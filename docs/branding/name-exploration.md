@@ -15,108 +15,147 @@ A strong candidate should:
 - still sound credible to serious mobile/platform engineers
 - leave room for CLI, CI, and potential future product surfaces
 
-## Initial candidate directions
+## Candidate directions
 
-### 1. Relay
+### Lighthouse
 Pros:
-- short, memorable, operational
-- suggests reliable execution and message passing
-- broad enough for agent + device orchestration
+- strong metaphor for guidance, visibility, and reliable navigation
+- very good fit for exploration, debugging, and agent workflows
+- Daniel explicitly likes it
 
 Cons:
-- generic; likely name collisions
-- not explicitly mobile
+- extremely crowded
+- heavily associated with Google's web-performance tool
+- likely difficult to own cleanly in developer-tooling contexts
 
-### 2. Runway
+External signal:
+- GitHub search is very crowded; top results include GoogleChrome/lighthouse and other major projects
+
+### Cadence
 Pros:
-- implies launch, execution, readiness
-- product-like and easy to say
+- implies repeatability and controlled execution
+- strong fit for CI and deterministic workflows
+- serious technical tone
 
 Cons:
-- broad and likely crowded
-- may sound more deployment-oriented than mobile-specific
+- not obviously mobile
+- existing developer-tooling usage already present
 
-### 3. Vector
-Pros:
-- suggests directed movement and precise execution
-- strong technical feel
+External signal:
+- notable existing usage including cadence-workflow/cadence and onflow/cadence
 
-Cons:
-- very generic and crowded
-- little mobile flavor
-
-### 4. Glide
-Pros:
-- subtle mobile/touch feel
-- lightweight and product-like
-
-Cons:
-- may sound more consumer than infrastructure-grade
-
-### 5. Beacon
+### Beacon
 Pros:
 - good for exploration, guidance, and agent workflows
 - recognizable and brandable
 
 Cons:
 - less obviously about execution/runtime
+- crowded name family
 
-### 6. Cadence
-Pros:
-- implies repeatability and controlled execution
-- strong fit for CI and deterministic workflows
+External signal:
+- crowded on GitHub; many existing Beacon projects
 
-Cons:
-- not obviously mobile
-
-### 7. Orbit
-Pros:
-- broad enough for multi-surface platform thinking
-- memorable and product-like
-
-Cons:
-- somewhat abstract
-
-### 8. Pilot
-Pros:
-- good fit for guided automation and agent interaction
-- easy to say and remember
-
-Cons:
-- crowded term in dev tools
-- may sound too assistant-centric
-
-### 9. Helix
+### Helix
 Pros:
 - stronger technical identity
 - distinctive sound relative to generic runtime names
 
 Cons:
 - more abstract; less immediate product meaning
+- significant existing software usage
 
-### 10. Maestro
+External signal:
+- notable collisions include helix-editor/helix and apache/helix
+
+### Glide
 Pros:
-- excellent product energy
+- subtle mobile/touch feel
+- lightweight and product-like
 
 Cons:
-- already taken in the target space, so not usable as inspiration only
+- may sound more consumer than infrastructure-grade
+- already strongly occupied in developer tooling/mobile libraries
 
-## Current preference buckets
+External signal:
+- strong existing association with bumptech/glide
 
-Most promising stylistic directions so far:
-- Cadence
-- Glide
+### Wayfinder
+Pros:
+- strong navigation/guidance metaphor similar to Lighthouse
+- clearer product feel than an internal runtime label
+- broad enough for execution + agent flows
+
+Cons:
+- slightly longer than Lighthouse/Cadence
+- still somewhat abstract
+
+External signal:
+- much less crowded than Lighthouse/Beacon/Relay/Pilot on GitHub
+- existing usage exists, but the collision surface appears materially lower
+
+### SignalPath
+Pros:
+- evokes determinism, orchestration, and observable execution
+- feels technical and infrastructure-credible
+- relatively distinctive
+
+Cons:
+- more systems/infrastructure flavored than consumer-product flavored
+- less elegant than Lighthouse
+
+External signal:
+- far less crowded than the more obvious one-word names in GitHub search
+
+### Northstar
+Pros:
+- good metaphor for guidance and direction
+- memorable and easy to say
+
+Cons:
+- somewhat common in product naming
+- less directly tied to execution/runtime than some alternatives
+
+External signal:
+- moderate crowding, but cleaner than Lighthouse/Relay/Pilot/Orbit
+
+## External signal snapshot
+
+GitHub search is a useful early proxy for collision risk, even though it is not the whole branding picture.
+
+Heavily crowded candidates:
+- Lighthouse
+- Relay
+- Orbit
+- Pilot
 - Beacon
+- Glide
 - Helix
+- Cadence
 
-## Recommendation for next pass
+Cleaner candidates from the second pass:
+- Wayfinder
+- SignalPath
+- Northstar
+- GuideLight (cleaner, but weaker as a product name)
 
-The next pass should evaluate candidates across:
+## Current recommendation
+
+Best current balance of product feel + distinctiveness:
+- Lighthouse as the strongest emotional/product direction
+- Wayfinder as a strong cleaner alternative
+- SignalPath as a more technical/distinctive alternative
+- Cadence as the strongest deterministic-execution name if we prioritize seriousness over uniqueness
+
+## Next pass recommendation
+
+The next pass should evaluate the top 3-5 candidates across:
 - memorability
 - seriousness/credibility
 - distinctiveness in mobile/devtool markets
 - GitHub/domain/package conflicts
 - whether the name can grow beyond pure CLI positioning
+- whether the name over-indexes on guidance vs execution
 
 Tracked issue:
 - #9
