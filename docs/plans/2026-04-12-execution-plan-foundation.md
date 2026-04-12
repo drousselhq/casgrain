@@ -15,6 +15,7 @@ Planned verification:
 - cargo fmt --all --check
 - cargo clippy --workspace --all-targets -- -D warnings
 - cargo test --workspace
+- CI coverage gate with minimum line coverage threshold
 
 Follow-on issues expected:
 - richer selector lowering

@@ -78,3 +78,15 @@ cargo fmt --all --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 ```
+
+## Quality gates
+
+Every PR should be gated on:
+- rustfmt formatting checks
+- clippy with `-D warnings`
+- full workspace unit tests
+- line coverage minimum enforcement in CI
+- cargo-audit security scan
+
+Current CI line coverage threshold:
+- 75% minimum line coverage across the workspace

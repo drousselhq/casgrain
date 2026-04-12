@@ -94,6 +94,30 @@ This direction is motivated by:
 - a CI pipeline can run the generated artifact repeatably
 - a failing artifact can be diagnosed and repaired with agent assistance
 
+## Product naming and positioning
+
+The current repository name is a placeholder, not a committed market-facing brand.
+
+Naming direction should aim for:
+- something stronger and more memorable than an internal infrastructure label
+- credibility with senior mobile engineers and platform/tooling teams
+- room to cover deterministic execution, local workflows, agent workflows, and future product surfaces
+
+Tracked follow-up:
+- issue #9 — define naming criteria and shortlist a stronger product brand
+
+## UI surface governance
+
+Current planned interfaces are CLI and CI-oriented. If future product surfaces expand into non-CLI/CI UI, a design system must be defined before UI implementation begins.
+
+This is intended to prevent:
+- ad hoc screen-by-screen design decisions
+- inconsistent interaction patterns
+- weak product identity across future surfaces
+
+Tracked follow-up:
+- issue #10 — require a design system before building non-CLI/CI product UIs
+
 ## Open Questions
 
 - iOS-first vs dual-platform MVP sequencing
