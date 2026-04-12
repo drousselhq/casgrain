@@ -2,9 +2,10 @@ use std::collections::BTreeMap;
 
 use mar_application::{validate_plan, CompileOutput, PlanCompiler};
 use mar_domain::{
-    ActionKind, ArtifactPolicy, CapabilitySet, CompilationDiagnostic, DiagnosticSeverity,
-    ExecutablePlan, ExecutionDefaults, FailurePolicy, PlanFormatVersion, PlanSource, PlanStep,
-    RetryPolicy, SourceKind, StepIntent, TargetPlatform, TargetProfile,
+    ActionKind, ArtifactPolicy, AssertionKind, CapabilitySet, CompilationDiagnostic,
+    DiagnosticSeverity, ExecutablePlan, ExecutionDefaults, FailurePolicy, PlanFormatVersion,
+    PlanSource, PlanStep, RetryPolicy, Selector, SourceKind, StepIntent, StringMatchKind,
+    TargetPlatform, TargetProfile, TextSelector, WaitKind,
 };
 
 pub struct OpenspecCompiler {
@@ -75,18 +76,16 @@ pub fn compile_openspec(
                 .clone()
                 .unwrap_or_else(|| "unnamed-scenario".into());
             let step_id = format!("{}-{:03}", slugify(&scenario_name), steps.len() + 1);
-            let action = match intent {
-                StepIntent::Assert => ActionKind::Noop,
-                _ => ActionKind::Noop,
-            };
+            let lowering = lower_step(&intent, description, line_number);
+            diagnostics.extend(lowering.diagnostics);
 
             steps.push(PlanStep {
                 step_id,
                 intent,
                 description: description.to_string(),
-                action,
-                guards: vec![],
-                postconditions: vec![],
+                action: lowering.action,
+                guards: lowering.guards,
+                postconditions: lowering.postconditions,
                 timeout_ms: 5_000,
                 retry: RetryPolicy::default(),
                 on_failure: FailurePolicy::AbortRun,
@@ -143,6 +142,217 @@ pub fn compile_openspec(
     }
 }
 
+#[derive(Debug)]
+struct LoweredStep {
+    action: ActionKind,
+    guards: Vec<WaitKind>,
+    postconditions: Vec<AssertionKind>,
+    diagnostics: Vec<CompilationDiagnostic>,
+}
+
+fn lower_step(intent: &StepIntent, description: &str, line_number: usize) -> LoweredStep {
+    let normalized = normalize_phrase(description);
+
+    if matches!(intent, StepIntent::Setup)
+        && (normalized.contains("app is launched")
+            || normalized.contains("application is launched"))
+    {
+        return LoweredStep {
+            action: ActionKind::LaunchApp {
+                app_id: "app.under.test".into(),
+            },
+            guards: vec![],
+            postconditions: vec![AssertionKind::AppInForeground {
+                app_id: "app.under.test".into(),
+            }],
+            diagnostics: vec![],
+        };
+    }
+
+    if matches!(intent, StepIntent::Interact) {
+        if let Some(target) = extract_after_any(&normalized, &["the user taps ", "user taps "]) {
+            return LoweredStep {
+                action: ActionKind::Tap {
+                    target: phrase_to_selector(target),
+                },
+                guards: vec![],
+                postconditions: vec![],
+                diagnostics: vec![],
+            };
+        }
+
+        if let Some((text, target)) = extract_text_entry(&normalized) {
+            return LoweredStep {
+                action: ActionKind::TypeText {
+                    target: phrase_to_selector(&target),
+                    text,
+                },
+                guards: vec![],
+                postconditions: vec![],
+                diagnostics: vec![],
+            };
+        }
+
+        if normalized.contains("take a screenshot") || normalized.contains("takes a screenshot") {
+            return LoweredStep {
+                action: ActionKind::TakeScreenshot { name: None },
+                guards: vec![],
+                postconditions: vec![],
+                diagnostics: vec![],
+            };
+        }
+    }
+
+    if matches!(intent, StepIntent::Assert) {
+        if let Some(target) = normalized.strip_suffix(" is visible") {
+            let selector = phrase_to_selector(target);
+            return LoweredStep {
+                action: ActionKind::Noop,
+                guards: vec![WaitKind::ForAssertion {
+                    assertion: AssertionKind::Visible {
+                        target: selector.clone(),
+                    },
+                }],
+                postconditions: vec![AssertionKind::Visible { target: selector }],
+                diagnostics: vec![],
+            };
+        }
+
+        if let Some(target) = normalized.strip_suffix(" exists") {
+            let selector = phrase_to_selector(target);
+            return LoweredStep {
+                action: ActionKind::Noop,
+                guards: vec![WaitKind::ForAssertion {
+                    assertion: AssertionKind::Exists {
+                        target: selector.clone(),
+                    },
+                }],
+                postconditions: vec![AssertionKind::Exists { target: selector }],
+                diagnostics: vec![],
+            };
+        }
+
+        if let Some((target, value)) = extract_text_equals_assertion(&normalized) {
+            let selector = phrase_to_selector(&target);
+            return LoweredStep {
+                action: ActionKind::Noop,
+                guards: vec![],
+                postconditions: vec![AssertionKind::TextEquals {
+                    target: selector,
+                    value,
+                }],
+                diagnostics: vec![],
+            };
+        }
+
+        if normalized.contains("app is launched") || normalized.contains("app is in foreground") {
+            return LoweredStep {
+                action: ActionKind::Noop,
+                guards: vec![],
+                postconditions: vec![AssertionKind::AppInForeground {
+                    app_id: "app.under.test".into(),
+                }],
+                diagnostics: vec![],
+            };
+        }
+    }
+
+    LoweredStep {
+        action: ActionKind::Noop,
+        guards: vec![],
+        postconditions: vec![],
+        diagnostics: vec![CompilationDiagnostic {
+            severity: DiagnosticSeverity::Warning,
+            message: format!(
+                "step lowered to noop because no deterministic lowering rule matched: {description}"
+            ),
+            location: Some(format!("line {line_number}")),
+        }],
+    }
+}
+
+fn extract_after_any<'a>(input: &'a str, prefixes: &[&str]) -> Option<&'a str> {
+    prefixes
+        .iter()
+        .find_map(|prefix| input.strip_prefix(prefix).map(trim_selector_phrase))
+}
+
+fn extract_text_entry(input: &str) -> Option<(String, String)> {
+    for prefix in [
+        "the user enters ",
+        "user enters ",
+        "the user types ",
+        "user types ",
+    ] {
+        if let Some(rest) = input.strip_prefix(prefix) {
+            let (text, remainder) = extract_quoted_value(rest)?;
+            let target = remainder
+                .strip_prefix("into ")
+                .or_else(|| remainder.strip_prefix("in "))
+                .map(trim_selector_phrase)?;
+            return Some((text, target.to_string()));
+        }
+    }
+    None
+}
+
+fn extract_text_equals_assertion(input: &str) -> Option<(String, String)> {
+    let target = input.strip_suffix(" is displayed")?;
+    let (value, remaining) = extract_quoted_value(target)?;
+    if remaining.is_empty() {
+        Some((value.clone(), value))
+    } else {
+        None
+    }
+}
+
+fn extract_quoted_value(input: &str) -> Option<(String, &str)> {
+    let trimmed = input.trim();
+    let rest = trimmed.strip_prefix('"')?;
+    let quote_end = rest.find('"')?;
+    let value = rest[..quote_end].to_string();
+    let remainder = rest[quote_end + 1..].trim();
+    Some((value, remainder))
+}
+
+fn phrase_to_selector(input: &str) -> Selector {
+    Selector::Text(TextSelector {
+        value: humanize_selector_phrase(trim_selector_phrase(input)),
+        match_kind: StringMatchKind::Contains,
+    })
+}
+
+fn trim_selector_phrase(input: &str) -> &str {
+    input
+        .trim()
+        .trim_end_matches(" field")
+        .trim_end_matches(" button")
+        .trim_end_matches('.')
+        .trim()
+}
+
+fn humanize_selector_phrase(input: &str) -> String {
+    input
+        .split_whitespace()
+        .filter_map(|word| match word {
+            "the" => None,
+            "screen" => None,
+            other => Some(other),
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn normalize_phrase(input: &str) -> String {
+    input
+        .trim()
+        .trim_end_matches('.')
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase()
+}
+
 fn slugify(input: &str) -> String {
     let mut output = String::new();
     let mut last_dash = false;
@@ -160,6 +370,8 @@ fn slugify(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use mar_domain::{ActionKind, AssertionKind, Selector, StepIntent, StringMatchKind, WaitKind};
+
     use super::compile_openspec;
 
     #[test]
@@ -168,7 +380,7 @@ mod tests {
 Feature: Login
   Scenario: Successful login
     Given the app is launched
-    When the user taps login
+    When the user taps login button
     Then the home screen is visible
 "#;
 
@@ -177,8 +389,49 @@ Feature: Login
 
         assert_eq!(first.plan, second.plan);
         assert_eq!(first.plan.steps.len(), 3);
-        assert_eq!(first.plan.steps[0].intent, mar_domain::StepIntent::Setup);
-        assert_eq!(first.plan.steps[1].intent, mar_domain::StepIntent::Interact);
-        assert_eq!(first.plan.steps[2].intent, mar_domain::StepIntent::Assert);
+        assert_eq!(first.plan.steps[0].intent, StepIntent::Setup);
+        assert_eq!(first.plan.steps[1].intent, StepIntent::Interact);
+        assert_eq!(first.plan.steps[2].intent, StepIntent::Assert);
+    }
+
+    #[test]
+    fn lowers_common_actions_and_assertions() {
+        let source = r#"
+Feature: Login
+  Scenario: Successful login
+    Given the app is launched
+    When the user taps login button
+    When the user enters "daniel@example.com" into email field
+    Then the home screen is visible
+"#;
+
+        let output = compile_openspec(source, "login.feature", "0.1.0").unwrap();
+        let steps = output.plan.steps;
+
+        assert!(matches!(
+            steps[0].action,
+            ActionKind::LaunchApp { ref app_id } if app_id == "app.under.test"
+        ));
+        assert!(matches!(
+            steps[1].action,
+            ActionKind::Tap { target: Selector::Text(ref text) }
+                if text.value == "login" && text.match_kind == StringMatchKind::Contains
+        ));
+        assert!(matches!(
+            steps[2].action,
+            ActionKind::TypeText { ref text, target: Selector::Text(ref selector) }
+                if text == "daniel@example.com" && selector.value == "email"
+        ));
+        assert!(matches!(
+            steps[3].guards.as_slice(),
+            [WaitKind::ForAssertion {
+                assertion: AssertionKind::Visible { .. }
+            }]
+        ));
+        assert!(matches!(
+            steps[3].postconditions.as_slice(),
+            [AssertionKind::Visible { target: Selector::Text(text) }]
+                if text.value == "home"
+        ));
     }
 }

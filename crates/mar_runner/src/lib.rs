@@ -194,11 +194,18 @@ fn element_matches_selector(element: &ObservedElement, selector: &Selector) -> b
         }
         Selector::Text(text) => match text.match_kind {
             StringMatchKind::Exact => element.text.as_deref() == Some(text.value.as_str()),
-            StringMatchKind::Contains => element
-                .text
-                .as_deref()
-                .map(|candidate| candidate.contains(&text.value))
-                .unwrap_or(false),
+            StringMatchKind::Contains => {
+                element
+                    .text
+                    .as_deref()
+                    .map(|candidate| candidate.contains(&text.value))
+                    .unwrap_or(false)
+                    || element
+                        .label
+                        .as_deref()
+                        .map(|candidate| candidate.contains(&text.value))
+                        .unwrap_or(false)
+            }
         },
         Selector::Role(role) => {
             element.role.as_ref() == Some(&role.role)
@@ -232,6 +239,7 @@ mod tests {
 
     use super::*;
 
+    #[derive(Clone)]
     struct FakeEngine {
         snapshot: DeviceSnapshot,
     }
@@ -251,9 +259,45 @@ mod tests {
         ) -> Result<Vec<ArtifactRef>, RuntimeFailure> {
             match action {
                 ActionKind::Noop => Ok(Vec::new()),
+                ActionKind::LaunchApp { app_id } => {
+                    self.snapshot.foreground_app = Some(app_id.clone());
+                    Ok(Vec::new())
+                }
+                ActionKind::Tap { target } => {
+                    let tapped_label = find_element(&self.snapshot, target)
+                        .and_then(|element| element.label.clone().or_else(|| element.text.clone()))
+                        .ok_or(RuntimeFailure {
+                            code: FailureCode::UnresolvedSelector,
+                            message: format!("selector was not found: {target:?}"),
+                        })?;
+                    if tapped_label.to_lowercase().contains("login") {
+                        self.snapshot.elements.push(ObservedElement {
+                            resource_id: None,
+                            accessibility_id: Some("home_title".into()),
+                            role: Some(UiRole::StaticText),
+                            text: Some("Home".into()),
+                            label: Some("Home".into()),
+                            visible: true,
+                        });
+                    }
+                    Ok(Vec::new())
+                }
+                ActionKind::TypeText { target, text } => {
+                    let element = self
+                        .snapshot
+                        .elements
+                        .iter_mut()
+                        .find(|element| element_matches_selector(element, target))
+                        .ok_or(RuntimeFailure {
+                            code: FailureCode::UnresolvedSelector,
+                            message: format!("selector was not found: {target:?}"),
+                        })?;
+                    element.text = Some(text.clone());
+                    Ok(Vec::new())
+                }
                 _ => Err(RuntimeFailure {
                     code: FailureCode::UnsupportedAction,
-                    message: "fake engine only supports noop".into(),
+                    message: "fake engine does not support this action yet".into(),
                 }),
             }
         }
@@ -338,5 +382,122 @@ mod tests {
             trace.steps[0].failure.as_ref().map(|f| &f.code),
             Some(&FailureCode::UnresolvedSelector)
         );
+    }
+
+    #[test]
+    fn runner_can_execute_small_login_like_flow() {
+        let mut engine = FakeEngine {
+            snapshot: DeviceSnapshot {
+                elements: vec![
+                    ObservedElement {
+                        resource_id: None,
+                        accessibility_id: Some("login_button".into()),
+                        role: Some(UiRole::Button),
+                        text: Some("Login".into()),
+                        label: Some("Login".into()),
+                        visible: true,
+                    },
+                    ObservedElement {
+                        resource_id: None,
+                        accessibility_id: Some("email_field".into()),
+                        role: Some(UiRole::TextField),
+                        text: Some(String::new()),
+                        label: Some("Email".into()),
+                        visible: true,
+                    },
+                ],
+                foreground_app: None,
+            },
+        };
+
+        let plan = ExecutablePlan {
+            plan_id: "plan-login".into(),
+            name: "Login".into(),
+            version: PlanFormatVersion { major: 1, minor: 0 },
+            source: PlanSource {
+                kind: SourceKind::OpenSpec,
+                source_name: "login.feature".into(),
+                compiler_version: "0.1.0".into(),
+            },
+            target: TargetProfile {
+                platform: TargetPlatform::CrossPlatform,
+                device_class: "simulator".into(),
+            },
+            capabilities_required: CapabilitySet::default(),
+            defaults: ExecutionDefaults::default(),
+            steps: vec![
+                PlanStep {
+                    step_id: "launch".into(),
+                    intent: StepIntent::Setup,
+                    description: "launch app".into(),
+                    action: ActionKind::LaunchApp {
+                        app_id: "app.under.test".into(),
+                    },
+                    guards: vec![],
+                    postconditions: vec![AssertionKind::AppInForeground {
+                        app_id: "app.under.test".into(),
+                    }],
+                    timeout_ms: 1_000,
+                    retry: RetryPolicy::default(),
+                    on_failure: FailurePolicy::AbortRun,
+                    artifacts: ArtifactPolicy::default(),
+                },
+                PlanStep {
+                    step_id: "type-email".into(),
+                    intent: StepIntent::Interact,
+                    description: "type email".into(),
+                    action: ActionKind::TypeText {
+                        target: Selector::Text(TextSelector {
+                            value: "Email".into(),
+                            match_kind: StringMatchKind::Contains,
+                        }),
+                        text: "daniel@example.com".into(),
+                    },
+                    guards: vec![],
+                    postconditions: vec![AssertionKind::TextEquals {
+                        target: Selector::Text(TextSelector {
+                            value: "daniel@example.com".into(),
+                            match_kind: StringMatchKind::Exact,
+                        }),
+                        value: "daniel@example.com".into(),
+                    }],
+                    timeout_ms: 1_000,
+                    retry: RetryPolicy::default(),
+                    on_failure: FailurePolicy::AbortRun,
+                    artifacts: ArtifactPolicy::default(),
+                },
+                PlanStep {
+                    step_id: "tap-login".into(),
+                    intent: StepIntent::Interact,
+                    description: "tap login".into(),
+                    action: ActionKind::Tap {
+                        target: Selector::Text(TextSelector {
+                            value: "Login".into(),
+                            match_kind: StringMatchKind::Contains,
+                        }),
+                    },
+                    guards: vec![],
+                    postconditions: vec![AssertionKind::Visible {
+                        target: Selector::Text(TextSelector {
+                            value: "Home".into(),
+                            match_kind: StringMatchKind::Contains,
+                        }),
+                    }],
+                    timeout_ms: 1_000,
+                    retry: RetryPolicy::default(),
+                    on_failure: FailurePolicy::AbortRun,
+                    artifacts: ArtifactPolicy::default(),
+                },
+            ],
+            metadata: Default::default(),
+        };
+
+        let trace = DeterministicRunner::new("run-login").execute(&mut engine, &plan);
+        assert_eq!(trace.status, RunStatus::Passed);
+        assert_eq!(trace.steps.len(), 3);
+        assert!(trace
+            .steps
+            .iter()
+            .all(|step| step.status == StepStatus::Passed));
     }
 }
