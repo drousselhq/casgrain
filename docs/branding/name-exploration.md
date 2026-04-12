@@ -139,13 +139,32 @@ Cleaner candidates from the second pass:
 - Northstar
 - GuideLight (cleaner, but weaker as a product name)
 
+## Navigation and sailing-themed pass
+
+Daniel prefers names related to sailing and navigation, but does not want to force a crowded name if it collides heavily with major existing projects.
+
+Strong navigation-themed candidates from the latest pass:
+- Wayfinder — strong guidance/navigation energy, cleaner than Lighthouse on GitHub, still product-like
+- Sextant — distinctive, nautical, and much less crowded, though slightly more niche/technical
+- Astrolabe — very distinctive and navigation-rooted, but more unusual and less immediately product-like
+- Starboard — strong nautical flavor, but already used by notable projects
+- Rudder — relevant metaphorically, but already occupied by existing software
+
+Navigation-themed candidates that look too crowded:
+- Lighthouse
+- Helm
+- Compass
+- Harbor
+- Waypoint
+
 ## Current recommendation
 
 Best current balance of product feel + distinctiveness:
-- Lighthouse as the strongest emotional/product direction
-- Wayfinder as a strong cleaner alternative
-- SignalPath as a more technical/distinctive alternative
+- Wayfinder as the best navigation-themed practical candidate
+- Lighthouse as the strongest emotional/product direction but likely too collision-prone
+- SignalPath as a more technical/distinctive alternative outside pure nautical naming
 - Cadence as the strongest deterministic-execution name if we prioritize seriousness over uniqueness
+- Sextant as the most promising more-distinctive nautical alternative
 
 ## Next pass recommendation
 
