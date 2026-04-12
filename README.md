@@ -37,14 +37,19 @@ This is intended to maximize:
 - local CLI performance
 - long-term suitability for mobile-focused engineering teams
 
-## Initial repository structure
+## Repository structure
 
 - `docs/architecture/` — architecture and bounded-context documents
 - `docs/prd/` — product requirements and scope
 - `docs/openspec/` — executable intent/specification source files
+- `docs/plans/` — implementation plans and execution notes
 - `tasks/` — backlog and planning artifacts
-- `src/` — implementation (to be added later)
-- `tests/` — automated test suites (to be added later)
+- `crates/mar_domain` — canonical executable plan, selector, trace, and runtime contracts
+- `crates/mar_application` — plan validation and application-layer contracts
+- `crates/mar_compiler` — OpenSpec-to-plan compilation entrypoint
+- `crates/mar_runner` — deterministic runner against abstract `DeviceEngine`
+- `crates/mar_cli` — machine-friendly CLI scaffold
+- `.github/workflows/` — CI and security validation workflows
 
 ## Initial scope
 
@@ -56,4 +61,20 @@ The first phase focuses on:
 - CI/local/agent interface design
 - OpenSpec-driven documentation
 
-No implementation code is committed yet beyond repository scaffolding.
+## Current implemented foundation
+
+The repo now contains an initial Rust workspace with:
+- a JSON-serializable `ExecutablePlan` IR
+- selector, action, assertion, wait, artifact, and trace domain types
+- a plan validation layer
+- a minimal deterministic OpenSpec compiler scaffold
+- a fake deterministic runner with unit tests
+- CI and security workflow scaffolding
+
+## Local verification
+
+```bash
+cargo fmt --all --check
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+```
