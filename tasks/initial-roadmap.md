@@ -1,7 +1,7 @@
 # Initial Roadmap
 
 ## Phase 0 — Foundation
-- establish architecture, scope, and OpenSpec sources
+- establish architecture, scope, and Gherkin authoring sources
 - decide core language/runtime strategy
 - define bounded contexts and canonical models
 - set up repository hygiene and review flow
@@ -15,7 +15,7 @@
 - compiler diagnostics
 
 ## Phase 2 — Compiler
-- parse OpenSpec/Gherkin-style requirements
+- parse Gherkin requirements
 - compile to canonical executable plan
 - add golden tests for compiler output
 

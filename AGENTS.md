@@ -74,7 +74,7 @@ Toolchain policy:
 Current CLI example (Gherkin feature file):
 
 ```bash
-cargo run -p mar_cli -- compile docs/openspec/engine-and-compilation.feature
+cargo run -p mar_cli -- compile docs/gherkin/engine-and-compilation.feature
 ```
 
 ## How agents should work in this repo
