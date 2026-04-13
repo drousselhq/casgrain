@@ -17,6 +17,8 @@ on:
       - crates/mar_domain/**
       - crates/mar_runner/**
       - crates/mar_ios/**
+      - fixtures/ios-smoke/**
+      - scripts/ios_smoke.sh
       - .github/workflows/ios-simulator-smoke.yml
 
 concurrency:
@@ -27,6 +29,8 @@ jobs:
   smoke:
     runs-on: macos-15
     timeout-minutes: 30
+    env:
+      ARTIFACT_DIR: ${{ github.workspace }}/artifacts/ios-smoke
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -46,5 +50,12 @@ jobs:
           xcrun simctl list runtimes | sed -n '1,20p'
           xcrun simctl list devices available | sed -n '1,40p'
 
-      - name: Run iOS boundary tests
-        run: cargo test -p mar_ios
+      - name: Run iOS smoke harness
+        run: scripts/ios_smoke.sh
+
+      - name: Upload smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: casgrain-ios-smoke
+          path: ${{ github.workspace }}/artifacts/ios-smoke
+          if-no-files-found: error

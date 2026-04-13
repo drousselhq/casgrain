@@ -13,6 +13,7 @@ This is the live execution plan for Casgrain.
 - Strengthen runner / trace / artifact quality around adapter-backed execution.
 - Keep docs, validation, and governance aligned with the codebase.
 - Use the macOS iOS simulator smoke workflow only for changes that may affect simulator interaction.
+- Keep the first simulator-backed slice isolated: one fixture app, one UI test, one visible state change, one screenshot artifact.
 
 ## Near-term priorities
 1. Expand the iOS adapter boundary into real simulator plumbing.
