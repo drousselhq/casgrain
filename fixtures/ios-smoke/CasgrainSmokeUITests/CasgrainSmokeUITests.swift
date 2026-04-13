@@ -1,8 +1,10 @@
 import XCTest
 
 final class CasgrainSmokeUITests: XCTestCase {
+    private let appBundleIdentifier = "org.casgrain.fixtures.CasgrainSmoke"
+
     func testTapChangesVisibleStateAndCapturesScreenshot() {
-        let app = XCUIApplication()
+        let app = XCUIApplication(bundleIdentifier: appBundleIdentifier)
         app.launch()
 
         let statusLabel = app.staticTexts["status-label"]
