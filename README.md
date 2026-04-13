@@ -182,6 +182,7 @@ Important files and directories:
 - `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
+- `docs/development/security-automation-plan.md` — security scanning baseline and follow-up roadmap
 - `docs/prd/` — product requirements
 - `docs/gherkin/` — Gherkin specification examples
 - `crates/` — Rust implementation
