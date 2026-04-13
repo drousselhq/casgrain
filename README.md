@@ -41,7 +41,7 @@ Implemented foundation already in the repo:
 - Rust workspace with domain, compiler, runner, application, and CLI crates
 - canonical `ExecutablePlan` IR
 - selector, action, assertion, wait, artifact, and trace domain models
-- minimal OpenSpec-to-plan compiler scaffold
+- minimal Gherkin-to-test-plan compiler scaffold
 - fake deterministic runner with unit tests
 - CI validation, security scanning, and coverage gating
 
@@ -98,22 +98,22 @@ cargo build --workspace
 
 ## Run the current CLI scaffold
 
-Compile an OpenSpec-style feature file into the current JSON plan format:
+Compile a Gherkin feature file into the current JSON test plan format:
 
 ```bash
-cargo run -p mar_cli -- compile docs/openspec/engine-and-compilation.feature
+cargo run -p mar_cli -- compile docs/gherkin/engine-and-compilation.feature
 ```
 
-Run an end-to-end deterministic mock demo from spec to execution trace summary:
+Run an end-to-end deterministic mock demo from Gherkin spec to execution trace summary:
 
 ```bash
-cargo run -p mar_cli -- run-mock docs/openspec/demo-login.feature
+cargo run -p mar_cli -- run-mock docs/gherkin/demo-login.feature
 ```
 
 If you want the full execution trace as JSON instead of the human summary:
 
 ```bash
-cargo run -p mar_cli -- run-mock docs/openspec/demo-login.feature --trace-json
+cargo run -p mar_cli -- run-mock docs/gherkin/demo-login.feature --trace-json
 ```
 
 ## Example output flow
@@ -183,7 +183,7 @@ Important files and directories:
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
 - `docs/prd/` — product requirements
-- `docs/openspec/` — specification examples
+- `docs/gherkin/` — Gherkin specification examples
 - `crates/` — Rust implementation
 - `.github/workflows/` — CI and security automation
 
