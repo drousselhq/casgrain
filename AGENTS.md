@@ -66,7 +66,12 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only
 ```
 
-Current CLI example:
+Toolchain policy:
+- the repository pins Rust 1.85.0 in `rust-toolchain.toml`
+- workspace MSRV is 1.85 via `workspace.package.rust-version`
+- prefer `rustup`-managed toolchains locally so your environment matches CI
+
+Current CLI example (Gherkin feature file):
 
 ```bash
 cargo run -p mar_cli -- compile docs/openspec/engine-and-compilation.feature

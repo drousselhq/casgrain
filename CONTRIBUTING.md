@@ -30,9 +30,15 @@ Recommended:
 
 ```bash
 curl https://sh.rustup.rs -sSf | sh
+rustup toolchain install 1.85.0
+rustup default 1.85.0
 rustup component add rustfmt clippy llvm-tools-preview
-cargo install cargo-llvm-cov
+cargo install cargo-llvm-cov --version 0.6.15 --locked
+cargo install cargo-audit --version 0.22.1 --locked
 ```
+
+Casgrain pins its validation toolchain in `rust-toolchain.toml` and currently requires Rust 1.85.0 / MSRV 1.85.
+Use a `rustup`-managed toolchain for local development; distro `cargo`/`rustc` packages do not automatically honor `rust-toolchain.toml` and can drift from CI.
 
 ### 3. Build the workspace
 
@@ -89,7 +95,7 @@ PRs should be green on:
 - clippy with `-D warnings`
 - tests
 - coverage threshold
-- cargo-audit
+- cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
 
 ## Issues and backlog
 
