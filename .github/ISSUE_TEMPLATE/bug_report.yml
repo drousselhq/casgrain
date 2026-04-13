@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a bug in Casgrain
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest reproducible sequence.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - compiler
+        - runner
+        - domain model
+        - cli
+        - ci/workflows
+        - docs
+        - simulator/emulator integration
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Include traces, logs, artifacts, failing commands, commit SHA, and environment details when available.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Rust version, command used, branch/commit, simulator/emulator details if relevant.

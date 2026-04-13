@@ -193,6 +193,24 @@ Target: spec input deterministically compiles into expected plan output.
 ### Integration tests
 Target: simulator/emulator-backed validation using fixture apps.
 
+## UI and design-system governance
+
+Current interface priorities are:
+- human CLI
+- machine/agent CLI with structured output
+- CI entrypoints
+
+If we later introduce non-CLI/CI product UI surfaces, a design system must be established before UI implementation proceeds.
+
+That design system should define at minimum:
+- design tokens
+- component primitives
+- layout and navigation principles
+- information density and artifact presentation patterns
+- brand language suitable for developer tooling
+
+This prevents presentation work from becoming an unstructured parallel architecture.
+
 ## Non-goals for early phases
 
 - device farm orchestration
