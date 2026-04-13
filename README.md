@@ -104,6 +104,18 @@ Compile an OpenSpec-style feature file into the current JSON plan format:
 cargo run -p mar_cli -- compile docs/openspec/engine-and-compilation.feature
 ```
 
+Run an end-to-end deterministic mock demo from spec to execution trace summary:
+
+```bash
+cargo run -p mar_cli -- run-mock docs/openspec/demo-login.feature
+```
+
+If you want the full execution trace as JSON instead of the human summary:
+
+```bash
+cargo run -p mar_cli -- run-mock docs/openspec/demo-login.feature --trace-json
+```
+
 ## Example output flow
 
 Given an input like:

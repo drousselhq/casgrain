@@ -22,6 +22,8 @@ version = "0.1.0"
 dependencies = [
  "mar_application",
  "mar_compiler",
+ "mar_domain",
+ "mar_runner",
  "serde_json",
 ]
 
