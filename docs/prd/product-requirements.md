@@ -103,8 +103,6 @@ Current direction:
 - deterministic plan execution remains the runtime substrate
 - authoring terminology in docs and examples should match that workflow
 
-Tracked follow-up:
-- issue #16 — rename remaining `OpenSpec`-named compiler/source APIs without changing runtime behavior
 
 ## Product naming and positioning
 

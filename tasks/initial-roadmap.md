@@ -1,5 +1,8 @@
 # Initial Roadmap
 
+> Historical roadmap for the early foundation phase.
+> The live plan now lives in `docs/plans/current-plan.md`.
+
 ## Phase 0 — Foundation
 - establish architecture, scope, and Gherkin authoring sources
 - decide core language/runtime strategy

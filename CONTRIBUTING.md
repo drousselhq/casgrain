@@ -48,12 +48,7 @@ cargo build --workspace
 
 ### 4. Run local checks
 
-```bash
-cargo fmt --all --check
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only
-```
+See `docs/validation.md` for the canonical validation gate.
 
 ## Where to start in the codebase
 
@@ -62,6 +57,7 @@ cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only
 - `crates/mar_runner` — deterministic execution
 - `docs/architecture/` — architecture and governance
 - `docs/prd/` — product intent and constraints
+- `docs/specs/` — canonical product behavior specs
 
 ## Contribution expectations
 
@@ -87,6 +83,7 @@ A good PR should include:
 Before opening a PR, review:
 - `.github/pull_request_template.md`
 - `docs/development/merge-and-validation-policy.md`
+- `docs/validation.md`
 - `docs/development/security-automation-plan.md`
 
 ## Quality gates

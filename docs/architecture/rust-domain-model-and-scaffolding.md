@@ -337,7 +337,7 @@ Priority 0:
 - determinism tests proving identical input -> identical compiled plan
 
 Priority 1:
-- compiler golden tests from `docs/gherkin/*.feature` to expected plan JSON
+- compiler golden tests from `docs/specs/` to expected plan JSON
 - validation tests for fragile selector warnings and forbidden ambiguous constructs
 - runner tests using fake device engine for success/failure/timeout/retry behavior
 

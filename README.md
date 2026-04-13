@@ -98,22 +98,22 @@ cargo build --workspace
 
 ## Run the current CLI scaffold
 
-Compile a Gherkin feature file into the current JSON test plan format:
+Compile the current product spec into the JSON test plan format:
 
 ```bash
-cargo run -p mar_cli -- compile docs/gherkin/engine-and-compilation.feature
+cargo run -p mar_cli -- compile docs/specs/casgrain-product-spec.md
 ```
 
-Run an end-to-end deterministic mock demo from Gherkin spec to execution trace summary:
+Run an end-to-end deterministic mock demo from the product spec to execution trace summary:
 
 ```bash
-cargo run -p mar_cli -- run-mock docs/gherkin/demo-login.feature
+cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md
 ```
 
 If you want the full execution trace as JSON instead of the human summary:
 
 ```bash
-cargo run -p mar_cli -- run-mock docs/gherkin/demo-login.feature --trace-json
+cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md --trace-json
 ```
 
 ## Example output flow
@@ -133,14 +133,7 @@ The current compiler scaffold lowers that into a structured JSON plan with expli
 
 ## Development workflow
 
-Run the local validation suite before opening or merging a PR:
-
-```bash
-cargo fmt --all --check
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only
-```
+Run the local validation suite before opening or merging a PR. See `docs/validation.md` for the canonical checks.
 
 ## CI quality gates
 
@@ -182,9 +175,12 @@ Important files and directories:
 - `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
+- `docs/validation.md` — canonical validation gate and reporting expectations
 - `docs/development/security-automation-plan.md` — security scanning baseline and follow-up roadmap
 - `docs/prd/` — product requirements
-- `docs/gherkin/` — Gherkin specification examples
+- `docs/branding/` — naming exploration and product naming context
+- `docs/plans/current-plan.md` — live execution plan
+- `docs/specs/casgrain-product-spec.md` — canonical product behavior spec
 - `crates/` — Rust implementation
 - `.github/workflows/` — CI and security automation
 

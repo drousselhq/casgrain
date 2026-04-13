@@ -22,6 +22,7 @@
 ## Notes for reviewers
 - risk level:
 - expected follow-up work:
+- current plan item or issue:
 - relevant issues:
 
 ## Additional validation details

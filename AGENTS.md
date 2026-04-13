@@ -1,129 +1,97 @@
 # AGENTS.md
 
-Guidance for coding agents and contributors using agentic tools on the Casgrain codebase.
+Project operating contract for Casgrain.
 
-This file is intentionally written for both:
-- autonomous or semi-autonomous coding agents
-- humans supervising or collaborating with them
-
-## Project summary
+## 1. Project identity
 
 Casgrain is an open-source mobile automation runtime for iOS simulators and Android emulators.
 
-Primary product goals:
+Primary goals:
 - deterministic CI/CD execution
 - strong local developer ergonomics
 - first-class agent workflows for exploration, authoring, and repair
 
-## Non-negotiable architectural rule
+## 2. Source of truth
 
-LLMs are not part of the deterministic execution path.
+- Repo docs are canonical.
+- GitHub Issues are the backlog.
+- `docs/plans/current-plan.md` is the active plan.
+- Pull Requests are the review and merge unit.
 
-Allowed roles for agents and models:
-- authoring
-- exploration assistance
-- repair proposals
-- summarization
-- spec drafting
+## 3. Standard workflow
 
-Forbidden role:
-- deciding runtime actions during deterministic replay
+For non-trivial work:
+1. Shape the request
+2. Write or update the spec when behavior changes
+3. Update the current plan
+4. Execute one bounded slice
+5. Validate
+6. Review
+7. Reconcile project state
 
-If a proposed change weakens this boundary, stop and rethink the approach.
+## 4. Autonomy rules
 
-## Current implementation shape
+Allowed by default:
+- inspect repo state, issues, PRs, and CI
+- choose the next bounded task from approved work
+- implement one bounded slice at a time
+- run validation
+- update docs/specs when implementation reveals they need clarification
+- open GitHub Issues for discovered follow-up work
+- open Pull Requests autonomously
+- merge only low-risk changes that do not change product behavior or developer experience
 
-Important crates:
-- `crates/mar_domain`
-- `crates/mar_application`
-- `crates/mar_compiler`
-- `crates/mar_runner`
-- `crates/mar_cli`
+Require human review before proceeding:
+- product behavior changes
+- developer experience changes
+- major architecture changes
+- destructive migrations
+- scope expansion across multiple slices
+- ambiguous situations where the right next step is unclear
 
-Important docs:
-- `README.md`
-- `CONTRIBUTING.md`
-- `docs/architecture/clean-architecture.md`
-- `docs/prd/product-requirements.md`
-- `docs/architecture/product-naming-and-ui-governance.md`
-- `docs/development/merge-and-validation-policy.md`
-- `.github/pull_request_template.md`
+## 5. Artifact model
 
-## Local commands
+Required:
+- `AGENTS.md`
+- project charter / PRD
+- behavior spec (`docs/specs/casgrain-product-spec.md`)
+- architecture notes / ADRs
+- `docs/plans/current-plan.md`
+- `docs/validation.md`
 
-Build:
+Recommended:
+- PR template
+- issue templates
+- decision log
 
-```bash
-cargo build --workspace
-```
+## 6. Validation policy
 
-Validation:
+`docs/validation.md` is the source of truth for required checks and quality gates.
 
-```bash
-cargo fmt --all --check
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only
-```
+## 7. Escalation rules
 
-Toolchain policy:
-- the repository pins Rust 1.85.0 in `rust-toolchain.toml`
-- workspace MSRV is 1.85 via `workspace.package.rust-version`
-- prefer `rustup`-managed toolchains locally so your environment matches CI
+Stop and ask when:
+- requirements are unclear
+- a change would alter product behavior or developer experience
+- an architectural tradeoff needs a decision
+- a change would cross a high-risk boundary
+- evidence is insufficient to proceed safely
 
-Current CLI example (Gherkin feature file):
+## 8. Change discipline
 
-```bash
-cargo run -p mar_cli -- compile docs/gherkin/engine-and-compilation.feature
-```
+- Keep diffs small and focused.
+- Prefer evidence over speculation.
+- Reconcile plan, issues, and docs after each slice.
+- Preserve a clean history of decisions in issues, PRs, or ADRs.
+- Avoid leaving stale documentation on main.
 
-## How agents should work in this repo
+## 9. Current plan handling
 
-Prefer this order of operations:
-1. inspect docs and relevant crate boundaries first
-2. make the smallest architecture-consistent change
-3. add or update tests
-4. run validation locally
-5. update docs if project behavior or direction changed
-6. record real follow-up work in GitHub issues
+- Keep the current plan file small and actively maintained.
+- Archive old plans only when the project becomes complex enough that the live plan is no longer readable.
+- Move history into archived plan files only when needed.
 
-## What to optimize for
-
-Optimize for:
-- forward progress
-- cheap validation before expensive exploration
-- deterministic behavior
-- explicit artifacts and traceability
-- small PRs
-
-Do not optimize for:
-- flashy but weakly grounded implementations
-- speculative large refactors without validation
-- token-heavy exploration where cheap evidence would do
-
-## Naming and product identity
-
-Chosen product name:
-- Casgrain
-
-The old repository placeholder name may still appear in historical docs or internal identifiers. Treat Casgrain as the actual software name unless a maintainer explicitly reopens the naming decision.
-
-## UI governance
-
-Current main surfaces are CLI and CI.
-
-If future non-CLI/CI product UIs are introduced, a design system must be defined before UI implementation begins.
-
-Agents should not introduce ad hoc UI systems or screen-by-screen design patterns without that prerequisite.
-
-## Open-source and licensing
-
-Project license:
-- Apache License 2.0
-
-When adding new files, preserve compatible licensing assumptions and avoid copying code from incompatible sources.
-
-## If you are unsure
+## 10. If you are unsure
 
 When trade-offs are unclear, prefer:
 - clearer architecture

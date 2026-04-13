@@ -60,15 +60,11 @@ Default action:
 
 ## Required validation
 
-Current default required checks:
-- `cargo fmt --all --check`
-- `cargo test --workspace`
-- `cargo clippy --workspace --all-targets -- -D warnings`
-- `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
-- `cargo audit`
+See `docs/validation.md` for the canonical validation gate and reporting expectations.
 
 See also:
 - `docs/development/security-automation-plan.md` for the current security baseline and staged follow-up checks.
+- `docs/plans/current-plan.md` for the live project direction.
 
 ## E2E policy
 
