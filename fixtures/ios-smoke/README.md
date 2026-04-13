@@ -21,4 +21,9 @@ ARTIFACT_DIR=./artifacts/ios-smoke scripts/ios_smoke.sh
 
 The harness now fails fast when it is invoked outside macOS or when `python3`, `xcodebuild`, or `xcrun` are unavailable.
 
+The script now prefers a small, explicit simulator selection order and supports override env vars for future Xcode/runtime changes:
+- `CASGRAIN_SMOKE_RUNTIME_NAME` to pin a specific iOS runtime name or identifier
+- `CASGRAIN_SMOKE_DEVICE_NAMES` to provide a semicolon-separated device preference list
+- `CASGRAIN_SMOKE_DESTINATION_TIMEOUT` to extend destination matching time if Apple changes simulator startup timing
+
 The workflow uploads the xcresult bundle and logs as artifacts.
