@@ -46,6 +46,8 @@ Important docs:
 - `docs/architecture/clean-architecture.md`
 - `docs/prd/product-requirements.md`
 - `docs/architecture/product-naming-and-ui-governance.md`
+- `docs/development/merge-and-validation-policy.md`
+- `.github/pull_request_template.md`
 
 ## Local commands
 
