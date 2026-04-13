@@ -7,7 +7,7 @@ Goal: establish the first executable Rust workspace for the mobile runtime, cent
 Architecture:
 - mar_domain owns the canonical plan, selector, action, wait, assertion, trace, and engine contracts.
 - mar_application owns validation and use-case boundaries.
-- mar_compiler lowers OpenSpec/Gherkin-ish text into the canonical plan.
+- mar_compiler lowers Gherkin feature text into the canonical plan.
 - mar_runner executes plans against a DeviceEngine deterministically.
 - mar_cli exposes a machine-friendly compile surface.
 
@@ -19,6 +19,6 @@ Planned verification:
 
 Follow-on issues expected:
 - richer selector lowering
-- assertions/waits expansion from OpenSpec prose
+- assertions/waits expansion from Gherkin prose
 - fixture app and integration matrix
 - cargo audit/CodeQL hardening

@@ -47,7 +47,7 @@ Git history, branches, PRs, comments, and specs should provide a clear audit tra
 - iOS simulator support (initial target)
 - Android emulator support (planned in MVP architecture, implementation may follow iOS)
 - executable deterministic plan model
-- Gherkin/OpenSpec-style requirement inputs compiled into executable plans
+- Gherkin feature inputs compiled into executable test plans
 - interactive exploration/control interface for agents and developers
 - artifact-rich execution traces
 - local CLI + CI-friendly machine-readable output
@@ -93,6 +93,18 @@ This direction is motivated by:
 - a developer can explore an app with an agent and generate a deterministic test artifact
 - a CI pipeline can run the generated artifact repeatably
 - a failing artifact can be diagnosed and repaired with agent assistance
+
+## Authoring model
+
+Casgrain treats Gherkin as the primary user-facing specification language for developers and QA analysts.
+
+Current direction:
+- Gherkin -> Test Plan
+- deterministic plan execution remains the runtime substrate
+- authoring terminology in docs and examples should match that workflow
+
+Tracked follow-up:
+- issue #16 — rename remaining `OpenSpec`-named compiler/source APIs without changing runtime behavior
 
 ## Product naming and positioning
 
