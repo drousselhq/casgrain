@@ -35,7 +35,7 @@ pub struct PlanSource {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SourceKind {
-    OpenSpec,
+    Gherkin,
     Json,
     AgentDraft,
 }
@@ -379,7 +379,7 @@ mod tests {
             name: "Login Flow".into(),
             version: PlanFormatVersion { major: 1, minor: 0 },
             source: PlanSource {
-                kind: SourceKind::OpenSpec,
+                kind: SourceKind::Gherkin,
                 source_name: "login.feature".into(),
                 compiler_version: "0.1.0".into(),
             },
@@ -408,12 +408,14 @@ mod tests {
                 on_failure: FailurePolicy::AbortRun,
                 artifacts: ArtifactPolicy::default(),
             }],
-            metadata: BTreeMap::from([(String::from("source_lineage"), String::from("openspec"))]),
+            metadata: BTreeMap::from([(String::from("source_lineage"), String::from("gherkin"))]),
         };
 
         let json = serde_json::to_string_pretty(&plan).unwrap();
         let decoded: ExecutablePlan = serde_json::from_str(&json).unwrap();
 
+        assert!(json.contains("\"kind\": \"gherkin\""));
+        assert!(json.contains("\"source_lineage\": \"gherkin\""));
         assert_eq!(plan, decoded);
         assert!(plan_is_serialization_stable(&decoded));
     }
