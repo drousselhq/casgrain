@@ -4,30 +4,16 @@ title: "bug: "
 labels:
   - bug
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a Casgrain bug. Please include the smallest reproducible case and the runtime diagnostics needed to investigate it on first pass.
   - type: textarea
     id: summary
     attributes:
       label: Summary
       description: What is broken?
-    validations:
-      required: true
-  - type: textarea
-    id: steps
-    attributes:
-      label: Steps to reproduce
-      description: Include the smallest reproducible sequence.
-    validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected behavior
-    validations:
-      required: true
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual behavior
+      placeholder: Casgrain crashes while compiling a feature with a nested Background step.
     validations:
       required: true
   - type: dropdown
@@ -45,13 +31,76 @@ body:
         - other
     validations:
       required: true
+  - type: dropdown
+    id: failure_mode
+    attributes:
+      label: Failure mode
+      description: Tell us whether the failure is deterministic or flaky.
+      options:
+        - deterministic / reproduces every time
+        - flaky / intermittent
+        - unknown
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform or target environment
+      description: Which platform or execution target was involved?
+      placeholder: iOS simulator, Android emulator, local CLI, GitHub Actions Ubuntu runner
+    validations:
+      required: true
+  - type: input
+    id: runtime_version
+    attributes:
+      label: Runtime version or commit SHA
+      description: Include the Casgrain version, branch, or commit SHA you ran.
+      placeholder: main@abc1234
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest reproducible sequence.
+      placeholder: |
+        1. Run `cargo run -p mar_cli -- compile docs/gherkin/example.feature`
+        2. Observe the failure after step 3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
   - type: textarea
     id: diagnostics
     attributes:
-      label: Diagnostics
-      description: Include traces, logs, artifacts, failing commands, commit SHA, and environment details when available.
+      label: Required diagnostics
+      description: Include traces, logs, artifacts, failing commands, and any diagnostic bundle paths. For flaky failures, include how often it reproduces and any known triggers.
+      placeholder: |
+        - Command: cargo test --workspace
+        - Trace/log paths: ...
+        - Artifacts/screenshots: ...
+        - Reproduction frequency: 3/10 runs
+    validations:
+      required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: OS, Rust version, command used, branch/commit, simulator/emulator details if relevant.
+      description: OS, Rust version, simulator/emulator details, and other relevant tooling.
+      placeholder: |
+        - OS: Ubuntu 24.04
+        - Rust: 1.85.0
+        - Toolchain: stable-x86_64-unknown-linux-gnu
+        - Simulator/emulator details: N/A
+    validations:
+      required: true
