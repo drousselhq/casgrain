@@ -170,24 +170,33 @@ Navigation-themed candidates that look too crowded:
 - Harbor
 - Waypoint
 
-## Current recommendation
+## Decision
 
-Best current balance of product feel + distinctiveness:
+Selected working product name:
+- **Casgrain**
+
+Decision notes:
+- chosen in honor of Thérèse Casgrain
+- preferred over continuing to optimize only for nautical/navigation metaphors
+- stronger as an ownable identity than the descriptive repository placeholder
+- avoids the obvious collision pressure seen in candidates like Lighthouse
+
+## Current recommendation status
+
+The earlier shortlist remains useful historical context, but the naming decision is currently considered made unless explicitly reopened.
+
+Previously strongest alternatives if the decision is revisited:
 - Wayfinder as the best navigation-themed practical candidate
-- Lighthouse as the strongest emotional/product direction but likely too collision-prone
 - SignalPath as a more technical/distinctive alternative outside pure nautical naming
 - Cadence as the strongest deterministic-execution name if we prioritize seriousness over uniqueness
 - Sextant as the most promising more-distinctive nautical alternative
+- Lighthouse as the strongest emotional/product direction but likely too collision-prone
 
-## Next pass recommendation
+## Migration direction
 
-The next pass should evaluate the top 3-5 candidates across:
-- memorability
-- seriousness/credibility
-- distinctiveness in mobile/devtool markets
-- GitHub/domain/package conflicts
-- whether the name can grow beyond pure CLI positioning
-- whether the name over-indexes on guidance vs execution
+- keep `mobile-agent-runtime` as the temporary repository/package slug while the technical foundation is still stabilizing
+- use **Casgrain** as the product-facing name in strategy/docs unless the decision is reopened
+- when rename work is scheduled, update the GitHub repo, package/binary names, docs, and any public-facing assets together rather than partially
 
 Tracked issue:
 - #9
