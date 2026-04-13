@@ -181,6 +181,7 @@ Important files and directories:
 - `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
+- `docs/development/test-pyramid-and-runtime-contracts.md` — test layers and runtime contract strategy
 - `docs/validation.md` — canonical validation gate and reporting expectations
 - `docs/development/security-automation-plan.md` — security scanning baseline and follow-up roadmap
 - `deny.toml` — cargo-deny license and dependency-source policy
