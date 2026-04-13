@@ -2,9 +2,17 @@
 
 ## Naming
 
-`mobile-agent-runtime` is currently a repository-friendly placeholder, not a final product brand.
+`mobile-agent-runtime` is currently a repository-friendly placeholder, not the intended long-term product brand.
 
-A future product name should:
+Selected working product name:
+- **Casgrain**
+
+Rationale recorded so far:
+- it gives the product a stronger, more ownable identity than the descriptive repository placeholder
+- it avoids the collision pressure found in crowded candidates like Lighthouse
+- it is meaningful to Daniel, honoring Thérèse Casgrain
+
+The product name should still satisfy the original criteria:
 - be short enough to say and remember
 - sound credible beside tools like Maestro, Appium, and RocketSim
 - feel product-like rather than purely infrastructural
@@ -22,6 +30,12 @@ A future product name should:
 3. check obvious repo/domain conflicts
 4. choose preferred direction
 5. plan migration from placeholder naming if needed
+
+### Current migration plan
+1. keep `mobile-agent-runtime` as the temporary repository/package slug while core architecture is still stabilizing
+2. treat **Casgrain** as the intended product-facing name in docs and future positioning work
+3. once repo/package rename work is scheduled, map the rename surface explicitly: GitHub repository, Cargo package names, CLI binary naming, docs, and any future website/assets
+4. avoid partial renames that create mixed branding across artifacts
 
 Tracked follow-up:
 - issue #9

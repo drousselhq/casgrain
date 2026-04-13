@@ -1,5 +1,7 @@
 # Mobile Agent Runtime
 
+> Working product name: **Casgrain**. The repository slug remains `mobile-agent-runtime` temporarily while branding and repository/package migration are planned.
+
 Agent-native mobile runtime for iOS simulators and Android emulators, designed for three first-class use cases from day one:
 
 1. CI/CD execution of deterministic mobile tests

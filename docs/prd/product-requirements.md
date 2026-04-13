@@ -96,15 +96,23 @@ This direction is motivated by:
 
 ## Product naming and positioning
 
-The current repository name is a placeholder, not a committed market-facing brand.
+The current repository name is a placeholder, not the intended long-term market-facing brand.
 
-Naming direction should aim for:
+Selected working product name:
+- **Casgrain**
+
+Naming direction still aims for:
 - something stronger and more memorable than an internal infrastructure label
 - credibility with senior mobile engineers and platform/tooling teams
 - room to cover deterministic execution, local workflows, agent workflows, and future product surfaces
 
+Current migration direction:
+- keep `mobile-agent-runtime` as the temporary repository/package slug during foundation work
+- use **Casgrain** in product-facing strategy/docs unless the decision is explicitly reopened
+- perform any eventual rename across repo/package/binary/docs as one planned change set rather than piecemeal
+
 Tracked follow-up:
-- issue #9 — define naming criteria and shortlist a stronger product brand
+- issue #9 — naming decision documented; eventual rename/migration execution still to be scheduled
 
 ## UI surface governance
 
