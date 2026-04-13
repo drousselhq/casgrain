@@ -1,3 +1,5 @@
+pub mod mock;
+
 use mar_domain::{
     ActionKind, ArtifactRef, AssertionKind, DeviceEngine, DeviceSnapshot, ExecutablePlan,
     ExecutionTrace, FailureCode, FailurePolicy, FailureReport, ObservedElement, RunStatus,
@@ -176,7 +178,7 @@ fn evaluate_assertion(
     }
 }
 
-fn find_element<'a>(
+pub(crate) fn find_element<'a>(
     snapshot: &'a DeviceSnapshot,
     selector: &Selector,
 ) -> Option<&'a ObservedElement> {
@@ -186,7 +188,7 @@ fn find_element<'a>(
         .find(|element| element_matches_selector(element, selector))
 }
 
-fn element_matches_selector(element: &ObservedElement, selector: &Selector) -> bool {
+pub(crate) fn element_matches_selector(element: &ObservedElement, selector: &Selector) -> bool {
     match selector {
         Selector::ResourceId(value) => element.resource_id.as_deref() == Some(value.as_str()),
         Selector::AccessibilityId(value) => {
@@ -195,15 +197,16 @@ fn element_matches_selector(element: &ObservedElement, selector: &Selector) -> b
         Selector::Text(text) => match text.match_kind {
             StringMatchKind::Exact => element.text.as_deref() == Some(text.value.as_str()),
             StringMatchKind::Contains => {
+                let needle = text.value.to_lowercase();
                 element
                     .text
                     .as_deref()
-                    .map(|candidate| candidate.contains(&text.value))
+                    .map(|candidate| candidate.to_lowercase().contains(&needle))
                     .unwrap_or(false)
                     || element
                         .label
                         .as_deref()
-                        .map(|candidate| candidate.contains(&text.value))
+                        .map(|candidate| candidate.to_lowercase().contains(&needle))
                         .unwrap_or(false)
             }
         },
