@@ -165,7 +165,11 @@ Important files and directories:
 - `README.md` — project overview and quick start
 - `CONTRIBUTING.md` — how to get set up and contribute
 - `AGENTS.md` — guidance for coding agents and contributors using agentic tools
+- `CODEOWNERS` — default review ownership
+- `.github/pull_request_template.md` — PR checklist and merge notes
+- `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
+- `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
 - `docs/prd/` — product requirements
 - `docs/openspec/` — specification examples
 - `crates/` — Rust implementation

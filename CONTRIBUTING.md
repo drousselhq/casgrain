@@ -78,6 +78,10 @@ A good PR should include:
 - tests or validation updates where relevant
 - notes about follow-up work if the implementation is intentionally incomplete
 
+Before opening a PR, review:
+- `.github/pull_request_template.md`
+- `docs/development/merge-and-validation-policy.md`
+
 ## Quality gates
 
 PRs should be green on:

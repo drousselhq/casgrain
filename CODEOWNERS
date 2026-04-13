@@ -1,0 +1,20 @@
+# Default owners
+* @droussel @drousselbot
+
+# Core runtime and compiler
+/crates/ @droussel @drousselbot
+
+# CI and GitHub automation
+/.github/ @droussel @drousselbot
+
+# Product and architecture docs
+/docs/ @droussel @drousselbot
+
+# Top-level project policy files
+/README.md @droussel @drousselbot
+/CONTRIBUTING.md @droussel @drousselbot
+/AGENTS.md @droussel @drousselbot
+/AGENT.md @droussel @drousselbot
+/CODEOWNERS @droussel @drousselbot
+/LICENSE @droussel @drousselbot
+/NOTICE @droussel @drousselbot
