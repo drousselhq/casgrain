@@ -11,11 +11,13 @@ Rationale:
 - strong proper-name brand with room to grow beyond a purely technical label
 
 Note:
-- the repository may still temporarily use `mobile-agent-runtime` as a technical placeholder, but product naming should now treat Casgrain as the selected name unless reopened explicitly.
+- `mobile-agent-runtime` was the original placeholder repository name
+- the repository has now been renamed to `casgrain`
+- product naming should treat Casgrain as selected unless reopened explicitly
 
 ## Purpose
 
-The current repository name, `mobile-agent-runtime`, is descriptive but weak as a market-facing product name.
+This document records the reasoning that led from the original placeholder name to the selected product name.
 
 We want a name that can stand beside tools like Maestro, Appium, and RocketSim without sounding like internal plumbing.
 
