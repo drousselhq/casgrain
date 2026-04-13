@@ -10,7 +10,27 @@ RESULT_BUNDLE="$ARTIFACT_DIR/CasgrainSmoke.xcresult"
 LOG_FILE="$ARTIFACT_DIR/xcodebuild.log"
 SIM_INFO_FILE="$ARTIFACT_DIR/simulator.json"
 
+require_macos_xcode() {
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "scripts/ios_smoke.sh requires macOS with Xcode and iOS Simulator support." >&2
+    exit 1
+  fi
+
+  local missing=()
+  for tool in python3 xcodebuild xcrun; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+      missing+=("$tool")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Missing required tool(s): ${missing[*]}" >&2
+    exit 1
+  fi
+}
+
 mkdir -p "$ARTIFACT_DIR"
+require_macos_xcode
 
 choose_simulator() {
   python3 - <<'PY'

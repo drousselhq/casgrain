@@ -13,10 +13,12 @@ Current harness shape:
 - one tap that increments a visible counter
 - one screenshot attachment kept in the xcresult bundle
 
-Run locally on macOS with:
+Run locally on macOS with Xcode command-line tools and iOS Simulator runtimes installed:
 
 ```bash
 ARTIFACT_DIR=./artifacts/ios-smoke scripts/ios_smoke.sh
 ```
+
+The harness now fails fast when it is invoked outside macOS or when `python3`, `xcodebuild`, or `xcrun` are unavailable.
 
 The workflow uploads the xcresult bundle and logs as artifacts.
