@@ -94,6 +94,38 @@ This direction is motivated by:
 - a CI pipeline can run the generated artifact repeatably
 - a failing artifact can be diagnosed and repaired with agent assistance
 
+## Product naming and positioning
+
+The current repository name is a placeholder, not the intended long-term market-facing brand.
+
+Selected working product name:
+- **Casgrain**
+
+Naming direction still aims for:
+- something stronger and more memorable than an internal infrastructure label
+- credibility with senior mobile engineers and platform/tooling teams
+- room to cover deterministic execution, local workflows, agent workflows, and future product surfaces
+
+Current migration direction:
+- keep `mobile-agent-runtime` as the temporary repository/package slug during foundation work
+- use **Casgrain** in product-facing strategy/docs unless the decision is explicitly reopened
+- perform any eventual rename across repo/package/binary/docs as one planned change set rather than piecemeal
+
+Tracked follow-up:
+- issue #9 — naming decision documented; eventual rename/migration execution still to be scheduled
+
+## UI surface governance
+
+Current planned interfaces are CLI and CI-oriented. If future product surfaces expand into non-CLI/CI UI, a design system must be defined before UI implementation begins.
+
+This is intended to prevent:
+- ad hoc screen-by-screen design decisions
+- inconsistent interaction patterns
+- weak product identity across future surfaces
+
+Tracked follow-up:
+- issue #10 — require a design system before building non-CLI/CI product UIs
+
 ## Open Questions
 
 - iOS-first vs dual-platform MVP sequencing

@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a feature or improvement for Casgrain
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or developer problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact area
+      options:
+        - developer experience
+        - deterministic execution
+        - agent workflows
+        - ci/cd
+        - iOS support
+        - Android support
+        - docs/process
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation idea
+      description: How should we know this feature works when implemented?
