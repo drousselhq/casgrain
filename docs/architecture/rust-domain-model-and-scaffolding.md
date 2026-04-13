@@ -2,7 +2,7 @@
 
 ## Why this shape
 
-This proposal keeps the deterministic execution path entirely inside a Rust core, matches the existing Clean Architecture document, and gives OpenSpec a stable compilation target that is explicit enough for CI replay and agent-assisted repair.
+This proposal keeps the deterministic execution path entirely inside a Rust core, matches the existing Clean Architecture document, and gives Gherkin a stable compilation target that is explicit enough for CI replay and agent-assisted repair.
 
 ## 1. Canonical executable plan IR
 
@@ -279,7 +279,7 @@ Suggested module layout:
 - `exploration_session.rs`
 
 ### `crates/mar_compiler/src/lib.rs`
-- `openspec/`
+- `gherkin/`
   - `parser.rs`
   - `ast.rs`
 - `lowering/`
@@ -324,7 +324,7 @@ Suggested module layout:
 2. implement stable IDs, plan IR, selector taxonomy, action/assert/wait enums
 3. implement `ExecutionTrace`, `FailureReport`, and `ArtifactRef`
 4. define `DeviceEngine` and `DeviceSession` traits in domain
-5. add `mar_compiler` with OpenSpec parser stubs and deterministic lowerer to plan JSON
+5. add `mar_compiler` with Gherkin parser stubs and deterministic lowerer to plan JSON
 6. add `mar_runner` with a fake engine for deterministic domain/application tests
 7. add filesystem artifact store and JSON output adapter
 8. only then start iOS simulator adapter work
@@ -337,7 +337,7 @@ Priority 0:
 - determinism tests proving identical input -> identical compiled plan
 
 Priority 1:
-- compiler golden tests from `docs/openspec/*.feature` to expected plan JSON
+- compiler golden tests from `docs/gherkin/*.feature` to expected plan JSON
 - validation tests for fragile selector warnings and forbidden ambiguous constructs
 - runner tests using fake device engine for success/failure/timeout/retry behavior
 
@@ -352,4 +352,4 @@ Priority 3:
 
 ## 8. Recommendation summary
 
-The best next concrete move is to establish a Rust workspace with `mar_domain` first and make `ExecutablePlan` the canonical contract between OpenSpec compilation, deterministic execution, trace capture, and agent-facing repair flows. Keep selectors explicit and ranked by stability, model waits/assertions separately from actions, and make traces/artifacts fully structured so agents can reason over failures without entering the execution path.
+The best next concrete move is to establish a Rust workspace with `mar_domain` first and make `ExecutablePlan` the canonical contract between Gherkin compilation, deterministic execution, trace capture, and agent-facing repair flows. Keep selectors explicit and ranked by stability, model waits/assertions separately from actions, and make traces/artifacts fully structured so agents can reason over failures without entering the execution path.

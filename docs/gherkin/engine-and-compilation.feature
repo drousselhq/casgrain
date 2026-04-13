@@ -26,7 +26,7 @@ Feature: Deterministic execution engine and specification compilation
       And the failure report identifies the unresolved selector
       And diagnostic artifacts are attached
 
-  Rule: Gherkin/OpenSpec is not the execution substrate
+  Rule: Gherkin is not the execution substrate
 
     Scenario: Higher-level intent compiles to lower-level executable steps
       Given a Gherkin-style scenario
