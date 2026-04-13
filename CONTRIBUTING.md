@@ -107,6 +107,14 @@ We use GitHub issues to track:
 
 If you discover a real limitation or bug during development, open or update an issue rather than letting it disappear into PR comments.
 
+When filing a bug, use the GitHub bug report form and include:
+- the smallest reproducible sequence
+- whether the failure is deterministic or flaky
+- the affected platform or execution target
+- the Casgrain version, branch, or commit SHA
+- traces, logs, artifacts, and failing commands
+- OS, Rust version, simulator/emulator details, and other relevant environment data
+
 ## Contributors using coding agents
 
 If you are using tools such as:
