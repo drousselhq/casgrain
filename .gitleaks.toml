@@ -1,0 +1,12 @@
+title = "Casgrain gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local Rust build and coverage artifacts are not part of repository policy enforcement"
+paths = [
+  '''^target(?:/|$)''',
+  '''\.profraw$''',
+  '''\.profdata$''',
+]

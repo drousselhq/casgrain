@@ -149,6 +149,7 @@ Every PR should be green on:
 - workspace tests
 - line coverage threshold
 - `cargo audit`
+- `gitleaks dir .`
 - `cargo deny check licenses sources`
 
 ## Install strategy

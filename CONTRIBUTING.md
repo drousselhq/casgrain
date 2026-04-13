@@ -87,6 +87,9 @@ Before opening a PR, review:
 - `docs/validation.md`
 - `docs/development/security-automation-plan.md`
 
+If your change adds fixtures, traces, sample configs, or other content that can resemble credentials, run `gitleaks dir .` locally before opening the PR.
+Casgrain keeps the repo policy in `.gitleaks.toml`; prefer a narrow path- or rule-scoped allowlist there instead of weakening the scanner globally.
+
 ## Quality gates
 
 PRs should be green on:
@@ -95,6 +98,7 @@ PRs should be green on:
 - tests
 - coverage threshold
 - cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
+- gitleaks secret scanning (`gitleaks dir .` using the repo's `.gitleaks.toml` policy)
 - cargo-deny license/source policy (`cargo deny check licenses sources` with `cargo-deny` 0.18.3)
 
 ## Issues and backlog
