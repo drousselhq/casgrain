@@ -8,11 +8,11 @@ use mar_domain::{
     TargetPlatform, TargetProfile, TextSelector, WaitKind,
 };
 
-pub struct OpenspecCompiler {
+pub struct GherkinCompiler {
     compiler_version: String,
 }
 
-impl Default for OpenspecCompiler {
+impl Default for GherkinCompiler {
     fn default() -> Self {
         Self {
             compiler_version: env!("CARGO_PKG_VERSION").to_string(),
@@ -20,17 +20,17 @@ impl Default for OpenspecCompiler {
     }
 }
 
-impl PlanCompiler for OpenspecCompiler {
+impl PlanCompiler for GherkinCompiler {
     fn compile(
         &self,
         input: &str,
         source_name: &str,
     ) -> Result<CompileOutput, Vec<CompilationDiagnostic>> {
-        compile_openspec(input, source_name, &self.compiler_version)
+        compile_gherkin(input, source_name, &self.compiler_version)
     }
 }
 
-pub fn compile_openspec(
+pub fn compile_gherkin(
     input: &str,
     source_name: &str,
     compiler_version: &str,
@@ -111,7 +111,7 @@ pub fn compile_openspec(
         name: plan_name,
         version: PlanFormatVersion { major: 1, minor: 0 },
         source: PlanSource {
-            kind: SourceKind::OpenSpec,
+            kind: SourceKind::Gherkin,
             source_name: source_name.into(),
             compiler_version: compiler_version.into(),
         },
@@ -372,10 +372,10 @@ fn slugify(input: &str) -> String {
 mod tests {
     use mar_domain::{ActionKind, AssertionKind, Selector, StepIntent, StringMatchKind, WaitKind};
 
-    use super::compile_openspec;
+    use super::compile_gherkin;
 
     #[test]
-    fn compiles_openspec_into_stable_plan() {
+    fn compiles_gherkin_into_stable_plan() {
         let source = r#"
 Feature: Login
   Scenario: Successful login
@@ -384,10 +384,11 @@ Feature: Login
     Then the home screen is visible
 "#;
 
-        let first = compile_openspec(source, "login.feature", "0.1.0").unwrap();
-        let second = compile_openspec(source, "login.feature", "0.1.0").unwrap();
+        let first = compile_gherkin(source, "login.feature", "0.1.0").unwrap();
+        let second = compile_gherkin(source, "login.feature", "0.1.0").unwrap();
 
         assert_eq!(first.plan, second.plan);
+        assert_eq!(first.plan.source.kind, mar_domain::SourceKind::Gherkin);
         assert_eq!(first.plan.steps.len(), 3);
         assert_eq!(first.plan.steps[0].intent, StepIntent::Setup);
         assert_eq!(first.plan.steps[1].intent, StepIntent::Interact);
@@ -405,7 +406,7 @@ Feature: Login
     Then the home screen is visible
 "#;
 
-        let output = compile_openspec(source, "login.feature", "0.1.0").unwrap();
+        let output = compile_gherkin(source, "login.feature", "0.1.0").unwrap();
         let steps = output.plan.steps;
 
         assert!(matches!(

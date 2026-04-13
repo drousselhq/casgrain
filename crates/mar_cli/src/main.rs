@@ -1,7 +1,7 @@
 use std::{env, fs};
 
 use mar_application::{CompileOutput, PlanCompiler};
-use mar_compiler::OpenspecCompiler;
+use mar_compiler::GherkinCompiler;
 use mar_domain::{CompilationDiagnostic, ExecutionTrace};
 use mar_runner::{mock::MockDeviceEngine, DeterministicRunner};
 
@@ -56,7 +56,7 @@ fn read_source(path: &str) -> Result<String, String> {
 }
 
 fn compile_source(source: &str, source_name: &str) -> Result<CompileOutput, String> {
-    let compiler = OpenspecCompiler::default();
+    let compiler = GherkinCompiler::default();
     compiler
         .compile(source, source_name)
         .map_err(|diagnostics| render_compile_failure(&diagnostics))
