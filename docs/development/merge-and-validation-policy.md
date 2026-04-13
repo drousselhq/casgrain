@@ -67,6 +67,9 @@ Current default required checks:
 - `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
 - `cargo audit`
 
+See also:
+- `docs/development/security-automation-plan.md` for the current security baseline and staged follow-up checks.
+
 ## E2E policy
 
 Casgrain should not wait for full real-device infrastructure before making progress.
