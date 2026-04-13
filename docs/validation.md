@@ -25,13 +25,14 @@ Required checks:
 ## When extra validation is needed
 
 - Add targeted validation when work touches:
-- compiler lowering
-- runner semantics
-- selector resolution
-- trace / artifact behavior
-- adapter or integration boundaries
-- iOS simulator interaction
-- security-sensitive code paths
+  - compiler lowering
+  - runner semantics
+  - selector resolution
+  - trace / artifact behavior
+  - adapter or integration boundaries
+  - iOS simulator interaction
+  - security-sensitive code paths
+  - the fixture iOS smoke harness or its shared scheme
 
 ## Reporting standard
 

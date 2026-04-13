@@ -1,0 +1,332 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DEDEDEDEDEDEDEDEDEDEDEDE /* CasgrainSmokeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABABABABABABABABABABABAB /* CasgrainSmokeApp.swift */; };
+		EFEFEFEFEFEFEFEFEFEFEFEF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBCBCBCBCBCBCBCBCBCBCBC /* ContentView.swift */; };
+		FAFAFAFAFAFAFAFAFAFAFAFA /* CasgrainSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCDCDCDCDCDCDCDCDCDCDCD /* CasgrainSmokeUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A1A1A1A1A1A1A1A1A1A1A1A /* CasgrainSmoke.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CasgrainSmoke.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B2B2B2B2B2B2B2B2B2B2B2B /* CasgrainSmokeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CasgrainSmokeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABABABABABABABABABABABAB /* CasgrainSmokeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CasgrainSmokeApp.swift; sourceTree = "<group>"; };
+		BCBCBCBCBCBCBCBCBCBCBCBC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CDCDCDCDCDCDCDCDCDCDCDCD /* CasgrainSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CasgrainSmokeUITests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		121212121212121212121212 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		151515151515151515151515 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		404040404040404040404040 = {
+			isa = PBXGroup;
+			children = (
+				4D4D4D4D4D4D4D4D4D4D4D4D /* CasgrainSmoke */,
+				5E5E5E5E5E5E5E5E5E5E5E5E /* CasgrainSmokeUITests */,
+				3C3C3C3C3C3C3C3C3C3C3C3C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3C3C3C3C3C3C3C3C3C3C3C3C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1A1A1A1A1A1A1A1A1A1A1A1A /* CasgrainSmoke.app */,
+				2B2B2B2B2B2B2B2B2B2B2B2B /* CasgrainSmokeUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4D4D4D4D4D4D4D4D4D4D4D4D /* CasgrainSmoke */ = {
+			isa = PBXGroup;
+			children = (
+				ABABABABABABABABABABABAB /* CasgrainSmokeApp.swift */,
+				BCBCBCBCBCBCBCBCBCBCBCBC /* ContentView.swift */,
+			);
+			path = CasgrainSmoke;
+			sourceTree = "<group>";
+		};
+		5E5E5E5E5E5E5E5E5E5E5E5E /* CasgrainSmokeUITests */ = {
+			isa = PBXGroup;
+			children = (
+				CDCDCDCDCDCDCDCDCDCDCDCD /* CasgrainSmokeUITests.swift */,
+			);
+			path = CasgrainSmokeUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6F6F6F6F6F6F6F6F6F6F6F6F /* CasgrainSmoke */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 181818181818181818181818 /* Build configuration list for PBXNativeTarget "CasgrainSmoke" */;
+			buildPhases = (
+				111111111111111111111111 /* Sources */,
+				121212121212121212121212 /* Frameworks */,
+				131313131313131313131313 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CasgrainSmoke;
+			productName = CasgrainSmoke;
+			productReference = 1A1A1A1A1A1A1A1A1A1A1A1A /* CasgrainSmoke.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7A7A7A7A7A7A7A7A7A7A7A7A /* CasgrainSmokeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 191919191919191919191919 /* Build configuration list for PBXNativeTarget "CasgrainSmokeUITests" */;
+			buildPhases = (
+				141414141414141414141414 /* Sources */,
+				151515151515151515151515 /* Frameworks */,
+				161616161616161616161616 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CasgrainSmokeUITests;
+			productName = CasgrainSmokeUITests;
+			productReference = 2B2B2B2B2B2B2B2B2B2B2B2B /* CasgrainSmokeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		303030303030303030303030 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					6F6F6F6F6F6F6F6F6F6F6F6F = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					7A7A7A7A7A7A7A7A7A7A7A7A = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 6F6F6F6F6F6F6F6F6F6F6F6F;
+					};
+				};
+			};
+			buildConfigurationList = 171717171717171717171717 /* Build configuration list for PBXProject "CasgrainSmoke" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 404040404040404040404040;
+			productRefGroup = 3C3C3C3C3C3C3C3C3C3C3C3C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6F6F6F6F6F6F6F6F6F6F6F6F /* CasgrainSmoke */,
+				7A7A7A7A7A7A7A7A7A7A7A7A /* CasgrainSmokeUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		131313131313131313131313 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		161616161616161616161616 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		111111111111111111111111 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DEDEDEDEDEDEDEDEDEDEDEDE /* CasgrainSmokeApp.swift in Sources */,
+				EFEFEFEFEFEFEFEFEFEFEFEF /* ContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		141414141414141414141414 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FAFAFAFAFAFAFAFAFAFAFAFA /* CasgrainSmokeUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1B1B1B1B1B1B1B1B1B1B1B1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		1C1C1C1C1C1C1C1C1C1C1C1C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		1D1D1D1D1D1D1D1D1D1D1D1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.casgrain.fixtures.CasgrainSmoke;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		1E1E1E1E1E1E1E1E1E1E1E1E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.casgrain.fixtures.CasgrainSmoke;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		1F1F1F1F1F1F1F1F1F1F1F1F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.casgrain.fixtures.CasgrainSmokeUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = CasgrainSmoke;
+			};
+			name = Debug;
+		};
+		202020202020202020202020 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.casgrain.fixtures.CasgrainSmokeUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = CasgrainSmoke;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		171717171717171717171717 /* Build configuration list for PBXProject "CasgrainSmoke" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1B1B1B1B1B1B1B1B1B1B1B1B /* Debug */,
+				1C1C1C1C1C1C1C1C1C1C1C1C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		181818181818181818181818 /* Build configuration list for PBXNativeTarget "CasgrainSmoke" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1D1D1D1D1D1D1D1D1D1D1D1D /* Debug */,
+				1E1E1E1E1E1E1E1E1E1E1E1E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		191919191919191919191919 /* Build configuration list for PBXNativeTarget "CasgrainSmokeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F1F1F1F1F1F1F1F1F1F1F1F /* Debug */,
+				202020202020202020202020 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 303030303030303030303030 /* Project object */;
+}
