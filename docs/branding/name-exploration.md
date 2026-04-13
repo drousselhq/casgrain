@@ -1,5 +1,18 @@
 # Name Exploration
 
+## Naming decision
+
+Chosen product name:
+- Casgrain
+
+Rationale:
+- named in honor of Thérèse Casgrain, an important historical figure in Quebec
+- distinctive relative to generic runtime/infrastructure names
+- strong proper-name brand with room to grow beyond a purely technical label
+
+Note:
+- the repository may still temporarily use `mobile-agent-runtime` as a technical placeholder, but product naming should now treat Casgrain as the selected name unless reopened explicitly.
+
 ## Purpose
 
 The current repository name, `mobile-agent-runtime`, is descriptive but weak as a market-facing product name.
