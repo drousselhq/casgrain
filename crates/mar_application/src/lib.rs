@@ -64,7 +64,7 @@ mod tests {
             name: "Sample".into(),
             version: PlanFormatVersion { major: 1, minor: 0 },
             source: PlanSource {
-                kind: SourceKind::OpenSpec,
+                kind: SourceKind::Gherkin,
                 source_name: "sample.feature".into(),
                 compiler_version: "0.1.0".into(),
             },
