@@ -9,15 +9,15 @@ This is the live execution plan for Casgrain.
 
 ## Current project direction
 - Keep the deterministic core strong and explicit.
-- Expand compiler lowering with clear, testable behavior.
-- Strengthen runner / trace / artifact quality.
-- Grow adapter scaffolding only when the underlying contracts are stable.
+- Prove the overall approach with the first iOS adapter boundary and follow it into real simulator plumbing.
+- Strengthen runner / trace / artifact quality around adapter-backed execution.
 - Keep docs, validation, and governance aligned with the codebase.
+- Use the macOS iOS simulator smoke workflow only for changes that may affect simulator interaction.
 
 ## Near-term priorities
-1. Improve compiler diagnostics and golden-test coverage.
-2. Extend runner and trace validation around current behavior.
-3. Continue adapter groundwork in a way that preserves the deterministic boundary.
+1. Expand the iOS adapter boundary into real simulator plumbing.
+2. Add the smallest honest simulator-backed smoke path for a fixture app.
+3. Extend runner and trace validation around the first real adapter path.
 4. Keep product, architecture, and validation docs current.
 
 ## Planning discipline

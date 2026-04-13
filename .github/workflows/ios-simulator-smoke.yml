@@ -1,0 +1,50 @@
+name: ios-simulator-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Why run this check?
+        required: false
+        type: string
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - crates/mar_application/**
+      - crates/mar_cli/**
+      - crates/mar_compiler/**
+      - crates/mar_domain/**
+      - crates/mar_runner/**
+      - crates/mar_ios/**
+      - .github/workflows/ios-simulator-smoke.yml
+
+concurrency:
+  group: ios-simulator-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Show macOS simulator tooling
+        run: |
+          set -euxo pipefail
+          xcodebuild -version
+          xcrun simctl list runtimes | sed -n '1,20p'
+          xcrun simctl list devices available | sed -n '1,40p'
+
+      - name: Run iOS boundary tests
+        run: cargo test -p mar_ios
