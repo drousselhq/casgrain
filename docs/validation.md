@@ -12,6 +12,7 @@ Required checks:
 - `cargo clippy --workspace --all-targets -- -D warnings`
 - `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
 - `cargo audit`
+- `cargo deny check licenses sources`
 
 ## Validation style
 

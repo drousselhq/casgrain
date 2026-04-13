@@ -84,8 +84,12 @@ Recommended Rust setup:
 
 ```bash
 curl https://sh.rustup.rs -sSf | sh
+rustup toolchain install 1.85.0
+rustup default 1.85.0
 rustup component add rustfmt clippy llvm-tools-preview
-cargo install cargo-llvm-cov
+cargo install cargo-llvm-cov --version 0.6.15 --locked
+cargo install cargo-audit --version 0.22.1 --locked
+cargo install cargo-deny --version 0.18.3 --locked
 ```
 
 ## Build
@@ -145,6 +149,7 @@ Every PR should be green on:
 - workspace tests
 - line coverage threshold
 - `cargo audit`
+- `cargo deny check licenses sources`
 
 ## Install strategy
 
@@ -177,6 +182,7 @@ Important files and directories:
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
 - `docs/validation.md` — canonical validation gate and reporting expectations
 - `docs/development/security-automation-plan.md` — security scanning baseline and follow-up roadmap
+- `deny.toml` — cargo-deny license and dependency-source policy
 - `docs/prd/` — product requirements
 - `docs/branding/` — naming exploration and product naming context
 - `docs/plans/current-plan.md` — live execution plan
