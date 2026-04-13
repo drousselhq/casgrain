@@ -84,6 +84,7 @@ A good PR should include:
 Before opening a PR, review:
 - `.github/pull_request_template.md`
 - `docs/development/merge-and-validation-policy.md`
+- `docs/development/test-pyramid-and-runtime-contracts.md`
 - `docs/validation.md`
 - `docs/development/security-automation-plan.md`
 
