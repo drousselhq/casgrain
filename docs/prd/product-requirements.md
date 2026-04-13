@@ -141,5 +141,5 @@ Tracked follow-up:
 - iOS-first vs dual-platform MVP sequencing
 - canonical executable plan serialization format
 - exact selector precedence model
-- fixture app strategy for integration testing
+- generated-plan bridge for the first iOS vertical slice
 - how much automated repair is allowed locally vs in CI

@@ -7,7 +7,7 @@ It complements:
 - `docs/development/merge-and-validation-policy.md` for merge classes
 - `docs/specs/casgrain-product-spec.md` for product behavior intent
 - issue #1 for the original backlog item
-- issue #4 for the future fixture-app integration layer
+- issue #4 for the fixture-app integration strategy that now anchors Layer 4 planning
 
 ## Goals
 
@@ -119,10 +119,18 @@ Purpose:
 - prove reproducible launch/tap/type/assert/trace flows against controlled fixture apps
 
 Status:
-- not implemented yet
-- tracked by issue #4
+- partially implemented
+- the first iOS fixture-app smoke path now exists under `fixtures/ios-smoke/`
+- reproducible simulator setup is proven in the macOS `ios-simulator-smoke` workflow and `scripts/ios_smoke.sh`
+- Android parity remains deferred until the iOS contracts and first generated-plan vertical slice stabilize
 
-Initial target scope:
+Current strategy:
+- keep one tiny iOS fixture app as the first honest integration target
+- prove launch, one visible tap, one visible assertion, and one screenshot artifact before broadening scope
+- keep simulator/emulator coverage as a narrow Layer 4 proof on top of cheaper workspace validation
+- sequence platforms iOS-first, then add Android parity only after the iOS slice is stable and reproducible
+
+Current target scope:
 - one iOS fixture-app smoke path
 - one Android parity path after iOS contracts stabilize
 - reproducible simulator/emulator setup in CI or documented pre-merge validation
@@ -153,7 +161,7 @@ The workspace gate remains the same canonical merge bar in `docs/validation.md`:
 1. Add compiler golden tests from representative product-spec slices to expected plan JSON.
 2. Expand runner contract coverage for retry, timeout, continue-on-failure, and trace/artifact details.
 3. Add CLI checks for `--trace-json` and other machine-readable output contracts.
-4. Land the fixture-app and simulator/emulator strategy from issue #4 before building broad adapter integration suites.
+4. Complete issue #32 so Layer 4 proves the generated Gherkin-to-iOS-fixture path rather than only the handwritten smoke harness.
 
 ## Exit criteria for issue #1
 
