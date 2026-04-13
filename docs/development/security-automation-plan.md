@@ -111,27 +111,31 @@ Tracked follow-up:
 
 ## 4. Static analysis
 
-**Decision:** document the baseline now, but treat CodeQL adoption as an explicit follow-up decision rather than silently assuming it belongs in the first wave.
+**Decision:** defer GitHub CodeQL adoption for now, but record an explicit revisit trigger instead of leaving static-analysis scope implied.
 
 Why:
-- the current repository is still small and largely scaffolding-oriented
-- CodeQL may become more valuable once simulator/emulator adapters and richer filesystem/process interactions land
+- a live trial on pull request #26 showed that repository-level code scanning is not currently enabled, so CodeQL cannot upload results or become a green required check yet
+- the same trial showed that Rust analysis does not accept the `autobuild` mode here, which means adoption needs a more deliberate workflow shape than the cheapest first-pass template
+- the repository is still small and mostly scaffolding-oriented, so delaying hosted static-analysis rollout does not currently leave a large unreviewed runtime surface behind
+- the existing lightweight security baseline (`cargo audit`, `gitleaks`, and `cargo deny`) still provides deterministic PR-visible coverage while CodeQL readiness is clarified
 
-Preferred approach:
-- evaluate GitHub CodeQL against the current Rust workspace
-- adopt it if the signal quality and maintenance burden are acceptable
-- otherwise document a concrete trigger for revisiting it, such as the first real device adapter or non-trivial host integration layer
+Evaluation evidence:
+- GitHub Actions run `24359700556` on PR #26 failed because code scanning is disabled for the repository
+- the same run reported `Rust does not support the autobuild build mode`, so any later rollout should use the supported Rust build mode instead of assuming a generic compiled-language template
+- GitHub's current CodeQL documentation still lists Rust as a supported language, so this is a rollout/readiness problem rather than a language-support gap
 
 Trade-offs:
-- stronger static analysis can catch classes of bugs `cargo audit` never will
-- it also adds workflow time and review overhead, especially if alerts are noisy for a fast-moving early codebase
+- deferring avoids landing a permanently red workflow that contributors cannot fix from the repository alone
+- Casgrain gives up early hosted static-analysis alerts until repository settings and workflow shape are ready
+- the deferred decision should stay documented so CodeQL is revisited intentionally rather than forgotten
 
-Failure surfacing:
-- if adopted, alerts should appear in GitHub Security and via PR checks
-- if deferred, the rationale should remain documented in the issue backlog rather than implied
+Next action to adopt later:
+- enable GitHub code scanning for the repository in settings
+- reintroduce a CodeQL workflow only after validating the supported Rust build mode and expected alert surfacing on a branch
+- treat the first real simulator/emulator adapter or non-trivial host integration layer as the latest acceptable trigger for revisiting this decision
 
-Tracked follow-up:
-- #21 Evaluate static analysis coverage with CodeQL or an equivalent baseline
+Issue status:
+- #21 is satisfied by documenting the defer decision, the failed trial evidence, and the explicit revisit trigger
 
 ## PR workflow expectations
 
@@ -145,14 +149,14 @@ As the next phases land, the expected PR security surface should become:
 1. dependency vulnerability scan (`cargo audit`)
 2. secret scanning on repo content and git history (`gitleaks`)
 3. supply-chain/license policy checks
-4. optional CodeQL or equivalent static analysis if adopted
+4. hosted CodeQL or equivalent static analysis once repository settings and workflow shape are validated
 
 ## Recommended implementation order
 
 1. keep the existing `cargo audit` workflow as the baseline
 2. implement secret scanning because it closes the highest-likelihood repository hygiene gap
 3. add supply-chain/license policy checks once the policy file can be maintained sanely
-4. decide on CodeQL after measuring current codebase value versus maintenance cost
+4. revisit CodeQL after repository code-scanning support is enabled or when adapter/host-integration work makes the extra coverage materially more valuable
 
 ## Done state for issue #3
 
