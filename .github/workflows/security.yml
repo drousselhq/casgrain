@@ -20,3 +20,18 @@ jobs:
 
       - name: Audit dependencies
         run: cargo audit
+
+  cargo-deny-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --version 0.18.3 --locked
+
+      - name: Enforce dependency policy
+        run: cargo deny check licenses sources

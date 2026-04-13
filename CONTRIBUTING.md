@@ -35,6 +35,7 @@ rustup default 1.85.0
 rustup component add rustfmt clippy llvm-tools-preview
 cargo install cargo-llvm-cov --version 0.6.15 --locked
 cargo install cargo-audit --version 0.22.1 --locked
+cargo install cargo-deny --version 0.18.3 --locked
 ```
 
 Casgrain pins its validation toolchain in `rust-toolchain.toml` and currently requires Rust 1.85.0 / MSRV 1.85.
@@ -94,6 +95,7 @@ PRs should be green on:
 - tests
 - coverage threshold
 - cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
+- cargo-deny license/source policy (`cargo deny check licenses sources` with `cargo-deny` 0.18.3)
 
 ## Issues and backlog
 

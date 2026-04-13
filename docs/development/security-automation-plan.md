@@ -72,22 +72,28 @@ Tracked follow-up:
 
 ## 3. Supply-chain and license policy
 
-**Decision:** evaluate a Rust-native policy gate after the secret-scanning baseline is documented.
+**Decision:** adopt `cargo-deny` now for license and source-policy checks, while keeping `cargo audit` as the vulnerability baseline.
 
 Why:
 - `cargo audit` is not enough for license policy, crate-source restrictions, or advisory exceptions management
 - Apache-2.0 projects should be explicit about acceptable transitive licenses before the dependency graph grows
+- the current dependency graph is still small enough to make the first allowlist cheap to maintain
 
-Tool direction:
-- evaluate `cargo-deny` first because it covers advisories, licenses, and source policy in one Rust-native workflow
+Current enforcement baseline:
+- `cargo deny check licenses sources` runs in `.github/workflows/security.yml`
+- the repo policy file lives at `deny.toml`
+- the initial allowed license set is `Apache-2.0`, `MIT`, `Unicode-3.0`, and `Unlicense`
+- dependency sources are restricted to the crates.io index, with unknown registries and git sources denied by default
+- duplicate-version and wildcard dependency checks are configured for local visibility, but only license and source policy are CI-blocking right now
 
 Trade-offs:
-- stronger policy files take maintenance effort while the dependency graph is still changing rapidly
+- stronger policy files take maintenance effort as the dependency graph changes
 - strict license enforcement can create churn if introduced without a documented allowlist
+- source restrictions may need revisiting once the project intentionally adopts git dependencies or private registries
 
 Failure surfacing:
-- ideally as a separate PR-visible check so dependency-policy failures are obvious
-- contributor docs should explain how to update policy files intentionally
+- as a separate PR-visible check so dependency-policy failures are obvious
+- contributor docs should explain how to update `deny.toml` intentionally when dependency policy changes
 
 Tracked follow-up:
 - #22 Add supply-chain and license policy checks for Rust dependencies
