@@ -8,11 +8,12 @@ This plan focuses on pull-request automation that is easy to maintain in a small
 
 ## Current baseline
 
-Casgrain already enforces one security check in CI:
+Casgrain already enforces these security checks in CI:
 
 - `cargo audit` in `.github/workflows/security.yml`
+- `gitleaks` committed-secret scanning in `.github/workflows/security.yml`
 
-That baseline is intentionally narrow, but it already gives the repository a deterministic dependency-vulnerability signal on both pull requests and pushes to `main`.
+That baseline stays intentionally lightweight, but it already gives the repository deterministic dependency-vulnerability and committed-secret signals on both pull requests and pushes to `main`.
 
 ## Principles
 
@@ -49,23 +50,33 @@ Failure surfacing:
 
 ## 2. Committed secrets
 
-**Decision:** add a dedicated secret-scanning policy next.
+**Decision:** adopt `gitleaks` now as the committed-secret baseline.
 
 Why:
 - the project will eventually handle traces, device artifacts, and credentials-adjacent automation
 - repository history is the cheapest place to catch accidental secret leakage
 
-Tool direction:
-- prefer a purpose-built committed-secret scanner rather than overloading Rust tooling
-- keep the first step focused on repository contents and PR diffs, not runtime log inspection
+Implementation baseline:
+- `.github/workflows/security.yml` runs `gitleaks/gitleaks-action@v2.3.9` on pull requests and pushes to `main`
+- the action checks out the full git history (`fetch-depth: 0`) so new leaks in commit history are visible to CI
+- repo-specific policy lives in `.gitleaks.toml`, which currently extends the upstream default rules and allowlists local Rust build / coverage artifacts such as `target/` and `*.profraw`
+- PR comments are disabled for now; the required check itself is the contributor-facing signal
 
 Trade-offs:
 - secret scanners can produce fixture/test false positives
 - allowlisting policy must be documented so contributors know how to resolve noise
 
 Failure surfacing:
-- PR check should fail on newly introduced secrets
-- suppression/allowlist process must be explicit in repo docs
+- PR check fails when `gitleaks` detects a committed secret candidate
+- the same workflow runs on `main` pushes so the default branch cannot silently drift away from the PR baseline
+- false positives should be handled by adding the narrowest possible repo-scoped allowlist entry in `.gitleaks.toml`
+- broad global suppressions and "ignore the whole docs/tests tree" patterns should be avoided unless a follow-up issue records why they are necessary
+
+Contributor workflow:
+- run `gitleaks dir .` locally when changing fixtures, traces, samples, workflow files, or anything else that may resemble credentials
+- if CI flags a deliberate fake token or fixture, first confirm it is not a real secret
+- after confirming it is synthetic, add the smallest path- or rule-scoped allowlist entry needed in `.gitleaks.toml` and explain that choice in the PR
+- if the suppression is non-obvious or seems reusable, record the rationale in GitHub so the allowlist does not become tribal knowledge
 
 Tracked follow-up:
 - #20 Add secret-scanning policy and CI guardrails
@@ -126,12 +137,13 @@ Tracked follow-up:
 
 Current required security-related behavior for contributors:
 - keep `cargo audit` green
+- keep `gitleaks` green
 - treat security-check failures as blocking for merge
 - record real validation gaps or security gaps in GitHub issues
 
 As the next phases land, the expected PR security surface should become:
 1. dependency vulnerability scan (`cargo audit`)
-2. secret scanning on repo content and PR diffs
+2. secret scanning on repo content and git history (`gitleaks`)
 3. supply-chain/license policy checks
 4. optional CodeQL or equivalent static analysis if adopted
 

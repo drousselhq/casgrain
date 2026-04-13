@@ -17,6 +17,7 @@
 - [ ] `cargo clippy --workspace --all-targets -- -D warnings`
 - [ ] `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
 - [ ] `cargo audit`
+- [ ] `gitleaks dir .`
 - [ ] other validation noted below
 
 ## Notes for reviewers
