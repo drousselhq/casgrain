@@ -14,8 +14,12 @@ Current harness shape:
 - one screenshot attachment kept in the xcresult bundle
 
 Product-true vertical-slice source of truth:
-- `features/tap_counter.feature` is the canonical scenario for issue #32's first Gherkin-to-iOS-fixture slice
-- the feature is intentionally tiny: launch app, tap once, observe the updated count, capture a screenshot
+- `features/tap_counter.feature` is the canonical scenario for the first Gherkin-to-iOS-fixture slice
+- issue #49 pins the exact supported fixture vocabulary to the phrases in that file:
+  - `Given the app is launched`
+  - `When the user taps tap button`
+  - `Then count label text is "Count: 1"`
+  - `When the user takes a screenshot`
 - the current handwritten XCTest remains harness plumbing until the generated-plan execution path replaces it in CI
 
 Run locally on macOS with Xcode command-line tools and iOS Simulator runtimes installed:

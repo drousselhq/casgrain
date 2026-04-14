@@ -35,6 +35,7 @@ pub fn compile_gherkin(
     source_name: &str,
     compiler_version: &str,
 ) -> Result<CompileOutput, Vec<CompilationDiagnostic>> {
+    let fixture_vocabulary = fixture_vocabulary_for(source_name);
     let mut feature_name = None;
     let mut current_scenario = None;
     let mut previous_intent = StepIntent::Observe;
@@ -76,7 +77,12 @@ pub fn compile_gherkin(
                 .clone()
                 .unwrap_or_else(|| "unnamed-scenario".into());
             let step_id = format!("{}-{:03}", slugify(&scenario_name), steps.len() + 1);
-            let lowering = lower_step(&intent, description, line_number);
+            let lowering = lower_step(
+                &intent,
+                description,
+                line_number,
+                fixture_vocabulary.as_ref(),
+            );
             diagnostics.extend(lowering.diagnostics);
 
             steps.push(PlanStep {
@@ -116,10 +122,16 @@ pub fn compile_gherkin(
             compiler_version: compiler_version.into(),
         },
         target: TargetProfile {
-            platform: TargetPlatform::CrossPlatform,
+            platform: fixture_vocabulary
+                .as_ref()
+                .map(|vocabulary| vocabulary.target_platform.clone())
+                .unwrap_or(TargetPlatform::CrossPlatform),
             device_class: "simulator".into(),
         },
-        capabilities_required: CapabilitySet::default(),
+        capabilities_required: fixture_vocabulary
+            .as_ref()
+            .map(|vocabulary| vocabulary.capabilities())
+            .unwrap_or_default(),
         defaults: ExecutionDefaults::default(),
         steps,
         metadata: BTreeMap::from([(
@@ -150,7 +162,118 @@ struct LoweredStep {
     diagnostics: Vec<CompilationDiagnostic>,
 }
 
-fn lower_step(intent: &StepIntent, description: &str, line_number: usize) -> LoweredStep {
+#[derive(Debug)]
+struct FixtureVocabulary {
+    name: &'static str,
+    target_platform: TargetPlatform,
+    screenshot_name: &'static str,
+}
+
+impl FixtureVocabulary {
+    fn capabilities(&self) -> CapabilitySet {
+        CapabilitySet {
+            capabilities: vec![String::from("screenshot")],
+        }
+    }
+
+    fn lower_step(
+        &self,
+        intent: &StepIntent,
+        description: &str,
+        line_number: usize,
+    ) -> LoweredStep {
+        match intent {
+            StepIntent::Setup if description == "the app is launched" => LoweredStep {
+                action: ActionKind::LaunchApp {
+                    app_id: "app.under.test".into(),
+                },
+                guards: vec![],
+                postconditions: vec![AssertionKind::AppInForeground {
+                    app_id: "app.under.test".into(),
+                }],
+                diagnostics: vec![],
+            },
+            StepIntent::Interact if description == "the user taps tap button" => LoweredStep {
+                action: ActionKind::Tap {
+                    target: Selector::AccessibilityId(String::from("tap-button")),
+                },
+                guards: vec![],
+                postconditions: vec![],
+                diagnostics: vec![],
+            },
+            StepIntent::Interact if description == "the user takes a screenshot" => LoweredStep {
+                action: ActionKind::TakeScreenshot {
+                    name: Some(self.screenshot_name.into()),
+                },
+                guards: vec![],
+                postconditions: vec![],
+                diagnostics: vec![],
+            },
+            StepIntent::Assert => {
+                if let Some(value) = extract_fixture_count_label_assertion(description) {
+                    LoweredStep {
+                        action: ActionKind::Noop,
+                        guards: vec![],
+                        postconditions: vec![AssertionKind::TextEquals {
+                            target: Selector::AccessibilityId(String::from("count-label")),
+                            value,
+                        }],
+                        diagnostics: vec![],
+                    }
+                } else {
+                    self.unsupported_step(intent, description, line_number)
+                }
+            }
+            _ => self.unsupported_step(intent, description, line_number),
+        }
+    }
+
+    fn unsupported_step(
+        &self,
+        intent: &StepIntent,
+        description: &str,
+        line_number: usize,
+    ) -> LoweredStep {
+        LoweredStep {
+            action: ActionKind::Noop,
+            guards: vec![],
+            postconditions: vec![],
+            diagnostics: vec![CompilationDiagnostic {
+                severity: DiagnosticSeverity::Error,
+                message: format!(
+                    "unsupported {} step for {}: {description}. Supported phrases: Given the app is launched; When the user taps tap button; Then count label text is \"Count: 1\"; When the user takes a screenshot",
+                    render_intent(intent),
+                    self.name,
+                ),
+                location: Some(format!("line {line_number}")),
+            }],
+        }
+    }
+}
+
+fn fixture_vocabulary_for(source_name: &str) -> Option<FixtureVocabulary> {
+    let normalized_source_name = source_name.replace('\\', "/");
+    if normalized_source_name.ends_with("fixtures/ios-smoke/features/tap_counter.feature") {
+        Some(FixtureVocabulary {
+            name: "the iOS smoke fixture",
+            target_platform: TargetPlatform::Ios,
+            screenshot_name: "tap-counter",
+        })
+    } else {
+        None
+    }
+}
+
+fn lower_step(
+    intent: &StepIntent,
+    description: &str,
+    line_number: usize,
+    fixture_vocabulary: Option<&FixtureVocabulary>,
+) -> LoweredStep {
+    if let Some(vocabulary) = fixture_vocabulary {
+        return vocabulary.lower_step(intent, description, line_number);
+    }
+
     let normalized = normalize_phrase(description);
 
     if matches!(intent, StepIntent::Setup)
@@ -271,6 +394,27 @@ fn lower_step(intent: &StepIntent, description: &str, line_number: usize) -> Low
     }
 }
 
+fn extract_fixture_count_label_assertion(description: &str) -> Option<String> {
+    let remainder = description.strip_prefix("count label text is ")?;
+    let (value, trailing) = extract_quoted_value(remainder)?;
+    if trailing.is_empty() {
+        Some(value)
+    } else {
+        None
+    }
+}
+
+fn render_intent(intent: &StepIntent) -> &'static str {
+    match intent {
+        StepIntent::Setup => "setup",
+        StepIntent::Navigate => "navigation",
+        StepIntent::Interact => "interaction",
+        StepIntent::Observe => "observation",
+        StepIntent::Assert => "assertion",
+        StepIntent::Cleanup => "cleanup",
+    }
+}
+
 fn extract_after_any<'a>(input: &'a str, prefixes: &[&str]) -> Option<&'a str> {
     prefixes
         .iter()
@@ -370,7 +514,10 @@ fn slugify(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use mar_domain::{ActionKind, AssertionKind, Selector, StepIntent, StringMatchKind, WaitKind};
+    use mar_domain::{
+        ActionKind, AssertionKind, DiagnosticSeverity, Selector, StepIntent, StringMatchKind,
+        TargetPlatform, WaitKind,
+    };
 
     use super::compile_gherkin;
 
@@ -433,6 +580,93 @@ Feature: Login
             steps[3].postconditions.as_slice(),
             [AssertionKind::Visible { target: Selector::Text(text) }]
                 if text.value == "home"
+        ));
+    }
+
+    #[test]
+    fn ios_fixture_feature_compiles_to_ios_specific_deterministic_selectors() {
+        let source = include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature");
+
+        let output = compile_gherkin(
+            source,
+            "fixtures/ios-smoke/features/tap_counter.feature",
+            "0.1.0",
+        )
+        .unwrap();
+        let steps = output.plan.steps;
+
+        assert_eq!(output.plan.target.platform, TargetPlatform::Ios);
+        assert_eq!(
+            output.plan.capabilities_required.capabilities,
+            vec![String::from("screenshot")]
+        );
+        assert!(matches!(
+            steps[1].action,
+            ActionKind::Tap {
+                target: Selector::AccessibilityId(ref value)
+            } if value == "tap-button"
+        ));
+        assert!(matches!(
+            steps[2].postconditions.as_slice(),
+            [AssertionKind::TextEquals {
+                target: Selector::AccessibilityId(value),
+                value: assertion_value,
+            }] if value == "count-label" && assertion_value == "Count: 1"
+        ));
+        assert!(matches!(
+            steps[3].action,
+            ActionKind::TakeScreenshot { name: Some(ref name) } if name == "tap-counter"
+        ));
+    }
+
+    #[test]
+    fn ios_fixture_rejects_nearby_unsupported_phrases_with_structured_errors() {
+        let source = r#"
+Feature: iOS smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps the tap button
+    Then "Count: 1" is displayed
+"#;
+
+        let errors = compile_gherkin(
+            source,
+            "fixtures/ios-smoke/features/tap_counter.feature",
+            "0.1.0",
+        )
+        .expect_err("fixture vocabulary should reject nearby unsupported phrases");
+
+        assert_eq!(errors.len(), 2);
+        assert!(errors
+            .iter()
+            .all(|diagnostic| diagnostic.severity == DiagnosticSeverity::Error));
+        assert!(errors[0].message.contains("When the user taps tap button"));
+        assert!(errors[0].location.as_deref() == Some("line 5"));
+        assert!(errors[1]
+            .message
+            .contains("Then count label text is \"Count: 1\""));
+        assert!(errors[1].location.as_deref() == Some("line 6"));
+    }
+
+    #[test]
+    fn non_fixture_tap_counter_feature_keeps_generic_lowering() {
+        let source = r#"
+Feature: login tap counter
+  Scenario: generic counter
+    Given the app is launched
+    Then "Count: 1" is displayed
+"#;
+
+        let output = compile_gherkin(source, "tap_counter.feature", "0.1.0")
+            .expect("non-fixture feature should keep generic lowering");
+
+        assert_eq!(output.plan.target.platform, TargetPlatform::CrossPlatform);
+        assert!(matches!(
+            output.plan.steps[1].postconditions.as_slice(),
+            [AssertionKind::TextEquals {
+                target: Selector::Text(text),
+                value,
+            }] if text.value == "count: 1" && value == "count: 1"
         ));
     }
 }
