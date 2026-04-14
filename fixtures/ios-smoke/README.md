@@ -34,6 +34,18 @@ Compile the canonical fixture feature into a deterministic plan from the repo ro
 cargo run -p mar_cli -- compile fixtures/ios-smoke/features/tap_counter.feature
 ```
 
+Run the fixture through the first iOS-specific CLI execution path from the repo root:
+
+```bash
+cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
+```
+
+Emit machine-readable trace JSON, including deterministic artifact references, with:
+
+```bash
+cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json
+```
+
 The harness now fails fast when it is invoked outside macOS or when `python3`, `xcodebuild`, or `xcrun` are unavailable.
 
 The script now prefers a small, explicit simulator selection order and supports override env vars for future Xcode/runtime changes:

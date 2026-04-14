@@ -114,7 +114,19 @@ Run an end-to-end deterministic mock demo from the product spec to execution tra
 cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md
 ```
 
-If you want the full execution trace as JSON instead of the human summary:
+Run the first fixture-specific iOS CLI slice against the canonical smoke feature:
+
+```bash
+cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
+```
+
+If you want machine-readable trace output for CI/archive use:
+
+```bash
+cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json
+```
+
+If you want the full execution trace as JSON instead of the human summary for the mock path:
 
 ```bash
 cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md --trace-json

@@ -11,5 +11,6 @@ repository.workspace = true
 mar_application = { path = "../mar_application" }
 mar_compiler = { path = "../mar_compiler" }
 mar_domain = { path = "../mar_domain" }
+mar_ios = { path = "../mar_ios" }
 mar_runner = { path = "../mar_runner" }
 serde_json.workspace = true

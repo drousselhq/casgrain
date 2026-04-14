@@ -3,6 +3,7 @@ use std::{env, fs};
 use mar_application::{CompileOutput, PlanCompiler};
 use mar_compiler::GherkinCompiler;
 use mar_domain::{CompilationDiagnostic, ExecutionTrace};
+use mar_ios::{IosSimulatorAdapter, IosSimulatorDescriptor};
 use mar_runner::{mock::MockDeviceEngine, DeterministicRunner};
 
 fn main() {
@@ -28,27 +29,55 @@ fn run(args: Vec<String>) -> Result<String, String> {
             let output = compile_source(&source, input)?;
             Ok(serde_json::to_string_pretty(&output.plan).expect("plan should serialize"))
         }
-        "run-mock" => {
-            let input = args.get(1).ok_or_else(usage)?;
-            let source = read_source(input)?;
-            let trace_json = args.iter().skip(2).any(|arg| arg == "--trace-json");
-            let output = compile_source(&source, input)?;
-            let mut engine = MockDeviceEngine::login_fixture();
-            let trace = DeterministicRunner::new(format!("mock-{}", output.plan.plan_id))
-                .execute(&mut engine, &output.plan);
-
-            if trace_json {
-                return Ok(serde_json::to_string_pretty(&trace).expect("trace should serialize"));
-            }
-
-            Ok(render_run_summary(&output, &trace))
-        }
+        "run-mock" => run_mock(&args),
+        "run-ios-smoke" => run_ios_smoke(&args),
         _ => Err(usage()),
     }
 }
 
+fn run_mock(args: &[String]) -> Result<String, String> {
+    let input = args.get(1).ok_or_else(usage)?;
+    let source = read_source(input)?;
+    let trace_json = trace_json_requested(args);
+    let output = compile_source(&source, input)?;
+    let mut engine = MockDeviceEngine::login_fixture();
+    let trace = DeterministicRunner::new(format!("mock-{}", output.plan.plan_id))
+        .execute(&mut engine, &output.plan);
+
+    render_trace_output("Casgrain mock run", trace_json, &output, &trace)
+}
+
+fn run_ios_smoke(args: &[String]) -> Result<String, String> {
+    let input = args.get(1).ok_or_else(usage)?;
+    let source = read_source(input)?;
+    let trace_json = trace_json_requested(args);
+    let output = compile_source(&source, input)?;
+    let mut engine = IosSimulatorAdapter::smoke_fixture(IosSimulatorDescriptor::iphone_16());
+    let trace = DeterministicRunner::new(format!("ios-smoke-{}", output.plan.plan_id))
+        .execute(&mut engine, &output.plan);
+
+    render_trace_output("Casgrain iOS smoke run", trace_json, &output, &trace)
+}
+
+fn render_trace_output(
+    title: &str,
+    trace_json: bool,
+    output: &CompileOutput,
+    trace: &ExecutionTrace,
+) -> Result<String, String> {
+    if trace_json {
+        return Ok(serde_json::to_string_pretty(trace).expect("trace should serialize"));
+    }
+
+    Ok(render_run_summary(title, output, trace))
+}
+
+fn trace_json_requested(args: &[String]) -> bool {
+    args.iter().skip(2).any(|arg| arg == "--trace-json")
+}
+
 fn usage() -> String {
-    "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]".into()
+    "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]".into()
 }
 
 fn read_source(path: &str) -> Result<String, String> {
@@ -80,9 +109,9 @@ fn render_diagnostic(diagnostic: &CompilationDiagnostic) -> String {
     }
 }
 
-fn render_run_summary(output: &CompileOutput, trace: &ExecutionTrace) -> String {
+fn render_run_summary(title: &str, output: &CompileOutput, trace: &ExecutionTrace) -> String {
     let mut lines = Vec::new();
-    lines.push(format!("Casgrain mock run: {}", output.plan.name));
+    lines.push(format!("{title}: {}", output.plan.name));
     lines.push(format!("Plan ID: {}", output.plan.plan_id));
     lines.push(format!("Source: {}", output.plan.source.source_name));
     lines.push(format!(
@@ -141,6 +170,10 @@ fn status_marker(status: &mar_domain::StepStatus) -> &'static str {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
+    use serde_json::Value;
+
     use super::run;
 
     #[test]
@@ -153,6 +186,7 @@ mod tests {
     fn usage_is_returned_for_unknown_command() {
         let error = run(vec!["wat".into()]).expect_err("expected usage error");
         assert!(error.contains("run-mock"));
+        assert!(error.contains("run-ios-smoke"));
     }
 
     #[test]
@@ -173,6 +207,7 @@ mod tests {
     When the user taps login button
     Then Home is visible
 "#,
+            "login.feature",
         );
 
         let output = run(vec!["run-mock".into(), feature]).expect("run-mock should succeed");
@@ -181,14 +216,63 @@ mod tests {
         assert!(output.contains("[PASS]"));
     }
 
-    fn tempfile_feature(contents: &str) -> String {
-        let path = std::env::temp_dir().join(format!(
-            "casgrain-cli-test-{}.feature",
+    #[test]
+    fn run_ios_smoke_reports_successful_tap_counter_flow() {
+        let feature = tempfile_feature(
+            r#"Feature: iOS smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "fixtures/ios-smoke/features/tap_counter.feature",
+        );
+
+        let output =
+            run(vec!["run-ios-smoke".into(), feature]).expect("run-ios-smoke should succeed");
+
+        assert!(output.contains("Casgrain iOS smoke run: Increment the counter once"));
+        assert!(output.contains("Device: iPhone 16 18.0 (Ios)"));
+        assert!(output.contains("Run status: Passed"));
+        assert!(output.contains("tap-counter-1 (screenshot) -> artifacts/tap-counter-1.png"));
+    }
+
+    #[test]
+    fn run_ios_smoke_trace_json_is_machine_readable() {
+        let feature = tempfile_feature(
+            r#"Feature: iOS smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "fixtures/ios-smoke/features/tap_counter.feature",
+        );
+
+        let output = run(vec!["run-ios-smoke".into(), feature, "--trace-json".into()])
+            .expect("run-ios-smoke json output should succeed");
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+
+        assert_eq!(json["run_id"], "ios-smoke-increment-the-counter-once");
+        assert_eq!(json["device"]["platform"], "ios");
+        assert_eq!(json["status"], "passed");
+        assert_eq!(json["artifacts"][0]["path"], "artifacts/tap-counter-1.png");
+    }
+
+    fn tempfile_feature(contents: &str, relative_name: &str) -> String {
+        let root = std::env::temp_dir().join(format!(
+            "casgrain-cli-test-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .expect("time should move forward")
                 .as_nanos()
         ));
+        let path = root.join(PathBuf::from(relative_name));
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).expect("temp feature directory should be created");
+        }
         std::fs::write(&path, contents).expect("temp feature should be written");
         path.to_string_lossy().to_string()
     }

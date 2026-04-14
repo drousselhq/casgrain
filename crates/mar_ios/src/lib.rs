@@ -45,11 +45,19 @@ impl IosSimulatorSnapshot {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FixtureMode {
+    Login,
+    TapCounterSmoke,
+}
+
 #[derive(Debug, Clone)]
 pub struct IosSimulatorAdapter {
     descriptor: DeviceDescriptor,
     snapshot: DeviceSnapshot,
     screenshot_counter: u32,
+    fixture_mode: FixtureMode,
+    tap_count: u32,
 }
 
 impl IosSimulatorAdapter {
@@ -58,6 +66,18 @@ impl IosSimulatorAdapter {
             descriptor: descriptor.into_device_descriptor(),
             snapshot: login_fixture_snapshot(),
             screenshot_counter: 0,
+            fixture_mode: FixtureMode::Login,
+            tap_count: 0,
+        }
+    }
+
+    pub fn smoke_fixture(descriptor: IosSimulatorDescriptor) -> Self {
+        Self {
+            descriptor: descriptor.into_device_descriptor(),
+            snapshot: tap_counter_fixture_snapshot(),
+            screenshot_counter: 0,
+            fixture_mode: FixtureMode::TapCounterSmoke,
+            tap_count: 0,
         }
     }
 
@@ -86,6 +106,30 @@ impl IosSimulatorAdapter {
             });
         }
     }
+
+    fn update_tap_counter_label(&mut self) {
+        let value = format!("Count: {}", self.tap_count);
+        if let Some(element) = self
+            .snapshot
+            .elements
+            .iter_mut()
+            .find(|element| element.accessibility_id.as_deref() == Some("count-label"))
+        {
+            element.text = Some(value.clone());
+            element.label = Some(value);
+            element.visible = true;
+            return;
+        }
+
+        self.snapshot.elements.push(ObservedElement {
+            resource_id: None,
+            accessibility_id: Some("count-label".into()),
+            role: Some(UiRole::StaticText),
+            text: Some(value.clone()),
+            label: Some(value),
+            visible: true,
+        });
+    }
 }
 
 impl DeviceEngine for IosSimulatorAdapter {
@@ -108,15 +152,28 @@ impl DeviceEngine for IosSimulatorAdapter {
                 Ok(Vec::new())
             }
             ActionKind::Tap { target } => {
-                let tapped_label = find_element(&self.snapshot, target)
-                    .and_then(|element| element.label.clone().or_else(|| element.text.clone()))
-                    .ok_or(RuntimeFailure {
-                        code: FailureCode::UnresolvedSelector,
-                        message: format!("selector was not found: {target:?}"),
-                    })?;
+                let tapped_element =
+                    find_element(&self.snapshot, target)
+                        .cloned()
+                        .ok_or(RuntimeFailure {
+                            code: FailureCode::UnresolvedSelector,
+                            message: format!("selector was not found: {target:?}"),
+                        })?;
+                let tapped_label = tapped_element
+                    .label
+                    .clone()
+                    .or_else(|| tapped_element.text.clone())
+                    .unwrap_or_default();
 
                 if tapped_label.to_lowercase().contains("login") {
                     self.ensure_home_screen();
+                }
+
+                if self.fixture_mode == FixtureMode::TapCounterSmoke
+                    && tapped_element.accessibility_id.as_deref() == Some("tap-button")
+                {
+                    self.tap_count += 1;
+                    self.update_tap_counter_label();
                 }
 
                 Ok(Vec::new())
@@ -178,6 +235,30 @@ fn login_fixture_snapshot() -> DeviceSnapshot {
                 role: Some(UiRole::TextField),
                 text: Some(String::new()),
                 label: Some("Password".into()),
+                visible: true,
+            },
+        ],
+        foreground_app: None,
+    }
+}
+
+fn tap_counter_fixture_snapshot() -> DeviceSnapshot {
+    DeviceSnapshot {
+        elements: vec![
+            ObservedElement {
+                resource_id: None,
+                accessibility_id: Some("tap-button".into()),
+                role: Some(UiRole::Button),
+                text: Some("Tap".into()),
+                label: Some("Tap".into()),
+                visible: true,
+            },
+            ObservedElement {
+                resource_id: None,
+                accessibility_id: Some("count-label".into()),
+                role: Some(UiRole::StaticText),
+                text: Some("Count: 0".into()),
+                label: Some("Count: 0".into()),
                 visible: true,
             },
         ],
@@ -314,6 +395,32 @@ mod tests {
             .any(
                 |element| element.accessibility_id.as_deref() == Some("email_field")
                     && element.text.as_deref() == Some("tester@example.com")
+            ));
+    }
+
+    #[test]
+    fn ios_smoke_fixture_tap_updates_counter_label() {
+        let mut adapter = IosSimulatorAdapter::smoke_fixture(IosSimulatorDescriptor::iphone_16());
+
+        adapter
+            .perform_action(&ActionKind::LaunchApp {
+                app_id: "app.under.test".into(),
+            })
+            .expect("launch should succeed");
+        adapter
+            .perform_action(&ActionKind::Tap {
+                target: Selector::AccessibilityId("tap-button".into()),
+            })
+            .expect("tap should succeed");
+
+        let snapshot = DeviceEngine::snapshot(&adapter).expect("snapshot should succeed");
+        assert_eq!(snapshot.foreground_app.as_deref(), Some("app.under.test"));
+        assert!(snapshot
+            .elements
+            .iter()
+            .any(
+                |element| element.accessibility_id.as_deref() == Some("count-label")
+                    && element.text.as_deref() == Some("Count: 1")
             ));
     }
 
