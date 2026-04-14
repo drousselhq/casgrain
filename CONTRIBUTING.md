@@ -85,6 +85,7 @@ A good PR should include:
 Before opening a PR, review:
 - `.github/pull_request_template.md`
 - `docs/development/automation-agent-operations.md` when the work involves autonomous maintenance or repo-operations roles
+- `docs/development/bug-reproduction-evidence-contract.md` when the work involves bug intake, reproduction, or evidence collection
 - `docs/development/merge-and-validation-policy.md`
 - `docs/development/test-pyramid-and-runtime-contracts.md`
 - `docs/validation.md`
