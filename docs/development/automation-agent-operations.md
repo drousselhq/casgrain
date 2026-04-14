@@ -77,6 +77,48 @@ Must not:
 - invent roadmap work that is not grounded in existing issues or repo evidence
 - close active work that still has unresolved product decisions
 
+#### Backlog hygiene protocol
+
+Before choosing work, the backlog hygiene agent should gather cheap evidence in this order:
+1. inspect local branch state and the active repo operating docs (`AGENTS.md`, `docs/plans/current-plan.md`, and `docs/validation.md`)
+2. inspect open GitHub Issues, open PRs, recent merged PRs, and recent `main` history
+3. inspect the candidate issue body, comments, labels, and nearby files before editing anything
+
+The non-interference screen is mandatory. Do not start a coding slice when:
+- an open PR already covers the issue or same file area
+- a branch name, recent comment, or fresh commit shows someone is actively working the same change
+- the change would overlap very recent product-path work and is not purely reconciliatory
+- the safest next step depends on a human product or DX decision
+
+After inspection, choose exactly one outcome for the run:
+1. **Coding slice** when the issue is clearly bounded, maintenance-oriented, and safe to complete in one PR
+2. **Triage-only update** when the right next step is clarification, labeling, assignment, or a comment with findings and a concrete proposal
+3. **No-op** when interference risk, insufficient evidence, or settings-side blockers make even a small in-repo change unsafe
+
+When a coding slice is safe, keep it narrow:
+- change only the files needed for the selected issue
+- prefer docs reconciliation, validation hardening, or small regression coverage over broader refactors
+- convert any newly discovered adjacent work into follow-up GitHub Issues instead of expanding the PR
+
+When triaging issues, the backlog hygiene agent may:
+- add or remove labels when the classification is evidence-backed
+- close issues only when the work is already landed, duplicated, or explicitly not planned
+- leave a comment summarizing what was checked, why the chosen action is safe, and what should happen next
+
+Every maintenance-loop completion report should include:
+- which issue was selected and why it was safe
+- whether the result was a coding slice, triage-only update, or no-op
+- what evidence or repo state was inspected
+- what validation ran, if any
+- any PR or follow-up issue links
+- any explicit blocker that prevented further safe progress
+
+Escalate instead of proceeding when:
+- the issue would change product behavior or developer experience in a meaningful way
+- multiple reasonable issue choices exist but require human prioritization
+- the repo needs settings-side enforcement rather than an in-repo change
+- the evidence is too weak to justify labels, closure, or code edits
+
 ### 2. Reproduction agent
 
 Purpose:
@@ -149,9 +191,8 @@ This ordering keeps repo maintenance grounded in evidence rather than jumping di
 
 ## Tracked follow-up work
 
-The definitions in this document are governance only. Concrete automation rollout should be tracked as follow-up GitHub Issues rather than assumed to exist implicitly.
+The definitions in this document are governance only. Remaining concrete automation rollout should be tracked as follow-up GitHub Issues rather than assumed to exist implicitly.
 
-- issue #42 — add a maintenance triage protocol for backlog hygiene runs
 - issue #43 — define a deterministic bug reproduction evidence contract
 - issue #44 — define CI shepherd and flaky-ownership operating procedures
 
