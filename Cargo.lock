@@ -23,6 +23,7 @@ dependencies = [
  "mar_application",
  "mar_compiler",
  "mar_domain",
+ "mar_ios",
  "mar_runner",
  "serde_json",
 ]
