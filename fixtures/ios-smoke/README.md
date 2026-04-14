@@ -13,10 +13,21 @@ Current harness shape:
 - one tap that increments a visible counter
 - one screenshot attachment kept in the xcresult bundle
 
+Product-true vertical-slice source of truth:
+- `features/tap_counter.feature` is the canonical scenario for issue #32's first Gherkin-to-iOS-fixture slice
+- the feature is intentionally tiny: launch app, tap once, observe the updated count, capture a screenshot
+- the current handwritten XCTest remains harness plumbing until the generated-plan execution path replaces it in CI
+
 Run locally on macOS with Xcode command-line tools and iOS Simulator runtimes installed:
 
 ```bash
 ARTIFACT_DIR=./artifacts/ios-smoke scripts/ios_smoke.sh
+```
+
+Compile the canonical fixture feature into a deterministic plan from the repo root:
+
+```bash
+cargo run -p mar_cli -- compile fixtures/ios-smoke/features/tap_counter.feature
 ```
 
 The harness now fails fast when it is invoked outside macOS or when `python3`, `xcodebuild`, or `xcrun` are unavailable.
