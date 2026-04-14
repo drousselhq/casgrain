@@ -160,6 +160,66 @@ Must not:
 - merge around failing or still-running required checks
 - weaken validation merely to make CI green
 
+#### CI shepherd operating procedure
+
+When a required workflow fails or behaves suspiciously, the CI shepherd agent should work in this order:
+1. identify the exact failing run, workflow, branch, job, and step before proposing any change
+2. compare the failure against `docs/validation.md` and `docs/development/merge-and-validation-policy.md`
+3. classify the problem as one of:
+   - **deterministic product or code regression**
+   - **workflow/tooling drift**
+   - **suspected nondeterminism**
+   - **settings-side or plan-limited blocker**
+4. choose the narrowest safe response and record the evidence in the issue or PR
+
+Evidence minimum for CI diagnosis:
+- workflow run URL or run ID
+- failing job and step names
+- the first concrete failing error, not just the top-level red status
+- whether the same command fails locally or is isolated to CI infrastructure
+- whether the failure affects the canonical required-check set
+
+Response rules by classification:
+
+**Deterministic product or code regression**
+- treat the failure as a normal bug
+- prefer a bounded code or test fix PR tied to the underlying issue
+- involve the reproduction agent first if the failure mechanism is not yet clear
+- do not add retries or workflow exceptions before understanding the product-facing defect
+
+**Workflow or tooling drift**
+- fix the workflow, tool installation, cache, checksum, documentation, or reporting gap directly
+- keep the PR limited to restoring the documented validation contract
+- document why the change increases trust in the gate instead of reducing coverage
+
+**Suspected nondeterminism**
+- do not classify a failure as flaky on a single weak signal
+- hand off to the flaky-test owner procedure below once repeated evidence suggests the same workflow or test sometimes passes and sometimes fails without a code change that explains it
+
+**Settings-side or plan-limited blocker**
+- open or update a GitHub issue when the safe fix requires repository settings, billing/plan changes, unavailable runners, or wider policy decisions
+- leave the in-repo procedural mitigation explicit while the blocker remains unresolved
+- report the blocker as out-of-repo rather than pretending a docs-only change fully enforces it
+
+Acceptable hardening actions:
+- tighten workflow documentation so the required gate is explicit
+- improve logging, artifact capture, and error surfacing
+- verify downloaded tool integrity and pin versions/checksums
+- make setup steps more deterministic
+- scope targeted retries only to known infrastructure boundaries after the failure has been classified as nondeterministic
+
+Unacceptable hardening actions:
+- removing or skipping required checks just to clear the queue
+- converting deterministic failures into soft warnings
+- merging while required checks are still `in_progress`
+- adding broad whole-job retries with no evidence that infrastructure instability is the cause
+- hiding a recurring failure without opening a follow-up issue that preserves accountability
+
+Escalate instead of editing code or workflows when:
+- the likely fix would meaningfully change developer experience or the required validation contract
+- the repo needs branch protection or other settings that cannot be changed in-tree
+- the failure points to product-direction ambiguity rather than maintenance drift
+
 ### 4. Flaky-test owner agent
 
 Purpose:
@@ -180,6 +240,42 @@ Must not:
 - hide real failures behind broad retries
 - mute tests without replacing lost signal intentionally and explicitly
 
+#### Flaky-test owner operating procedure
+
+A failure should only be treated as flaky after evidence shows nondeterminism instead of a deterministic defect.
+
+Minimum evidence before labeling something as flaky:
+- at least two materially similar failures with comparable symptoms
+- at least one successful run or reproduction path for the same code state, or equivalent evidence that the failure is intermittent rather than universal
+- the failing boundary is identified clearly enough to say whether the instability is in tests, workflow setup, simulator/emulator infrastructure, or an external dependency
+
+Classification questions:
+1. does the same command fail locally in a stable way?
+2. does the same revision alternate between pass and fail?
+3. does the error point to timing, resource contention, environment bootstrapping, or missing observability rather than an assertion mismatch?
+4. would a retry preserve signal, or would it only hide an unresolved defect?
+
+Acceptable flake mitigations when the evidence supports them:
+- targeted waits or readiness checks at unstable environment boundaries
+- narrower retries around idempotent infrastructure steps such as downloads or simulator boot waits
+- improved artifact capture, timestamps, screenshots, traces, or logs so future failures are diagnosable
+- fixture isolation or cleanup that removes state leakage between runs
+- quarantining a test only when the lost coverage is explicitly acknowledged and tracked in GitHub
+
+Unacceptable flake mitigations:
+- blind rerun-until-green loops
+- suite-wide retries that make deterministic regressions harder to detect
+- deleting or disabling tests without a replacement signal or tracked follow-up
+- calling a failure flaky merely because it is expensive or inconvenient to debug
+
+When quarantine is the least-bad option, the flaky-test owner must:
+1. open or update a GitHub issue describing the flake signature and missing signal
+2. explain why narrower hardening could not be completed safely in the current slice
+3. preserve as much validation signal as possible elsewhere
+4. propose the next bounded step required to remove the quarantine
+
+The flaky-test owner should hand work back to the CI shepherd agent when the primary fix is workflow hardening, and back to the reproduction or product fix path when the evidence points to a deterministic defect.
+
 ## Coordination model
 
 When multiple roles could respond to the same situation, prefer this order:
@@ -190,12 +286,13 @@ When multiple roles could respond to the same situation, prefer this order:
 
 This ordering keeps repo maintenance grounded in evidence rather than jumping directly to fixes.
 
-## Tracked follow-up work
+## Governance status
 
-The definitions in this document are governance only. Remaining concrete automation rollout should be tracked as follow-up GitHub Issues rather than assumed to exist implicitly.
+This document now defines the bounded operating procedures for the backlog hygiene, reproduction, CI shepherd, and flaky-test owner roles. Any further rollout work should be tracked as concrete GitHub Issues rather than assumed implicitly from these role definitions.
 
-- issue #43 — define a deterministic bug reproduction evidence contract
-- issue #44 — define CI shepherd and flaky-ownership operating procedures
+Related completed follow-up work:
+- issue #43 — deterministic bug reproduction evidence contract in `docs/development/bug-reproduction-evidence-contract.md`
+- issue #44 — CI shepherd and flaky-test owner operating procedures in this document
 
 ## Relationship to other repo documents
 
