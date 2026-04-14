@@ -6,6 +6,11 @@ This document is the canonical place for Casgrain validation rules and quality g
 
 Before merging work, run the required checks below unless the PR is explicitly scoped as a narrowly exempted docs-only or governance-only change and the reviewer accepts the exception.
 
+Repository reality today:
+- the GitHub repository is still on a plan/configuration where branch protection required-status-check enforcement is unavailable
+- merge discipline is therefore partly procedural until repository settings can enforce the documented gate
+- PR authors and mergers must not merge while required checks are still `in_progress`, even if GitHub shows the merge button
+
 Required checks:
 - `cargo fmt --all --check`
 - `cargo test --workspace`

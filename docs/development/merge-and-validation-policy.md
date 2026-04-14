@@ -23,9 +23,11 @@ Examples:
 Expected bar:
 - green required checks
 - no unresolved review concerns
+- PR body records the validation that actually ran and whether any documented exception was used
 
 Default action:
 - agent may self-merge when green
+- agent must not treat a visible GitHub merge button as proof that the merge gate is satisfied
 
 ### Class B — self-merge after stronger automated validation
 Examples:
