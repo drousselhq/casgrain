@@ -19,6 +19,7 @@ on:
       - crates/mar_ios/**
       - fixtures/ios-smoke/**
       - scripts/ios_smoke.sh
+      - scripts/ios_smoke_run_plan.py
       - .github/workflows/ios-simulator-smoke.yml
 
 concurrency:
@@ -31,6 +32,7 @@ jobs:
     timeout-minutes: 30
     env:
       ARTIFACT_DIR: ${{ github.workspace }}/artifacts/ios-smoke
+      CASGRAIN_IOS_SMOKE_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/ios-smoke
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -50,8 +52,11 @@ jobs:
           xcrun simctl list runtimes | sed -n '1,20p'
           xcrun simctl list devices available | sed -n '1,40p'
 
-      - name: Run iOS smoke harness
-        run: scripts/ios_smoke.sh
+      - name: Run iOS smoke CLI bridge
+        run: |
+          set -euxo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"
 
       - name: Upload smoke artifacts
         uses: actions/upload-artifact@v4
