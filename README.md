@@ -180,6 +180,7 @@ Important files and directories:
 - `.github/pull_request_template.md` — PR checklist and merge notes
 - `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
+- `docs/development/automation-agent-operations.md` — repository maintenance agent roles and boundaries
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
 - `docs/development/test-pyramid-and-runtime-contracts.md` — test layers and runtime contract strategy
 - `docs/validation.md` — canonical validation gate and reporting expectations
