@@ -123,6 +123,7 @@ Escalate instead of proceeding when:
 
 Purpose:
 - turn bug reports or suspicious failures into deterministic evidence
+- produce reproduction evidence that meets the repo's canonical contract in `docs/development/bug-reproduction-evidence-contract.md`
 
 Typical triggers:
 - issues with incomplete reproduction detail
@@ -198,6 +199,8 @@ The definitions in this document are governance only. Remaining concrete automat
 
 ## Relationship to other repo documents
 
+- `CONTRIBUTING.md` defines the contributor-facing bug filing expectations
+- `docs/development/bug-reproduction-evidence-contract.md` defines the canonical evidence package for reproduction claims
 - `AGENTS.md` defines the high-level operating contract for repo work
 - `docs/validation.md` defines the canonical validation gate
 - `docs/development/merge-and-validation-policy.md` defines merge classes and merge discipline
