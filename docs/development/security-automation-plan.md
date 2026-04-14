@@ -57,10 +57,10 @@ Why:
 - repository history is the cheapest place to catch accidental secret leakage
 
 Implementation baseline:
-- `.github/workflows/security.yml` runs `gitleaks/gitleaks-action@v2.3.9` on pull requests and pushes to `main`
-- the action checks out the full git history (`fetch-depth: 0`) so new leaks in commit history are visible to CI
+- `.github/workflows/security.yml` installs the pinned `gitleaks` CLI (`8.30.1`) and runs it on pull requests and pushes to `main`
+- the workflow checks out the full git history (`fetch-depth: 0`) so new leaks in commit history are visible to CI
 - repo-specific policy lives in `.gitleaks.toml`, which currently extends the upstream default rules and allowlists local Rust build / coverage artifacts such as `target/` and `*.profraw`
-- PR comments are disabled for now; the required check itself is the contributor-facing signal
+- the repository intentionally uses the CLI directly instead of `gitleaks-action`, because the hosted action now requires a commercial license for private organization repositories and would otherwise fail before scanning
 
 Trade-offs:
 - secret scanners can produce fixture/test false positives
