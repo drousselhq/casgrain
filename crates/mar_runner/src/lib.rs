@@ -50,6 +50,12 @@ impl DeterministicRunner {
                 step_trace.attempts += 1;
                 match run_step(engine, &step.action, &step.guards, &step.postconditions) {
                     Ok(mut artifacts) => {
+                        for artifact in &mut artifacts {
+                            if artifact.step_id.is_none() {
+                                artifact.step_id = Some(step.step_id.clone());
+                            }
+                        }
+
                         if step.artifacts.capture_after_step {
                             artifacts.push(ArtifactRef {
                                 artifact_id: format!("{}-after", step.step_id),
@@ -502,5 +508,55 @@ mod tests {
             .steps
             .iter()
             .all(|step| step.status == StepStatus::Passed));
+    }
+
+    #[test]
+    fn runner_links_action_artifacts_to_the_originating_step() {
+        let mut engine = mock::MockDeviceEngine::login_fixture();
+        let plan = ExecutablePlan {
+            plan_id: "plan-screenshot".into(),
+            name: "Screenshot".into(),
+            version: PlanFormatVersion { major: 1, minor: 0 },
+            source: PlanSource {
+                kind: SourceKind::Gherkin,
+                source_name: "screenshot.feature".into(),
+                compiler_version: "0.1.0".into(),
+            },
+            target: TargetProfile {
+                platform: TargetPlatform::CrossPlatform,
+                device_class: "simulator".into(),
+            },
+            capabilities_required: CapabilitySet::default(),
+            defaults: ExecutionDefaults::default(),
+            steps: vec![PlanStep {
+                step_id: "take-screenshot".into(),
+                intent: StepIntent::Interact,
+                description: "take screenshot".into(),
+                action: ActionKind::TakeScreenshot {
+                    name: Some("demo-login".into()),
+                },
+                guards: vec![],
+                postconditions: vec![],
+                timeout_ms: 1_000,
+                retry: RetryPolicy::default(),
+                on_failure: FailurePolicy::AbortRun,
+                artifacts: ArtifactPolicy::default(),
+            }],
+            metadata: Default::default(),
+        };
+
+        let trace = DeterministicRunner::new("run-screenshot").execute(&mut engine, &plan);
+        assert_eq!(trace.status, RunStatus::Passed);
+        assert_eq!(trace.artifacts.len(), 1);
+        assert_eq!(trace.artifacts[0].artifact_type, "screenshot");
+        assert_eq!(
+            trace.artifacts[0].step_id.as_deref(),
+            Some("take-screenshot")
+        );
+        assert_eq!(trace.steps[0].artifacts.len(), 1);
+        assert_eq!(
+            trace.steps[0].artifacts[0].step_id.as_deref(),
+            Some("take-screenshot")
+        );
     }
 }
