@@ -52,6 +52,7 @@ name = "mar_ios"
 version = "0.1.0"
 dependencies = [
  "mar_domain",
+ "serde_json",
 ]
 
 [[package]]

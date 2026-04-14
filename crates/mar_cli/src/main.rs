@@ -3,7 +3,7 @@ use std::{env, fs};
 use mar_application::{CompileOutput, PlanCompiler};
 use mar_compiler::GherkinCompiler;
 use mar_domain::{CompilationDiagnostic, ExecutionTrace};
-use mar_ios::{IosSimulatorAdapter, IosSimulatorDescriptor};
+use mar_ios::run_smoke_fixture_plan;
 use mar_runner::{mock::MockDeviceEngine, DeterministicRunner};
 
 fn main() {
@@ -52,9 +52,8 @@ fn run_ios_smoke(args: &[String]) -> Result<String, String> {
     let source = read_source(input)?;
     let trace_json = trace_json_requested(args);
     let output = compile_source(&source, input)?;
-    let mut engine = IosSimulatorAdapter::smoke_fixture(IosSimulatorDescriptor::iphone_16());
-    let trace = DeterministicRunner::new(format!("ios-smoke-{}", output.plan.plan_id))
-        .execute(&mut engine, &output.plan);
+    let trace = run_smoke_fixture_plan(&output.plan)
+        .map_err(|error| format!("failed to run real iOS smoke harness: {error}"))?;
 
     render_trace_output("Casgrain iOS smoke run", trace_json, &output, &trace)
 }
@@ -170,7 +169,13 @@ fn status_marker(status: &mar_domain::StepStatus) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{
+        fs,
+        os::unix::fs::PermissionsExt,
+        path::PathBuf,
+        sync::{Mutex, OnceLock},
+        time::{SystemTime, UNIX_EPOCH},
+    };
 
     use serde_json::Value;
 
@@ -228,14 +233,30 @@ mod tests {
 "#,
             "fixtures/ios-smoke/features/tap_counter.feature",
         );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_ios_smoke_runner(&repo_root);
+        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
 
         let output =
             run(vec!["run-ios-smoke".into(), feature]).expect("run-ios-smoke should succeed");
 
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR");
+        }
+
         assert!(output.contains("Casgrain iOS smoke run: Increment the counter once"));
         assert!(output.contains("Device: iPhone 16 18.0 (Ios)"));
         assert!(output.contains("Run status: Passed"));
-        assert!(output.contains("tap-counter-1 (screenshot) -> artifacts/tap-counter-1.png"));
+        assert!(output.contains("tap-counter-1 (screenshot) ->"));
     }
 
     #[test]
@@ -250,22 +271,106 @@ mod tests {
 "#,
             "fixtures/ios-smoke/features/tap_counter.feature",
         );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_ios_smoke_runner(&repo_root);
+        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
 
         let output = run(vec!["run-ios-smoke".into(), feature, "--trace-json".into()])
             .expect("run-ios-smoke json output should succeed");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR");
+        }
         let json: Value = serde_json::from_str(&output).expect("output should be valid json");
 
         assert_eq!(json["run_id"], "ios-smoke-increment-the-counter-once");
         assert_eq!(json["device"]["platform"], "ios");
         assert_eq!(json["status"], "passed");
-        assert_eq!(json["artifacts"][0]["path"], "artifacts/tap-counter-1.png");
+        assert!(json["artifacts"][0]["path"]
+            .as_str()
+            .expect("artifact path should be a string")
+            .ends_with("tap-counter-1.png"));
+    }
+
+    fn install_fake_ios_smoke_runner(repo_root: &std::path::Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let runner = repo_root.join("runner.py");
+        fs::write(
+            &runner,
+            r#"#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--repo-root", required=True)
+parser.add_argument("--plan", required=True)
+parser.add_argument("--artifact-dir", required=True)
+args = parser.parse_args()
+
+plan = json.loads(Path(args.plan).read_text())
+artifact_dir = Path(args.artifact_dir)
+artifact_dir.mkdir(parents=True, exist_ok=True)
+artifact_path = artifact_dir / "tap-counter-1.png"
+artifact_path.write_bytes(b"png")
+
+print(json.dumps({
+    "run_id": f"ios-smoke-{plan['plan_id']}",
+    "plan_id": plan["plan_id"],
+    "device": {
+        "platform": "ios",
+        "name": "iPhone 16",
+        "os_version": "18.0"
+    },
+    "started_at": "2026-01-01T00:00:00Z",
+    "finished_at": "2026-01-01T00:00:01Z",
+    "status": "passed",
+    "steps": [
+        {
+            "step_id": step["step_id"],
+            "status": "passed",
+            "attempts": 1,
+            "failure": None,
+            "artifacts": []
+        }
+        for step in plan["steps"]
+    ],
+    "artifacts": [
+        {
+            "artifact_id": "tap-counter-1",
+            "artifact_type": "screenshot",
+            "path": str(artifact_path),
+            "sha256": None,
+            "step_id": plan["steps"][-1]["step_id"]
+        }
+    ],
+    "diagnostics": []
+}))
+"#,
+        )
+        .expect("fake runner should be written");
+        let mut permissions = fs::metadata(&runner)
+            .expect("runner metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&runner, permissions).expect("runner should be executable");
+        runner
     }
 
     fn tempfile_feature(contents: &str, relative_name: &str) -> String {
         let root = std::env::temp_dir().join(format!(
             "casgrain-cli-test-{}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .expect("time should move forward")
                 .as_nanos()
         ));
@@ -275,5 +380,20 @@ mod tests {
         }
         std::fs::write(&path, contents).expect("temp feature should be written");
         path.to_string_lossy().to_string()
+    }
+
+    fn temp_path(prefix: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "{prefix}-{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("time should move forward")
+                .as_nanos()
+        ))
+    }
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
     }
 }

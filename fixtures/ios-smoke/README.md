@@ -40,6 +40,8 @@ Run the fixture through the first iOS-specific CLI execution path from the repo 
 cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
 ```
 
+That command now writes the compiled plan to `artifacts/ios-smoke-generated/<plan-id>/plan.json`, invokes the real simulator-backed fixture harness through `scripts/ios_smoke_run_plan.py`, and emits structured trace/artifact output for QA and CI archival.
+
 Emit machine-readable trace JSON, including deterministic artifact references, with:
 
 ```bash
@@ -47,6 +49,8 @@ cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.fe
 ```
 
 The harness now fails fast when it is invoked outside macOS or when `python3`, `xcodebuild`, or `xcrun` are unavailable.
+
+When the real simulator-backed path runs on macOS, it preserves the xcresult bundle/logs under the chosen artifact directory and also attempts to export the captured screenshot deterministically to `tap-counter-1.png` for easier inspection.
 
 The script now prefers a small, explicit simulator selection order and supports override env vars for future Xcode/runtime changes:
 - `CASGRAIN_SMOKE_RUNTIME_NAME` to pin a specific iOS runtime name or identifier
