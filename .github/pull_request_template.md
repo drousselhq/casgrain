@@ -18,7 +18,13 @@
 - [ ] `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
 - [ ] `cargo audit`
 - [ ] `gitleaks dir .`
+- [ ] `cargo deny check licenses sources`
 - [ ] other validation noted below
+
+## Merge gate acknowledgement
+- [ ] I confirmed this PR should not merge until the required checks above are green or an explicitly documented docs/governance exception applies.
+- [ ] I recorded any exception, skipped check, or path-scoped extra validation below.
+- [ ] I confirmed whether `ios-simulator-smoke` is required for this diff.
 
 ## Notes for reviewers
 - risk level:
