@@ -41,4 +41,7 @@ Artifacts emitted by the default harness:
 - `ui-before-tap.xml`
 - `ui-after-tap.xml`
 
+CI proof path:
+- `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, boots a real Android emulator, runs `mar run-android-smoke`, and uploads the emitted artifacts as `casgrain-android-smoke`
+
 The runner stays honest about prerequisites: if `adb` is unavailable, no emulator is ready, or the APK is missing, the command fails with a concrete message instead of pretending to execute the smoke slice.
