@@ -19,8 +19,8 @@ on:
       - crates/domain/**
       - crates/runner/**
       - crates/android/**
-      - fixtures/android-smoke/**
-      - scripts/android_smoke_run_plan.py
+      - tests/test-support/fixtures/android-smoke/**
+      - tests/test-support/scripts/android_smoke_run_plan.py
       - .github/workflows/android-emulator-smoke.yml
 
 permissions:
@@ -75,8 +75,8 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p "$ARTIFACT_DIR"
-          gradle -p fixtures/android-smoke/app assembleDebug
-          APK_DIR=fixtures/android-smoke/app/build/outputs/apk/debug
+          gradle -p tests/test-support/fixtures/android-smoke/app assembleDebug
+          APK_DIR=tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug
           DEFAULT_APK="$APK_DIR/app-debug.apk"
           if [ -f "$DEFAULT_APK" ]; then
             APK_PATH="$DEFAULT_APK"
@@ -107,7 +107,7 @@ jobs:
           profile: pixel_7
           disable-animations: true
           emulator-options: -no-window -no-snapshot-save -gpu swiftshader_indirect -noaudio -no-boot-anim
-          script: bash -euxo pipefail -c 'adb devices; cargo run -p casgrain -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"'
+          script: bash -euxo pipefail -c 'adb devices; cargo run -p casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"'
 
       - name: Assert generated-plan Android smoke artifacts
         run: |

@@ -103,7 +103,7 @@ def main() -> int:
 
     screenshot_path = artifact_dir / "tap-counter-1.png"
     simulator_info_path = artifact_dir / "simulator.json"
-    shell_script = repo_root / "scripts" / "ios_smoke.sh"
+    shell_script = repo_root / "tests" / "test-support" / "scripts" / "ios_smoke.sh"
     expect(shell_script.is_file(), f"missing iOS smoke harness script at {shell_script}")
 
     started_at = utc_now()
