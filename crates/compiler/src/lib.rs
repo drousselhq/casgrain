@@ -257,7 +257,7 @@ impl FixtureVocabulary {
 
 fn fixture_vocabulary_for(source_name: &str) -> Option<FixtureVocabulary> {
     let normalized_source_name = source_name.replace('\\', "/");
-    if normalized_source_name.ends_with("fixtures/ios-smoke/features/tap_counter.feature") {
+    if normalized_source_name.ends_with("tests/fixtures/ios-smoke/features/tap_counter.feature") {
         Some(FixtureVocabulary {
             name: "the iOS smoke fixture",
             target_platform: TargetPlatform::Ios,
@@ -265,7 +265,7 @@ fn fixture_vocabulary_for(source_name: &str) -> Option<FixtureVocabulary> {
             screenshot_name: "tap-counter",
         })
     } else if normalized_source_name
-        .ends_with("fixtures/android-smoke/features/tap_counter.feature")
+        .ends_with("tests/fixtures/android-smoke/features/tap_counter.feature")
     {
         Some(FixtureVocabulary {
             name: "the Android smoke fixture",
@@ -599,11 +599,11 @@ Feature: Login
 
     #[test]
     fn ios_fixture_feature_compiles_to_ios_specific_deterministic_selectors() {
-        let source = include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature");
+        let source = include_str!("../../../tests/fixtures/ios-smoke/features/tap_counter.feature");
 
         let output = compile_gherkin(
             source,
-            "fixtures/ios-smoke/features/tap_counter.feature",
+            "tests/fixtures/ios-smoke/features/tap_counter.feature",
             "0.1.0",
         )
         .unwrap();
@@ -636,11 +636,11 @@ Feature: Login
 
     #[test]
     fn android_fixture_feature_compiles_to_android_specific_deterministic_selectors() {
-        let source = include_str!("../../../fixtures/android-smoke/features/tap_counter.feature");
+        let source = include_str!("../../../tests/fixtures/android-smoke/features/tap_counter.feature");
 
         let output = compile_gherkin(
             source,
-            "fixtures/android-smoke/features/tap_counter.feature",
+            "tests/fixtures/android-smoke/features/tap_counter.feature",
             "0.1.0",
         )
         .unwrap();
@@ -683,7 +683,7 @@ Feature: iOS smoke tap counter
 
         let errors = compile_gherkin(
             source,
-            "fixtures/ios-smoke/features/tap_counter.feature",
+            "tests/fixtures/ios-smoke/features/tap_counter.feature",
             "0.1.0",
         )
         .expect_err("fixture vocabulary should reject nearby unsupported phrases");

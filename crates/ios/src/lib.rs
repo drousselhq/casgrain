@@ -13,7 +13,7 @@ use domain::{
 const IOS_SMOKE_RUNNER_ENV: &str = "CASGRAIN_IOS_SMOKE_RUNNER";
 const IOS_SMOKE_ARTIFACT_DIR_ENV: &str = "CASGRAIN_IOS_SMOKE_ARTIFACT_DIR";
 const REPO_ROOT_ENV: &str = "CASGRAIN_REPO_ROOT";
-const DEFAULT_SMOKE_SCRIPT: &str = "scripts/ios_smoke_run_plan.py";
+const DEFAULT_SMOKE_SCRIPT: &str = "tests/scripts/ios_smoke_run_plan.py";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IosSimulatorDescriptor {
@@ -219,7 +219,7 @@ fn resolve_repo_root() -> Result<PathBuf, RuntimeFailure> {
     Err(RuntimeFailure {
         code: FailureCode::EngineError,
         message: String::from(
-            "failed to locate repository root; set CASGRAIN_REPO_ROOT to a checkout containing scripts/ios_smoke_run_plan.py",
+            "failed to locate repository root; set CASGRAIN_REPO_ROOT to a checkout containing tests/scripts/ios_smoke_run_plan.py",
         ),
     })
 }
@@ -820,7 +820,7 @@ print(json.dumps({
             version: PlanFormatVersion { major: 1, minor: 0 },
             source: PlanSource {
                 kind: SourceKind::Gherkin,
-                source_name: "fixtures/ios-smoke/features/tap_counter.feature".into(),
+                source_name: "tests/fixtures/ios-smoke/features/tap_counter.feature".into(),
                 compiler_version: "0.1.0".into(),
             },
             target: TargetProfile {

@@ -6,7 +6,7 @@ Goal: prove Casgrain's first product-true vertical slice on iOS: Gherkin in, det
 
 Architecture: keep this slice intentionally narrow and fixture-specific. Reuse the existing compiler, plan, runner, and iOS smoke harness where possible, but make the proof unambiguous by ensuring the primary executable input is generated from Gherkin rather than handwritten XCTest. Prefer one honest path over a flexible abstraction.
 
-Tech stack: Rust workspace crates (`casgrain`, `compiler`, `runner`, `ios`, `domain`), SwiftUI fixture app under `fixtures/ios-smoke/`, macOS GitHub Actions smoke workflow.
+Tech stack: Rust workspace crates (`casgrain`, `compiler`, `runner`, `ios`, `domain`), SwiftUI fixture app under `tests/fixtures/ios-smoke/`, macOS GitHub Actions smoke workflow.
 
 ---
 
@@ -37,15 +37,15 @@ Casgrain then:
 Objective: create the smallest possible feature file that expresses the existing smoke-app behavior.
 
 Files:
-- Create: `fixtures/ios-smoke/features/tap_counter.feature`
-- Modify: `fixtures/ios-smoke/README.md`
+- Create: `tests/fixtures/ios-smoke/features/tap_counter.feature`
+- Modify: `tests/fixtures/ios-smoke/README.md`
 
 Steps:
-1. Create `fixtures/ios-smoke/features/tap_counter.feature` with one scenario only.
+1. Create `tests/fixtures/ios-smoke/features/tap_counter.feature` with one scenario only.
 2. Use only step phrases that we are willing to support in the first slice.
 3. Update the fixture README so it explains that this feature is now the product-true source for the vertical slice.
 4. Validation:
-   - `cargo run -p casgrain -- compile fixtures/ios-smoke/features/tap_counter.feature`
+   - `cargo run -p casgrain -- compile tests/fixtures/ios-smoke/features/tap_counter.feature`
 
 ## Task 2: Narrow and pin the first supported Gherkin vocabulary
 
@@ -91,9 +91,9 @@ Objective: make the compiled plan drive the real fixture app, not just an in-mem
 
 Files:
 - Modify: `crates/ios/src/lib.rs`
-- Modify: `scripts/ios_smoke.sh`
-- Possibly create: `scripts/ios_smoke_run_plan.py` or `scripts/ios_smoke_run_plan.sh`
-- Possibly create: `artifacts/` contract documentation in `fixtures/ios-smoke/README.md`
+- Modify: `tests/scripts/ios_smoke.sh`
+- Possibly create: `tests/scripts/ios_smoke_run_plan.py` or `tests/scripts/ios_smoke_run_plan.sh`
+- Possibly create: `artifacts/` contract documentation in `tests/fixtures/ios-smoke/README.md`
 
 Steps:
 1. Decide the thinnest honest bridge from Rust plan execution to the real simulator-backed fixture.
@@ -114,7 +114,7 @@ Objective: make CI prove the product loop, not only the harness loop.
 
 Files:
 - Modify: `.github/workflows/ios-simulator-smoke.yml`
-- Modify: `fixtures/ios-smoke/README.md`
+- Modify: `tests/fixtures/ios-smoke/README.md`
 - Possibly modify: `docs/validation.md`
 
 Steps:

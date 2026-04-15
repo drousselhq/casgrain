@@ -19,7 +19,7 @@ gradle assembleDebug
 The default smoke harness expects a debug APK under:
 
 ```text
-fixtures/android-smoke/app/build/outputs/apk/debug/
+tests/fixtures/android-smoke/app/build/outputs/apk/debug/
 ```
 
 It prefers `app-debug.apk` when present and otherwise auto-discovers a single `*.apk` in that directory.
