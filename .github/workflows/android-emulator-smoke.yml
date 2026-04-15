@@ -58,7 +58,27 @@ jobs:
           set -euxo pipefail
           mkdir -p "$ARTIFACT_DIR"
           gradle -p fixtures/android-smoke/app assembleDebug
-          test -f fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk
+          APK_DIR=fixtures/android-smoke/app/build/outputs/apk/debug
+          DEFAULT_APK="$APK_DIR/app-debug.apk"
+          if [ -f "$DEFAULT_APK" ]; then
+            APK_PATH="$DEFAULT_APK"
+          else
+            mapfile -t APK_CANDIDATES < <(find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' | sort)
+            case "${#APK_CANDIDATES[@]}" in
+              1) APK_PATH="${APK_CANDIDATES[0]}" ;;
+              0)
+                echo "No debug APK found under $APK_DIR" >&2
+                exit 1
+                ;;
+              *)
+                printf 'Multiple debug APK candidates found under %s:\n' "$APK_DIR" >&2
+                printf '  %s\n' "${APK_CANDIDATES[@]}" >&2
+                exit 1
+                ;;
+            esac
+          fi
+          test -f "$APK_PATH"
+          printf 'CASGRAIN_ANDROID_SMOKE_APK=%s\n' "$APK_PATH" >> "$GITHUB_ENV"
 
       - name: Run generated-plan Android smoke path
         uses: reactivecircus/android-emulator-runner@v2

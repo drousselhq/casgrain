@@ -16,10 +16,12 @@ Build a debug APK from this directory with a local Android toolchain:
 gradle assembleDebug
 ```
 
-The default smoke harness expects the resulting APK at:
+The default smoke harness expects a debug APK under:
 
 ```text
-fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk
+fixtures/android-smoke/app/build/outputs/apk/debug/
 ```
 
-Or override that path at runtime with `CASGRAIN_ANDROID_SMOKE_APK`.
+It prefers `app-debug.apk` when present and otherwise auto-discovers a single `*.apk` in that directory.
+
+Or override the exact APK path at runtime with `CASGRAIN_ANDROID_SMOKE_APK`.

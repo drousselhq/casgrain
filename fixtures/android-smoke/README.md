@@ -29,7 +29,7 @@ cargo run -p mar_cli -- run-android-smoke fixtures/android-smoke/features/tap_co
 
 Runtime prerequisites for the default harness:
 - an Android emulator is already booted and reachable via `adb`
-- a debug APK for `fixtures/android-smoke/app/` exists at `fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk`, or `CASGRAIN_ANDROID_SMOKE_APK` points at the built APK
+- a debug APK for `fixtures/android-smoke/app/` exists under `fixtures/android-smoke/app/build/outputs/apk/debug/` (the runner prefers `app-debug.apk` when present and otherwise auto-discovers a single `*.apk` there), or `CASGRAIN_ANDROID_SMOKE_APK` points at the built APK
 - optionally set `CASGRAIN_ANDROID_ADB` if `adb` is not on `PATH`
 - optionally set `CASGRAIN_ANDROID_SMOKE_APP_ID` to override the default package id `hq.droussel.casgrain.smoke`
 - optionally set `CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS` to control how long the runner waits for `adb wait-for-device` before failing fast

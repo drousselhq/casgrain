@@ -17,6 +17,7 @@ ADB_ENV = "CASGRAIN_ANDROID_ADB"
 DEVICE_TIMEOUT_ENV = "CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS"
 DEFAULT_APP_ID = "hq.droussel.casgrain.smoke"
 DEFAULT_APK = "fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk"
+DEFAULT_APK_GLOB = "fixtures/android-smoke/app/build/outputs/apk/debug/*.apk"
 DEFAULT_DEVICE_TIMEOUT_SECS = 20.0
 UI_DUMP_REMOTE_PATH = "/sdcard/window_dump.xml"
 
@@ -119,14 +120,37 @@ def resolve_app_id() -> str:
 
 
 def resolve_apk_path(repo_root: Path) -> Path:
-    path = Path(os.environ.get(APK_ENV, repo_root / DEFAULT_APK))
-    if not path.is_absolute():
-        path = repo_root / path
-    expect(
-        path.is_file(),
-        f"missing Android smoke fixture APK at {path}; set {APK_ENV} to a built debug APK",
+    configured_path = os.environ.get(APK_ENV)
+    if configured_path is not None:
+        path = Path(configured_path)
+        if not path.is_absolute():
+            path = repo_root / path
+        expect(
+            path.is_file(),
+            f"missing Android smoke fixture APK at {path}; set {APK_ENV} to a built debug APK",
+        )
+        return path
+
+    default_path = repo_root / DEFAULT_APK
+    if default_path.is_file():
+        return default_path
+
+    candidates = sorted((repo_root / "fixtures/android-smoke/app/build/outputs/apk/debug").glob("*.apk"))
+    if len(candidates) == 1:
+        return candidates[0]
+
+    if len(candidates) > 1:
+        candidate_list = ", ".join(str(path) for path in candidates)
+        raise SystemExit(
+            "found multiple Android smoke fixture APK candidates under "
+            f"{repo_root / 'fixtures/android-smoke/app/build/outputs/apk/debug'}: {candidate_list}; "
+            f"set {APK_ENV} explicitly"
+        )
+
+    raise SystemExit(
+        f"missing Android smoke fixture APK at {default_path}; no APKs matched {repo_root / DEFAULT_APK_GLOB}; "
+        f"set {APK_ENV} to a built debug APK"
     )
-    return path
 
 
 def resolve_device_timeout() -> float:
