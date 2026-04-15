@@ -53,6 +53,18 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Enable KVM acceleration for Android emulator
+        run: |
+          set -euxo pipefail
+          if [ -e /dev/kvm ]; then
+            sudo chown root:"$(id -gn)" /dev/kvm
+            sudo chmod 0660 /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo "/dev/kvm is not available on this runner" >&2
+            exit 1
+          fi
+
       - name: Build Android smoke fixture APK
         run: |
           set -euxo pipefail
