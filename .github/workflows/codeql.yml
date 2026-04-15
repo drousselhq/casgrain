@@ -2,7 +2,9 @@ name: codeql
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - ci/codeql-trial
   pull_request:
     branches: [main]
   schedule:
