@@ -279,6 +279,10 @@ def wait_for_app_foreground(
         last_snapshot = dump_foreground_state(adb)
         if app_is_in_foreground(last_snapshot, app_id):
             return last_snapshot
+        if blocking_anr_package(last_snapshot.get("window", ""), app_id) is not None:
+            ui_root = parse_ui(dump_ui_xml(adb))
+            if dismiss_known_system_dialog(adb, ui_root, app_id=app_id):
+                continue
         time.sleep(0.5)
 
     window_snapshot = last_snapshot.get("window", "")
@@ -362,6 +366,36 @@ def find_node(root: ET.Element, selector: str) -> ET.Element | None:
     return None
 
 
+def blocking_anr_package(window_snapshot: str, app_id: str) -> str | None:
+    match = re.search(r"Application Not Responding: ([^}\n]+)", window_snapshot)
+    if match is None:
+        return None
+    package_name = match.group(1).strip()
+    if package_name == app_id:
+        return None
+    return package_name
+
+
+def dismiss_known_system_dialog(
+    adb: str,
+    root: ET.Element,
+    *,
+    app_id: str,
+) -> bool:
+    window_snapshot = dump_foreground_state(adb).get("window", "")
+    foreign_anr_package = blocking_anr_package(window_snapshot, app_id)
+    if foreign_anr_package is None:
+        return False
+
+    wait_button = find_node(root, "aerr_wait")
+    if wait_button is None:
+        return False
+
+    tap_selector(adb, wait_button)
+    time.sleep(0.5)
+    return True
+
+
 def parse_bounds(bounds: str) -> tuple[int, int, int, int]:
     match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", bounds)
     expect(match is not None, f"invalid bounds string in uiautomator dump: {bounds!r}")
@@ -378,6 +412,7 @@ def wait_for_selector(
     adb: str,
     selector: str,
     *,
+    app_id: str,
     artifact_dir: Path | None = None,
     timeout_s: float = 15.0,
 ) -> tuple[ET.Element, str]:
@@ -389,6 +424,8 @@ def wait_for_selector(
         node = find_node(root, selector)
         if node is not None:
             return node, last_xml
+        if dismiss_known_system_dialog(adb, root, app_id=app_id):
+            continue
         time.sleep(0.5)
     if artifact_dir is not None:
         latest_foreground = dump_foreground_state(adb)
@@ -407,6 +444,7 @@ def wait_for_text(
     selector: str,
     expected_text: str,
     *,
+    app_id: str,
     artifact_dir: Path | None = None,
     timeout_s: float = 15.0,
 ) -> tuple[ET.Element, str]:
@@ -418,6 +456,8 @@ def wait_for_text(
         node = find_node(root, selector)
         if node is not None and node.attrib.get("text") == expected_text:
             return node, last_xml
+        if dismiss_known_system_dialog(adb, root, app_id=app_id):
+            continue
         time.sleep(0.5)
     if artifact_dir is not None:
         latest_foreground = dump_foreground_state(adb)
@@ -482,6 +522,7 @@ def main() -> int:
     tap_button, before_tap_xml = wait_for_selector(
         adb,
         "tap-button",
+        app_id=app_id,
         artifact_dir=artifact_dir,
     )
     write_text(before_tap_dump_path, before_tap_xml)
@@ -499,6 +540,7 @@ def main() -> int:
         adb,
         "count-label",
         "Count: 1",
+        app_id=app_id,
         artifact_dir=artifact_dir,
     )
     write_text(after_tap_dump_path, after_tap_xml)

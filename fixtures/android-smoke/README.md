@@ -8,6 +8,7 @@ Current scope in this slice:
 - the compiler lowers that feature into an Android-targeted deterministic plan
 - `mar run-android-smoke` writes the generated `plan.json` and dispatches it through an explicit Android smoke runner boundary
 - the default runner script now drives an emulator-backed fixture session through `adb`: install, launch, tap, assert, dump UI hierarchy, and capture a screenshot
+- if a foreign Android `Application Not Responding` dialog (for example the launcher) obscures the fixture right after launch, the runner dismisses it with `Wait` and retries the selector poll instead of timing out on the system overlay
 
 Supported vocabulary for the canonical fixture feature:
 - `Given the app is launched`

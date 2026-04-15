@@ -521,6 +521,48 @@ mod tests {
     }
 
     #[test]
+    fn default_script_dismisses_foreign_anr_overlay_and_completes_smoke_run() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|path| path.parent())
+            .expect("workspace root should exist")
+            .to_path_buf();
+        let artifact_dir = temp_path("casgrain-android-foreign-anr-artifacts");
+        let apk_path = temp_path("casgrain-android-foreign-anr-apk").with_extension("apk");
+        let fake_adb_root = temp_path("casgrain-android-foreign-anr-adb");
+        fs::create_dir_all(&fake_adb_root).expect("fake adb root should exist");
+        fs::write(&apk_path, b"fake-apk").expect("fake apk should be written");
+        let adb = install_foreign_anr_overlay_adb(&fake_adb_root);
+        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_APK", &apk_path);
+            std::env::set_var("CASGRAIN_ANDROID_ADB", &adb);
+            std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
+            std::env::remove_var("CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS");
+        }
+
+        let trace = run_smoke_fixture_plan(&supported_smoke_plan())
+            .expect("default script should dismiss a foreign ANR overlay and continue");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_APK");
+            std::env::remove_var("CASGRAIN_ANDROID_ADB");
+            std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
+            std::env::remove_var("CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS");
+        }
+
+        assert_eq!(trace.status, mar_domain::RunStatus::Passed);
+        assert!(artifact_dir.join("ui-before-tap.xml").is_file());
+        assert!(artifact_dir.join("ui-after-tap.xml").is_file());
+    }
+
+    #[test]
     fn default_script_honors_explicit_activity_component_override() {
         let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .parent()
@@ -980,6 +1022,141 @@ if __name__ == "__main__":
             ),
         )
         .expect("misleading-foreground fake adb should be written");
+        let mut permissions = fs::metadata(&adb)
+            .expect("adb metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&adb, permissions).expect("adb should be executable");
+        adb
+    }
+
+    fn install_foreign_anr_overlay_adb(repo_root: &Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let adb = repo_root.join("foreign-anr-overlay-adb.py");
+        fs::write(
+            &adb,
+            format!(
+                r##"#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+STATE_PATH = Path({state_path:?})
+WAIT_BOUNDS = "[70,1300][1010,1426]"
+TAP_BOUNDS = "[100,200][300,320]"
+
+
+def load_state():
+    if STATE_PATH.is_file():
+        return json.loads(STATE_PATH.read_text())
+    return {{"foreground": False, "tapped": False, "anr_open": False}}
+
+
+def save_state(state):
+    STATE_PATH.write_text(json.dumps(state))
+
+
+def emit_ui(state):
+    if state.get("anr_open", False):
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy rotation="0">
+  <node index="0" text="" resource-id="" class="android.widget.FrameLayout" package="android" bounds="[28,983][1052,1489]">
+    <node index="0" text="Pixel Launcher isn't responding" resource-id="android:id/alertTitle" class="android.widget.TextView" package="android" bounds="[133,1072][947,1135]" />
+    <node index="1" text="Close app" resource-id="android:id/aerr_close" class="android.widget.Button" package="android" clickable="true" bounds="[70,1174][1010,1300]" />
+    <node index="2" text="Wait" resource-id="android:id/aerr_wait" class="android.widget.Button" package="android" clickable="true" bounds="[70,1300][1010,1426]" />
+  </node>
+</hierarchy>
+'''
+        sys.stdout.write(xml)
+        return
+
+    count = "Count: 1" if state.get("tapped", False) else "Count: 0"
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy rotation="0">
+  <node index="0" text="" resource-id="" class="android.widget.FrameLayout" package="hq.droussel.casgrain.smoke" bounds="[0,0][1080,2400]">
+    <node index="0" text="{{count}}" resource-id="hq.droussel.casgrain.smoke:id/count_label" class="android.widget.TextView" package="hq.droussel.casgrain.smoke" content-desc="count-label" bounds="[100,80][500,160]" />
+    <node index="1" text="Tap once" resource-id="hq.droussel.casgrain.smoke:id/tap_button" class="android.widget.Button" package="hq.droussel.casgrain.smoke" content-desc="tap-button" clickable="true" bounds="[100,200][300,320]" />
+  </node>
+</hierarchy>
+'''
+    sys.stdout.write(xml)
+
+
+def main():
+    args = sys.argv[1:]
+    state = load_state()
+
+    if args == ["wait-for-device"]:
+        return 0
+    if args == ["get-state"]:
+        print("device")
+        return 0
+    if args == ["shell", "getprop", "ro.product.model"]:
+        print("Pixel 8")
+        return 0
+    if args == ["shell", "getprop", "ro.build.version.release"]:
+        print("15")
+        return 0
+    if len(args) == 3 and args[0] == "install" and args[1] == "-r":
+        print("Success")
+        return 0
+    if len(args) == 4 and args[:3] == ["shell", "am", "force-stop"]:
+        return 0
+    if len(args) == 4 and args[:3] == ["shell", "pm", "clear"]:
+        state["foreground"] = False
+        state["tapped"] = False
+        state["anr_open"] = False
+        save_state(state)
+        print("Success")
+        return 0
+    if args == ["shell", "am", "start", "-W", "-n", "hq.droussel.casgrain.smoke/.MainActivity"]:
+        state["foreground"] = True
+        state["anr_open"] = True
+        save_state(state)
+        print("Status: ok")
+        return 0
+    if args == ["shell", "dumpsys", "window", "windows"]:
+        if state.get("anr_open", False):
+            print("mCurrentFocus=Window{{42 u0 Application Not Responding: com.google.android.apps.nexuslauncher}}")
+        elif state.get("foreground", False):
+            print("mCurrentFocus=Window{{42 u0 hq.droussel.casgrain.smoke/hq.droussel.casgrain.smoke.MainActivity}}")
+        else:
+            print("mCurrentFocus=Window{{42 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity}}")
+        return 0
+    if args == ["shell", "dumpsys", "activity", "activities"]:
+        if state.get("foreground", False):
+            print("ResumedActivity: ActivityRecord{{42 u0 hq.droussel.casgrain.smoke/.MainActivity t12}}")
+        else:
+            print("ResumedActivity: ActivityRecord{{42 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t1}}")
+        return 0
+    if args == ["shell", "uiautomator", "dump", "/sdcard/window_dump.xml"]:
+        print("UI hierchary dumped to: /sdcard/window_dump.xml")
+        return 0
+    if args == ["exec-out", "cat", "/sdcard/window_dump.xml"]:
+        emit_ui(state)
+        return 0
+    if len(args) == 5 and args[:3] == ["shell", "input", "tap"]:
+        if state.get("anr_open", False):
+            state["anr_open"] = False
+        else:
+            state["tapped"] = True
+        save_state(state)
+        return 0
+    if args == ["exec-out", "screencap", "-p"]:
+        sys.stdout.buffer.write(b"\x89PNG\r\n\x1a\nFAKE")
+        return 0
+
+    print(f"unsupported foreign-anr fake adb command: {{args}}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"##,
+                state_path = repo_root.join("foreign-anr-overlay-adb-state.json")
+            ),
+        )
+        .expect("foreign-anr fake adb should be written");
         let mut permissions = fs::metadata(&adb)
             .expect("adb metadata should exist")
             .permissions();
