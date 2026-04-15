@@ -6,6 +6,8 @@ Define a cheap, architecture-consistent security baseline for Casgrain before re
 
 This plan focuses on pull-request automation that is easy to maintain in a small Rust workspace while still giving contributors clear signals when they introduce risk.
 
+For the repo-wide OWASP-aligned audit checklist and CVE-triage operating baseline, see `docs/development/security-owasp-baseline.md`.
+
 ## Current baseline
 
 Casgrain already enforces these security checks in CI:
