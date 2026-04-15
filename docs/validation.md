@@ -7,8 +7,9 @@ This document is the canonical place for Casgrain validation rules and quality g
 Before merging work, run the required checks below unless the PR is explicitly scoped as a narrowly exempted docs-only or governance-only change and the reviewer accepts the exception.
 
 Repository reality today:
-- `main` is protected with required `rust-ci` and `security` status checks
+- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, and `cargo-deny-policy` status checks
 - expensive simulator/emulator smoke workflows are manual-only so unsolicited public PRs do not automatically burn minutes
+- CodeQL runs on PRs and `main` pushes as an always-on static-analysis baseline for Actions workflow logic and Rust code; keep it advisory until the workflow proves stable on this repo
 - PR authors and mergers must still avoid bypassing the merge gate just because an admin path exists
 
 Required checks:

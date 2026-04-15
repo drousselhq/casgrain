@@ -13,6 +13,7 @@ This is the live execution plan for Casgrain.
 - Keep the scope intentionally tiny: one fixture app, one scenario, one tap, one visible state change, one screenshot artifact.
 - Reuse the existing iOS smoke harness only as enabling infrastructure, not as the final proof.
 - Keep docs, validation, and governance aligned with the codebase.
+- Maintain a cheap always-on security baseline for public PRs; prefer Linux-hosted checks for default enforcement and keep macOS simulator runs scoped to real simulator-impacting changes.
 - Use the macOS iOS simulator workflow only for changes that may affect simulator interaction.
 
 ## Near-term priorities
