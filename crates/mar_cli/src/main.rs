@@ -481,7 +481,8 @@ mod tests {
             std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
         }
 
-        assert!(error.contains("validates the generated plan contract only"));
+        assert!(error.contains("missing Android smoke fixture APK"));
+        assert!(error.contains("CASGRAIN_ANDROID_SMOKE_APK"));
         assert!(artifact_dir.join("plan.json").is_file());
     }
 
