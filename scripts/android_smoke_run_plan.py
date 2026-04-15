@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 APP_ID_ENV = "CASGRAIN_ANDROID_SMOKE_APP_ID"
+ACTIVITY_ENV = "CASGRAIN_ANDROID_SMOKE_ACTIVITY"
 APK_ENV = "CASGRAIN_ANDROID_SMOKE_APK"
 ADB_ENV = "CASGRAIN_ANDROID_ADB"
 DEVICE_TIMEOUT_ENV = "CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS"
@@ -19,6 +20,8 @@ DEFAULT_APP_ID = "hq.droussel.casgrain.smoke"
 DEFAULT_APK = "fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk"
 DEFAULT_APK_GLOB = "fixtures/android-smoke/app/build/outputs/apk/debug/*.apk"
 DEFAULT_DEVICE_TIMEOUT_SECS = 20.0
+DEFAULT_LAUNCH_TIMEOUT_SECS = 20.0
+DEFAULT_MAIN_ACTIVITY = ".MainActivity"
 UI_DUMP_REMOTE_PATH = "/sdcard/window_dump.xml"
 
 
@@ -119,6 +122,15 @@ def resolve_app_id() -> str:
     return os.environ.get(APP_ID_ENV, DEFAULT_APP_ID)
 
 
+def resolve_launch_component(app_id: str) -> str:
+    configured = os.environ.get(ACTIVITY_ENV, DEFAULT_MAIN_ACTIVITY)
+    if "/" in configured:
+        return configured
+    if configured.startswith("."):
+        return f"{app_id}/{configured}"
+    return f"{app_id}/{configured}"
+
+
 def resolve_apk_path(repo_root: Path) -> Path:
     configured_path = os.environ.get(APK_ENV)
     if configured_path is not None:
@@ -204,7 +216,44 @@ def reset_fixture_app(adb: str, app_id: str) -> None:
 
 
 def launch_fixture_app(adb: str, app_id: str) -> None:
-    run_adb(adb, "shell", "monkey", "-p", app_id, "-c", "android.intent.category.LAUNCHER", "1")
+    run_adb(adb, "shell", "am", "start", "-W", "-n", resolve_launch_component(app_id))
+
+
+def dump_foreground_state(adb: str) -> str:
+    snapshots: list[str] = []
+    for label, command in (
+        ("window", ("shell", "dumpsys", "window", "windows")),
+        ("activity", ("shell", "dumpsys", "activity", "activities")),
+    ):
+        try:
+            output = run_adb(adb, *command).stdout.strip()
+        except SystemExit as error:
+            output = f"<failed to capture {label} state: {error}>"
+        snapshots.append(f"[{label}]\n{output}")
+    return "\n\n".join(snapshots)
+
+
+def app_is_in_foreground(snapshot: str, app_id: str) -> bool:
+    for line in snapshot.splitlines():
+        if any(
+            marker in line
+            for marker in ("mCurrentFocus", "mFocusedApp", "topResumedActivity", "ResumedActivity")
+        ) and app_id in line:
+            return True
+    return False
+
+
+def wait_for_app_foreground(adb: str, app_id: str, timeout_s: float = DEFAULT_LAUNCH_TIMEOUT_SECS) -> str:
+    deadline = time.monotonic() + timeout_s
+    last_snapshot = ""
+    while time.monotonic() < deadline:
+        last_snapshot = dump_foreground_state(adb)
+        if app_is_in_foreground(last_snapshot, app_id):
+            return last_snapshot
+        time.sleep(0.5)
+    raise SystemExit(
+        f"fixture app {app_id!r} did not reach the foreground after launch; latest focus state:\n{last_snapshot}"
+    )
 
 
 def dump_ui_xml(adb: str) -> str:
@@ -325,6 +374,7 @@ def main() -> int:
     install_fixture_app(adb, apk_path)
     reset_fixture_app(adb, app_id)
     launch_fixture_app(adb, app_id)
+    wait_for_app_foreground(adb, app_id)
 
     tap_button, before_tap_xml = wait_for_selector(adb, "tap-button")
     write_text(before_tap_dump_path, before_tap_xml)

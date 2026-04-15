@@ -424,6 +424,92 @@ mod tests {
         assert!(error.message.contains("wait-for-device timed out"));
     }
 
+    #[test]
+    fn default_script_fails_when_fixture_app_never_reaches_foreground() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|path| path.parent())
+            .expect("workspace root should exist")
+            .to_path_buf();
+        let artifact_dir = temp_path("casgrain-android-foreground-timeout-artifacts");
+        let apk_path = temp_path("casgrain-android-foreground-timeout-apk").with_extension("apk");
+        let fake_adb_root = temp_path("casgrain-android-foreground-timeout-adb");
+        fs::create_dir_all(&fake_adb_root).expect("fake adb root should exist");
+        fs::write(&apk_path, b"fake-apk").expect("fake apk should be written");
+        let adb = install_never_foregrounds_adb(&fake_adb_root);
+        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_APK", &apk_path);
+            std::env::set_var("CASGRAIN_ANDROID_ADB", &adb);
+            std::env::set_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS", "0.1");
+        }
+
+        let error = run_smoke_fixture_plan(&supported_smoke_plan())
+            .expect_err("default script should fail when the fixture app never becomes foreground");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_APK");
+            std::env::remove_var("CASGRAIN_ANDROID_ADB");
+            std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
+        }
+
+        assert_eq!(error.code, FailureCode::EngineError);
+        assert!(error.message.contains("did not reach the foreground"));
+        assert!(error.message.contains("mCurrentFocus"));
+        assert!(error
+            .message
+            .contains("com.google.android.apps.nexuslauncher"));
+    }
+
+    #[test]
+    fn default_script_honors_explicit_activity_component_override() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|path| path.parent())
+            .expect("workspace root should exist")
+            .to_path_buf();
+        let artifact_dir = temp_path("casgrain-android-explicit-activity-artifacts");
+        let apk_path = temp_path("casgrain-android-explicit-activity-apk").with_extension("apk");
+        let fake_adb_root = temp_path("casgrain-android-explicit-activity-adb");
+        fs::create_dir_all(&fake_adb_root).expect("fake adb root should exist");
+        fs::write(&apk_path, b"fake-apk").expect("fake apk should be written");
+        let adb = install_fake_adb(&fake_adb_root);
+        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_APK", &apk_path);
+            std::env::set_var("CASGRAIN_ANDROID_ADB", &adb);
+            std::env::set_var(
+                "CASGRAIN_ANDROID_SMOKE_ACTIVITY",
+                "hq.droussel.casgrain.smoke/.MainActivity",
+            );
+            std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
+        }
+
+        let trace = run_smoke_fixture_plan(&supported_smoke_plan())
+            .expect("default script should accept an explicit launch component override");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_APK");
+            std::env::remove_var("CASGRAIN_ANDROID_ADB");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ACTIVITY");
+            std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
+        }
+
+        assert_eq!(trace.status, mar_domain::RunStatus::Passed);
+    }
+
     fn supported_smoke_plan() -> ExecutablePlan {
         ExecutablePlan {
             plan_id: "increment-the-counter-once".into(),
@@ -590,15 +676,26 @@ BOUNDS = "[100,200][300,320]"
 def load_state():
     if STATE_PATH.is_file():
         return json.loads(STATE_PATH.read_text())
-    return {{"tapped": False}}
+    return {{"tapped": False, "foreground": False}}
 
 
 def save_state(state):
     STATE_PATH.write_text(json.dumps(state))
 
 
-def emit_ui(tapped: bool):
-    count = "Count: 1" if tapped else "Count: 0"
+def emit_ui(state):
+    if not state.get("foreground", False):
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy rotation="0">
+  <node index="0" text="" resource-id="" class="android.widget.FrameLayout" package="com.google.android.apps.nexuslauncher" bounds="[0,0][1080,2400]">
+    <node index="0" text="Pixel Launcher" resource-id="com.google.android.apps.nexuslauncher:id/home" class="android.widget.FrameLayout" package="com.google.android.apps.nexuslauncher" bounds="[0,0][1080,2400]" />
+  </node>
+</hierarchy>
+'''
+        sys.stdout.write(xml)
+        return
+
+    count = "Count: 1" if state.get("tapped", False) else "Count: 0"
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <hierarchy rotation="0">
   <node index="0" text="" resource-id="" class="android.widget.FrameLayout" package="hq.droussel.casgrain.smoke" bounds="[0,0][1080,2400]">
@@ -632,8 +729,26 @@ def main():
         return 0
     if len(args) == 4 and args[:3] == ["shell", "pm", "clear"]:
         state["tapped"] = False
+        state["foreground"] = False
         save_state(state)
         print("Success")
+        return 0
+    if args == ["shell", "am", "start", "-W", "-n", "hq.droussel.casgrain.smoke/.MainActivity"]:
+        state["foreground"] = True
+        save_state(state)
+        print("Status: ok")
+        return 0
+    if args == ["shell", "dumpsys", "window", "windows"]:
+        if state.get("foreground", False):
+            print("mCurrentFocus=Window{{42 u0 hq.droussel.casgrain.smoke/hq.droussel.casgrain.smoke.MainActivity}}")
+        else:
+            print("mCurrentFocus=Window{{42 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity}}")
+        return 0
+    if args == ["shell", "dumpsys", "activity", "activities"]:
+        if state.get("foreground", False):
+            print("ResumedActivity: ActivityRecord{{42 u0 hq.droussel.casgrain.smoke/.MainActivity t12}}")
+        else:
+            print("ResumedActivity: ActivityRecord{{42 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t1}}")
         return 0
     if args[:2] == ["shell", "monkey"]:
         print("Events injected: 1")
@@ -642,7 +757,7 @@ def main():
         print("UI hierchary dumped to: /sdcard/window_dump.xml")
         return 0
     if args == ["exec-out", "cat", "/sdcard/window_dump.xml"]:
-        emit_ui(state["tapped"])
+        emit_ui(state)
         return 0
     if len(args) == 5 and args[:3] == ["shell", "input", "tap"]:
         state["tapped"] = True
@@ -663,6 +778,78 @@ if __name__ == "__main__":
             ),
         )
         .expect("fake adb should be written");
+        let mut permissions = fs::metadata(&adb)
+            .expect("adb metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&adb, permissions).expect("adb should be executable");
+        adb
+    }
+
+    fn install_never_foregrounds_adb(repo_root: &Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let adb = repo_root.join("never-foreground-adb.py");
+        fs::write(
+            &adb,
+            format!(
+                r##"#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+STATE_PATH = Path({state_path:?})
+
+
+def load_state():
+    if STATE_PATH.is_file():
+        return json.loads(STATE_PATH.read_text())
+    return {{"foreground": False}}
+
+
+def save_state(state):
+    STATE_PATH.write_text(json.dumps(state))
+
+
+def main():
+    args = sys.argv[1:]
+    state = load_state()
+
+    if args == ["wait-for-device"]:
+        return 0
+    if args == ["get-state"]:
+        print("device")
+        return 0
+    if len(args) == 3 and args[0] == "install" and args[1] == "-r":
+        print("Success")
+        return 0
+    if len(args) == 4 and args[:3] == ["shell", "am", "force-stop"]:
+        return 0
+    if len(args) == 4 and args[:3] == ["shell", "pm", "clear"]:
+        state["foreground"] = False
+        save_state(state)
+        print("Success")
+        return 0
+    if args == ["shell", "am", "start", "-W", "-n", "hq.droussel.casgrain.smoke/.MainActivity"]:
+        print("Status: ok")
+        return 0
+    if args == ["shell", "dumpsys", "window", "windows"]:
+        print("mCurrentFocus=Window{{42 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity}}")
+        return 0
+    if args == ["shell", "dumpsys", "activity", "activities"]:
+        print("ResumedActivity: ActivityRecord{{42 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t1}}")
+        return 0
+
+    print(f"unsupported never-foreground fake adb command: {{args}}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"##,
+                state_path = repo_root.join("never-foreground-adb-state.json")
+            ),
+        )
+        .expect("never-foreground fake adb should be written");
         let mut permissions = fs::metadata(&adb)
             .expect("adb metadata should exist")
             .permissions();

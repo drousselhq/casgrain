@@ -32,6 +32,7 @@ Runtime prerequisites for the default harness:
 - a debug APK for `fixtures/android-smoke/app/` exists under `fixtures/android-smoke/app/build/outputs/apk/debug/` (the runner prefers `app-debug.apk` when present and otherwise auto-discovers a single `*.apk` there), or `CASGRAIN_ANDROID_SMOKE_APK` points at the built APK
 - optionally set `CASGRAIN_ANDROID_ADB` if `adb` is not on `PATH`
 - optionally set `CASGRAIN_ANDROID_SMOKE_APP_ID` to override the default package id `hq.droussel.casgrain.smoke`
+- optionally set `CASGRAIN_ANDROID_SMOKE_ACTIVITY` to override the launcher activity component or suffix (defaults to `.MainActivity` for the in-repo fixture app)
 - optionally set `CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS` to control how long the runner waits for `adb wait-for-device` before failing fast
 
 Artifacts emitted by the default harness:
