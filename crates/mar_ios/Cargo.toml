@@ -9,4 +9,5 @@ repository.workspace = true
 
 [dependencies]
 mar_domain = { path = "../mar_domain" }
+serde_json.workspace = true
 

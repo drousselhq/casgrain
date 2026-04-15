@@ -23,5 +23,15 @@ final class CasgrainSmokeUITests: XCTestCase {
         attachment.name = "CasgrainSmoke-count-1"
         attachment.lifetime = .keepAlways
         add(attachment)
+
+        if let screenshotPath = ProcessInfo.processInfo.environment["CASGRAIN_SMOKE_SCREENSHOT_PATH"],
+           !screenshotPath.isEmpty {
+            let destinationURL = URL(fileURLWithPath: screenshotPath)
+            try? FileManager.default.createDirectory(
+                at: destinationURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try? screenshot.pngRepresentation.write(to: destinationURL)
+        }
     }
 }

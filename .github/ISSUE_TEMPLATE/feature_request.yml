@@ -1,8 +1,6 @@
 name: Feature request
 description: Propose a feature or improvement for Casgrain
 title: "feat: "
-labels:
-  - enhancement
 body:
   - type: textarea
     id: problem
