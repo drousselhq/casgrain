@@ -29,6 +29,32 @@ All automation agents operating in this repository should:
 - stop when a proposed change would alter product behavior, developer experience, or architecture in a meaningful way
 - record discovered follow-up work in GitHub Issues instead of leaving it implicit in chat logs or PR comments
 
+## Workflow-state labels
+
+Casgrain uses GitHub labels as durable workflow state.
+
+Core execution labels:
+- `ready-for-dev` — released into autonomous execution; this is a release-state label, not a routing label
+- `devops` — routing label for repository infrastructure, CI, workflow, security-posture, release-automation, and settings-adjacent work
+- `in-dev` — actively being implemented
+- `needs-qa` — ready for independent QA validation
+- `qa-failed` — QA found a blocking problem
+- `qa-passed` — QA validated the scoped change
+- `po-approved` — product-owner proxy approved the PR for merge when the remaining gates are green
+- `blocked` — waiting on another issue, repo capability, or external dependency
+- `waiting-on-human` — waiting on explicit human action outside the repo automation workflow
+
+Stewardship labels:
+- `docs-needed`, `docs-approved`, `docs-blocked`
+- `security-review-needed`, `security-approved`, `security-blocked`
+
+Routing rule:
+- the general Dev Delivery Agent may only pick issues labeled `ready-for-dev` that do not have `devops`
+- the DevOps Agent may only pick issues labeled both `ready-for-dev` and `devops`
+- if an issue is unlabeled, it is backlog only and is not yet released into execution
+
+Use GitHub-native relationship metadata (`Blocked by`, `blocking`, Parent/sub-issue) to express true dependencies whenever GitHub can represent them directly. Labels and comments should reflect that state clearly, not replace it.
+
 ## Human and agent boundaries
 
 Humans remain responsible for:
