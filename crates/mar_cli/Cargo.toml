@@ -7,6 +7,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[[bin]]
+name = "casgrain"
+path = "src/main.rs"
+
 [dependencies]
 mar_android = { path = "../mar_android" }
 mar_application = { path = "../mar_application" }

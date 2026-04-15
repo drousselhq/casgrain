@@ -121,7 +121,7 @@ Purpose:
 Status:
 - partially implemented
 - the first iOS fixture-app smoke path now exists under `fixtures/ios-smoke/`
-- the macOS `ios-simulator-smoke` workflow now runs the generated-plan `mar run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
+- the macOS `ios-simulator-smoke` workflow now runs the generated-plan `casgrain run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
 - Android parity remains deferred until the iOS contracts and first generated-plan vertical slice stabilize
 
 Current strategy:

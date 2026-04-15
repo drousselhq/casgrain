@@ -7,6 +7,8 @@ use mar_domain::{CompilationDiagnostic, ExecutionTrace};
 use mar_ios::run_smoke_fixture_plan;
 use mar_runner::{mock::MockDeviceEngine, DeterministicRunner};
 
+const CLI_NAME: &str = "casgrain";
+
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
     match run(args) {
@@ -89,7 +91,9 @@ fn trace_json_requested(args: &[String]) -> bool {
 }
 
 fn usage() -> String {
-    "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]\n  mar run-android-smoke <feature-file> [--trace-json]".into()
+    format!(
+        "usage:\n  {CLI_NAME} compile <feature-file>\n  {CLI_NAME} run-mock <feature-file> [--trace-json]\n  {CLI_NAME} run-ios-smoke <feature-file> [--trace-json]\n  {CLI_NAME} run-android-smoke <feature-file> [--trace-json]"
+    )
 }
 
 fn read_source(path: &str) -> Result<String, String> {
@@ -222,7 +226,7 @@ mod tests {
 
         assert_eq!(
             usage,
-            "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]\n  mar run-android-smoke <feature-file> [--trace-json]"
+            "usage:\n  casgrain compile <feature-file>\n  casgrain run-mock <feature-file> [--trace-json]\n  casgrain run-ios-smoke <feature-file> [--trace-json]\n  casgrain run-android-smoke <feature-file> [--trace-json]"
         );
     }
 

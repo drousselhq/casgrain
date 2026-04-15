@@ -6,7 +6,7 @@ Current scope in this slice:
 - `features/tap_counter.feature` is the canonical Android tap-counter scenario
 - `app/` is the minimal Android fixture app source tree that exposes the canonical `tap-button` and `count-label` accessibility identifiers
 - the compiler lowers that feature into an Android-targeted deterministic plan
-- `mar run-android-smoke` writes the generated `plan.json` and dispatches it through an explicit Android smoke runner boundary
+- `casgrain run-android-smoke` writes the generated `plan.json` and dispatches it through an explicit Android smoke runner boundary
 - the default runner script now drives an emulator-backed fixture session through `adb`: install, launch, tap, assert, dump UI hierarchy, and capture a screenshot
 - if a foreign Android `Application Not Responding` dialog (for example the launcher) obscures the fixture right after launch, the runner dismisses it with `Wait` and retries the selector poll instead of timing out on the system overlay
 
@@ -19,13 +19,13 @@ Supported vocabulary for the canonical fixture feature:
 Compile the canonical Android fixture feature into a deterministic plan from the repo root:
 
 ```bash
-cargo run -p mar_cli -- compile fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- compile fixtures/android-smoke/features/tap_counter.feature
 ```
 
 Dispatch the Android smoke path from the repo root:
 
 ```bash
-cargo run -p mar_cli -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
 ```
 
 Runtime prerequisites for the default harness:
@@ -51,6 +51,6 @@ Failure diagnostics emitted when the real emulator path cannot find the expected
 - `ui-last.xml`
 
 CI proof path:
-- `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, enables `/dev/kvm` access on the hosted Ubuntu runner so the x86_64 emulator can boot with hardware acceleration, runs `mar run-android-smoke`, and uploads the emitted artifacts as `casgrain-android-smoke`
+- `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, enables `/dev/kvm` access on the hosted Ubuntu runner so the x86_64 emulator can boot with hardware acceleration, runs `casgrain run-android-smoke`, and uploads the emitted artifacts as `casgrain-android-smoke`
 
 The runner stays honest about prerequisites: if `adb` is unavailable, no emulator is ready, or the APK is missing, the command fails with a concrete message instead of pretending to execute the smoke slice.
