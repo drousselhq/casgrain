@@ -73,50 +73,14 @@ That makes Casgrain less about “another mobile test DSL” and more about “a
 
 ## How Casgrain differs
 
-Casgrain is not trying to pretend Appium and Maestro are bad tools.
-They solve real problems well.
-The point is that Casgrain is drawing the boundary in a different place.
+Casgrain is not trying to out-Appium Appium or out-Maestro Maestro.
+It is drawing the boundary in a different place:
 
-### Compared with Appium
+- **Appium** gives you a flexible WebDriver-based automation ecosystem
+- **Maestro** gives you fast, human-friendly interpreted flows
+- **Casgrain** is being built around compiled execution plans, deterministic runtime behavior, and structured traces for local dev, CI, and agent workflows
 
-From Appium's own documentation, Appium is a WebDriver-based automation framework with modular drivers, plugins, and clients across multiple programming languages.
-That is a powerful model when you want broad protocol compatibility and low-level control.
-
-Casgrain is aiming at a different center of gravity:
-- Appium centers the WebDriver automation stack; Casgrain centers a compiled execution-plan model
-- Appium exposes a flexible driver/client ecosystem; Casgrain tries to make the executable artifact itself the stable contract
-- Appium is excellent when you want to script automation with your preferred language and framework; Casgrain is being shaped for deterministic replay, plan validation, and structured evidence flows first
-
-### Compared with Maestro
-
-Maestro is the closest open-source comparison in spirit.
-Its README explicitly emphasizes human-readable YAML flows, an interpreted execution engine, and fast local authoring across mobile platforms.
-That is a strong developer experience story.
-
-Casgrain's main difference is that it is not treating the authoring format as the runtime substrate.
-Instead, Casgrain is being built around:
-- compilation from Gherkin or derived scenarios into a canonical `ExecutablePlan`
-- deterministic execution from that explicit plan
-- structured trace and artifact objects as first-class outputs
-- agent assistance in authoring, inspection, and repair without putting an LLM in the runtime path
-
-### The short version
-
-If you want a concise positioning statement:
-
-- Appium is a flexible WebDriver-based automation ecosystem
-- Maestro is a fast, human-friendly interpreted flow runner
-- Casgrain is being built as a deterministic, plan-driven mobile execution system for local dev, CI, and agent workflows
-
-### Practical differentiators Casgrain is optimizing for
-
-- **Compiled execution plans** instead of treating the authoring format as the execution substrate
-- **Deterministic runtime semantics** with explicit steps, guards, waits, assertions, and failure policy
-- **Structured outputs first** so machines and agents can consume the results without scraping pretty text
-- **Traceable repair workflows** where failures point to concrete artifacts and runtime evidence
-- **One core model across local CLI, CI, and future agent workflows**
-- **LLM-free runtime execution** even when LLMs help with authoring, exploration, or repair
-
+In short: Casgrain is a deterministic, plan-driven mobile execution system — not just another mobile test DSL.
 ## What Casgrain does today
 
 Today, the repository already demonstrates the core shape of that approach:
