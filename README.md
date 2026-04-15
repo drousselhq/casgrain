@@ -1,4 +1,33 @@
-# Casgrain
+<h1 align="center">Casgrain</h1>
+
+<p align="center">
+  <strong>An open-source mobile automation runtime for deterministic execution, structured traces, and agent-assisted repair.</strong><br/>
+  Compile Gherkin into explicit execution plans, run them locally or in CI, and keep LLMs out of the runtime path.
+</p>
+
+<p align="center">
+  <a href="https://github.com/drousselhq/casgrain/stargazers">
+    <img src="https://img.shields.io/github/stars/drousselhq/casgrain?style=flat" alt="GitHub stars" />
+  </a>
+  <a href="https://github.com/drousselhq/casgrain/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/drousselhq/casgrain?style=flat" alt="License" />
+  </a>
+  <a href="https://github.com/drousselhq/casgrain/actions/workflows/rust-ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/drousselhq/casgrain/rust-ci.yml?branch=main&label=rust-ci" alt="Rust CI workflow" />
+  </a>
+  <a href="https://github.com/drousselhq/casgrain/actions/workflows/security.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/drousselhq/casgrain/security.yml?branch=main&label=security" alt="Security workflow" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="#why-casgrain">Why</a> •
+  <a href="#how-casgrain-differs">How it differs</a> •
+  <a href="#what-casgrain-does-today">What it does today</a> •
+  <a href="#quick-start">Quick start</a> •
+  <a href="#architecture-at-a-glance">Architecture</a> •
+  <a href="#contributing">Contributing</a>
+</p>
 
 Casgrain is an open-source mobile automation runtime for iOS simulators and Android emulators.
 
@@ -9,67 +38,103 @@ It is being built for three first-class use cases from day one:
 
 The project is named in honour of Thérèse Casgrain.
 
-## Why Casgrain exists
+> [!IMPORTANT]
+> Casgrain is early, but it is no longer docs-only.
+> The repo already contains a Rust workspace, a canonical `ExecutablePlan` IR, a Gherkin-to-plan compiler scaffold, a deterministic mock runner, and an iOS smoke CLI slice that emits structured trace/artifact output.
+> It is best understood today as an actively built foundation, not yet as a production-ready replacement for Appium or Maestro.
 
-Existing mobile automation tools often force a trade-off:
-- good for CI, but painful for local developers
-- good for manual authoring, but weak for autonomous agents
-- easy to start, but hard to trust when tests become important
+## Table of Contents
 
-Casgrain aims to be different:
-- deterministic execution for CI trust
-- agent-native interfaces without putting an LLM in the execution path
-- clean architecture from the start
-- artifact-rich traces for debugging and repair
+- [Why Casgrain](#why-casgrain)
+- [How Casgrain differs](#how-casgrain-differs)
+- [What Casgrain does today](#what-casgrain-does-today)
+- [Quick start](#quick-start)
+- [Current project status](#current-project-status)
+- [Architecture at a glance](#architecture-at-a-glance)
+- [Repository guide](#repository-guide)
+- [Future UI rule](#future-ui-rule)
+- [Contributing](#contributing)
+- [License](#license)
 
-## What Casgrain does
+## Why Casgrain
 
-Casgrain is intended to compile high-level specifications into explicit executable plans, then run those plans against mobile targets through platform adapters.
+Existing mobile automation tools are strong in different places, but teams still tend to feel a gap between:
+- a workflow that is pleasant for local developers
+- a runtime they can trust in CI
+- an interface that autonomous agents can inspect and operate safely
 
-Conceptually:
-1. author or generate a spec
+Casgrain exists to close that gap with a stricter execution boundary:
+- human or agent-authored input can start as Gherkin or observed behavior
+- Casgrain compiles that input into an explicit deterministic execution plan
+- the runtime executes the plan without an LLM deciding the next step
+- every run produces structured traces and artifacts that can be replayed, archived, and analyzed
+
+That makes Casgrain less about “another mobile test DSL” and more about “a deterministic execution substrate for mobile product flows.”
+
+## How Casgrain differs
+
+Casgrain is not trying to pretend Appium and Maestro are bad tools.
+They solve real problems well.
+The point is that Casgrain is drawing the boundary in a different place.
+
+### Compared with Appium
+
+From Appium's own documentation, Appium is a WebDriver-based automation framework with modular drivers, plugins, and clients across multiple programming languages.
+That is a powerful model when you want broad protocol compatibility and low-level control.
+
+Casgrain is aiming at a different center of gravity:
+- Appium centers the WebDriver automation stack; Casgrain centers a compiled execution-plan model
+- Appium exposes a flexible driver/client ecosystem; Casgrain tries to make the executable artifact itself the stable contract
+- Appium is excellent when you want to script automation with your preferred language and framework; Casgrain is being shaped for deterministic replay, plan validation, and structured evidence flows first
+
+### Compared with Maestro
+
+Maestro is the closest open-source comparison in spirit.
+Its README explicitly emphasizes human-readable YAML flows, an interpreted execution engine, and fast local authoring across mobile platforms.
+That is a strong developer experience story.
+
+Casgrain's main difference is that it is not treating the authoring format as the runtime substrate.
+Instead, Casgrain is being built around:
+- compilation from Gherkin or derived scenarios into a canonical `ExecutablePlan`
+- deterministic execution from that explicit plan
+- structured trace and artifact objects as first-class outputs
+- agent assistance in authoring, inspection, and repair without putting an LLM in the runtime path
+
+### The short version
+
+If you want a concise positioning statement:
+
+- Appium is a flexible WebDriver-based automation ecosystem
+- Maestro is a fast, human-friendly interpreted flow runner
+- Casgrain is being built as a deterministic, plan-driven mobile execution system for local dev, CI, and agent workflows
+
+### Practical differentiators Casgrain is optimizing for
+
+- **Compiled execution plans** instead of treating the authoring format as the execution substrate
+- **Deterministic runtime semantics** with explicit steps, guards, waits, assertions, and failure policy
+- **Structured outputs first** so machines and agents can consume the results without scraping pretty text
+- **Traceable repair workflows** where failures point to concrete artifacts and runtime evidence
+- **One core model across local CLI, CI, and future agent workflows**
+- **LLM-free runtime execution** even when LLMs help with authoring, exploration, or repair
+
+## What Casgrain does today
+
+Today, the repository already demonstrates the core shape of that approach:
+
+- a Rust workspace with domain, compiler, runner, application, and CLI crates
+- a canonical `ExecutablePlan` IR
+- selector, action, assertion, wait, artifact, and trace domain models
+- a minimal Gherkin-to-test-plan compiler scaffold
+- a deterministic mock runner
+- a real iOS smoke CLI path that writes `plan.json` and emits structured trace/artifact output
+- CI validation, security scanning, and coverage gating
+
+Conceptually, Casgrain works like this:
+1. author or generate a scenario
 2. compile it into a deterministic execution plan
 3. run the plan on a simulator or emulator
 4. collect traces, artifacts, and structured results
 5. use those results for debugging, repair, or regression testing
-
-## Current project status
-
-Casgrain is early, but no longer docs-only.
-
-Implemented foundation already in the repo:
-- Rust workspace with domain, compiler, runner, application, and CLI crates
-- canonical `ExecutablePlan` IR
-- selector, action, assertion, wait, artifact, and trace domain models
-- minimal Gherkin-to-test-plan compiler scaffold
-- fake deterministic runner with unit tests
-- CI validation, security scanning, and coverage gating
-
-Not implemented yet:
-- real iOS simulator adapter
-- real Android emulator adapter
-- fixture-app-backed end-to-end integration tests
-- stable public CLI/API surface
-
-So today, Casgrain is best understood as an actively built foundation rather than a production-ready mobile runner.
-
-## Architecture at a glance
-
-Core direction:
-- Rust for deterministic core logic
-- Swift for iOS-native adapter work where needed
-- Kotlin/Java for Android-native adapter work where needed
-
-Layering:
-- `mar_domain` — canonical execution-plan and runtime contracts
-- `mar_application` — use-case boundaries and validation
-- `mar_compiler` — spec lowering into executable plans
-- `mar_runner` — deterministic execution against a `DeviceEngine`
-- `mar_cli` — CLI entrypoints
-
-Important constraint:
-- LLMs may assist with authoring, exploration, or repair
-- LLMs are not part of the deterministic execution path
 
 ## Quick start
 
@@ -92,23 +157,23 @@ cargo install cargo-audit --version 0.22.1 --locked
 cargo install cargo-deny --version 0.18.3 --locked
 ```
 
-## Build
+### Build
 
 ```bash
-git clone https://github.com/drousselbot/casgrain.git
+git clone https://github.com/drousselhq/casgrain.git
 cd casgrain
 cargo build --workspace
 ```
 
-## Run the current CLI scaffold
+### Try the current CLI
 
-Compile the current product spec into the JSON test plan format:
+Compile the current product spec into the JSON plan format:
 
 ```bash
 cargo run -p mar_cli -- compile docs/specs/casgrain-product-spec.md
 ```
 
-Run an end-to-end deterministic mock demo from the product spec to execution trace summary:
+Run the deterministic mock path from spec to execution trace summary:
 
 ```bash
 cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md
@@ -120,19 +185,19 @@ Run the first fixture-specific iOS CLI slice against the canonical smoke feature
 cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
 ```
 
-If you want machine-readable trace output for CI/archive use:
+If you want machine-readable trace output:
 
 ```bash
 cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json
 ```
 
-If you want the full execution trace as JSON instead of the human summary for the mock path:
+If you want the full mock execution trace as JSON instead of the human summary:
 
 ```bash
 cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md --trace-json
 ```
 
-## Example output flow
+### Example authoring shape
 
 Given an input like:
 
@@ -145,42 +210,48 @@ Feature: Login
     Then the home screen is visible
 ```
 
-The current compiler scaffold lowers that into a structured JSON plan with explicit steps, actions, waits, and assertions.
+Casgrain's intended shape is:
+- keep the feature readable at the authoring layer
+- lower it into an explicit plan with stable step IDs, actions, waits, and assertions
+- run that plan deterministically
+- preserve structured evidence from the run
 
-## Development workflow
+## Current project status
 
-Run the local validation suite before opening or merging a PR. See `docs/validation.md` for the canonical checks.
+Implemented foundation already in the repo:
+- Rust workspace with domain, compiler, runner, application, and CLI crates
+- canonical `ExecutablePlan` IR
+- selector, action, assertion, wait, artifact, and trace domain models
+- minimal Gherkin-to-test-plan compiler scaffold
+- fake deterministic runner with unit tests
+- CI validation, security scanning, and coverage gating
+- first fixture-specific iOS smoke path through `mar run-ios-smoke`
 
-## CI quality gates
+Not implemented yet:
+- real general-purpose iOS simulator adapter
+- real Android emulator adapter
+- fixture-app-backed end-to-end breadth beyond the current smoke slice
+- stable public CLI/API surface
 
-Current CI checks are designed to stay cheap enough for fast iteration while still catching obvious regressions.
+So today, Casgrain is best understood as an actively built foundation rather than a production-ready mobile runner.
 
-Every PR should be green on:
-- formatting (`rustfmt`)
-- linting (`clippy -D warnings`)
-- workspace tests
-- line coverage threshold
-- `cargo audit`
-- `gitleaks dir .`
-- `cargo deny check licenses sources`
+## Architecture at a glance
 
-## Install strategy
+Core direction:
+- Rust for deterministic core logic
+- Swift for iOS-native adapter work where needed
+- Kotlin/Java for Android-native adapter work where needed
 
-Casgrain is not yet packaged as a stable released binary.
+Layering:
+- `mar_domain` — canonical execution-plan and runtime contracts
+- `mar_application` — use-case boundaries and validation
+- `mar_compiler` — spec lowering into executable plans
+- `mar_runner` — deterministic execution against a `DeviceEngine`
+- `mar_cli` — CLI entrypoints
 
-For now, installation means cloning the repository and building from source:
-
-```bash
-git clone https://github.com/drousselbot/casgrain.git
-cd casgrain
-cargo build --release
-```
-
-Future install targets may include:
-- `cargo install`
-- Homebrew
-- prebuilt binaries
-- CI-friendly container images
+Important constraint:
+- LLMs may assist with authoring, exploration, or repair
+- LLMs are not part of the deterministic execution path
 
 ## Repository guide
 
@@ -202,6 +273,7 @@ Important files and directories:
 - `docs/branding/` — naming exploration and product naming context
 - `docs/plans/current-plan.md` — live execution plan
 - `docs/specs/casgrain-product-spec.md` — canonical product behavior spec
+- `fixtures/ios-smoke/` — smallest honest iOS simulator-backed smoke slice
 - `crates/` — Rust implementation
 - `.github/workflows/` — CI and security automation
 
