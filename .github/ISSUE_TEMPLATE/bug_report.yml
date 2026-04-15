@@ -64,7 +64,7 @@ body:
       label: Steps to reproduce
       description: Include the smallest reproducible sequence.
       placeholder: |
-        1. Run `cargo run -p mar_cli -- compile docs/gherkin/example.feature`
+        1. Run `cargo run -p casgrain -- compile docs/gherkin/example.feature`
         2. Observe the failure after step 3.
     validations:
       required: true

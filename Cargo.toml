@@ -1,12 +1,12 @@
 [workspace]
 members = [
-  "crates/mar_domain",
-  "crates/mar_application",
-  "crates/mar_compiler",
-  "crates/mar_runner",
-  "crates/mar_ios",
-  "crates/mar_android",
-  "crates/mar_cli",
+  "crates/domain",
+  "crates/application",
+  "crates/compiler",
+  "crates/runner",
+  "crates/ios",
+  "crates/android",
+  "crates/casgrain",
 ]
 resolver = "2"
 

@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use mar_domain::{CompilationDiagnostic, DiagnosticSeverity, ExecutablePlan};
+use domain::{CompilationDiagnostic, DiagnosticSeverity, ExecutablePlan};
 
 pub trait PlanCompiler {
     fn compile(
@@ -50,7 +50,7 @@ pub fn validate_plan(plan: &ExecutablePlan) -> Result<(), Vec<CompilationDiagnos
 
 #[cfg(test)]
 mod tests {
-    use mar_domain::{
+    use domain::{
         ActionKind, ArtifactPolicy, CapabilitySet, ExecutablePlan, ExecutionDefaults,
         FailurePolicy, PlanFormatVersion, PlanSource, PlanStep, RetryPolicy, SourceKind,
         StepIntent, TargetPlatform, TargetProfile,

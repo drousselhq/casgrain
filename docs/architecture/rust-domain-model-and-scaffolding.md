@@ -224,21 +224,21 @@ Failure report should explicitly capture:
 Recommended workspace:
 
 - `Cargo.toml`
-- `crates/mar_domain`
-- `crates/mar_application`
-- `crates/mar_compiler`
-- `crates/mar_runner`
-- `crates/mar_infra_fs`
-- `crates/mar_infra_iossim`
-- `crates/mar_infra_android`
-- `crates/mar_cli`
+- `crates/domain`
+- `crates/application`
+- `crates/compiler`
+- `crates/runner`
+- `crates/infra_fs`
+- `crates/infra_iossim`
+- `crates/infra_android`
+- `crates/casgrain`
 - `fixtures/`
 - `tests/golden/`
 - `tests/integration/`
 
 Suggested module layout:
 
-### `crates/mar_domain/src/lib.rs`
+### `crates/domain/src/lib.rs`
 - `plan/`
   - `executable_plan.rs`
   - `step.rs`
@@ -271,14 +271,14 @@ Suggested module layout:
 - `ids.rs`
 - `time.rs`
 
-### `crates/mar_application/src/lib.rs`
+### `crates/application/src/lib.rs`
 - `compile_plan.rs`
 - `run_plan.rs`
 - `collect_artifacts.rs`
 - `repair_context.rs`
 - `exploration_session.rs`
 
-### `crates/mar_compiler/src/lib.rs`
+### `crates/compiler/src/lib.rs`
 - `gherkin/`
   - `parser.rs`
   - `ast.rs`
@@ -290,28 +290,28 @@ Suggested module layout:
   - `determinism_rules.rs`
 - `serialize.rs`
 
-### `crates/mar_runner/src/lib.rs`
+### `crates/runner/src/lib.rs`
 - `executor.rs`
 - `step_executor.rs`
 - `polling.rs`
 - `trace_builder.rs`
 - `artifact_policy.rs`
 
-### `crates/mar_infra_fs/src/lib.rs`
+### `crates/infra_fs/src/lib.rs`
 - `artifact_store.rs`
 - `json_reporter.rs`
 
-### `crates/mar_infra_iossim/src/lib.rs`
+### `crates/infra_iossim/src/lib.rs`
 - `simulator_session.rs`
 - `xcui_selector_resolver.rs`
 - `capture.rs`
 
-### `crates/mar_infra_android/src/lib.rs`
+### `crates/infra_android/src/lib.rs`
 - `emulator_session.rs`
 - `uiautomator_selector_resolver.rs`
 - `capture.rs`
 
-### `crates/mar_cli/src/main.rs`
+### `crates/casgrain/src/main.rs`
 - `commands/compile.rs`
 - `commands/run.rs`
 - `commands/explore.rs`
@@ -320,12 +320,12 @@ Suggested module layout:
 
 ## 6. Immediate implementation sequence
 
-1. create Cargo workspace and `mar_domain`
+1. create Cargo workspace and `domain`
 2. implement stable IDs, plan IR, selector taxonomy, action/assert/wait enums
 3. implement `ExecutionTrace`, `FailureReport`, and `ArtifactRef`
 4. define `DeviceEngine` and `DeviceSession` traits in domain
-5. add `mar_compiler` with Gherkin parser stubs and deterministic lowerer to plan JSON
-6. add `mar_runner` with a fake engine for deterministic domain/application tests
+5. add `compiler` with Gherkin parser stubs and deterministic lowerer to plan JSON
+6. add `runner` with a fake engine for deterministic domain/application tests
 7. add filesystem artifact store and JSON output adapter
 8. only then start iOS simulator adapter work
 
@@ -352,4 +352,4 @@ Priority 3:
 
 ## 8. Recommendation summary
 
-The best next concrete move is to establish a Rust workspace with `mar_domain` first and make `ExecutablePlan` the canonical contract between Gherkin compilation, deterministic execution, trace capture, and agent-facing repair flows. Keep selectors explicit and ranked by stability, model waits/assertions separately from actions, and make traces/artifacts fully structured so agents can reason over failures without entering the execution path.
+The best next concrete move is to establish a Rust workspace with `domain` first and make `ExecutablePlan` the canonical contract between Gherkin compilation, deterministic execution, trace capture, and agent-facing repair flows. Keep selectors explicit and ranked by stability, model waits/assertions separately from actions, and make traces/artifacts fully structured so agents can reason over failures without entering the execution path.

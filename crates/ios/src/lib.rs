@@ -4,7 +4,7 @@ use std::{
     process::Command,
 };
 
-use mar_domain::{
+use domain::{
     ActionKind, ArtifactRef, AssertionKind, DeviceDescriptor, DeviceEngine, DeviceSnapshot,
     ExecutablePlan, ExecutionTrace, FailureCode, ObservedElement, RuntimeFailure, Selector,
     StringMatchKind, TargetPlatform, UiRole,
@@ -570,7 +570,7 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
 
-    use mar_domain::{
+    use domain::{
         ActionKind, ArtifactPolicy, AssertionKind, CapabilitySet, DeviceEngine, ExecutablePlan,
         ExecutionDefaults, FailureCode, FailurePolicy, PlanFormatVersion, PlanSource, PlanStep,
         RetryPolicy, Selector, SourceKind, StepIntent, TargetPlatform, TargetProfile,
@@ -808,7 +808,7 @@ print(json.dumps({
         }
 
         assert_eq!(trace.plan_id, "increment-the-counter-once");
-        assert_eq!(trace.status, mar_domain::RunStatus::Passed);
+        assert_eq!(trace.status, domain::RunStatus::Passed);
         assert_eq!(trace.artifacts[0].artifact_type, "screenshot");
         assert!(artifact_dir.join("plan.json").is_file());
     }

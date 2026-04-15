@@ -54,7 +54,7 @@ First iOS vertical-slice note:
 - The iOS workflow always reports a status on PRs so branch protection can enforce it safely, but it only runs the expensive simulator path when the PR touches iOS or shared execution surfaces.
 - `android-emulator-smoke` is advisory for now: it auto-runs for Android/shared-runtime changes and on the nightly drift-catching schedule, but it is not yet a required branch-protection gate.
 - Changes limited to docs, governance, labels, or other non-runtime surfaces should not pay the full mobile smoke cost.
-- Shared execution surfaces (`mar_cli`, `mar_compiler`, `mar_runner`, `mar_domain`, `mar_application`, root Cargo manifests) should trigger both mobile smoke workflows because they can regress either platform.
+- Shared execution surfaces (`casgrain`, `compiler`, `runner`, `domain`, `application`, root Cargo manifests) should trigger both mobile smoke workflows because they can regress either platform.
 
 ## Reporting standard
 

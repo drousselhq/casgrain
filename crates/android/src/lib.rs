@@ -4,7 +4,7 @@ use std::{
     process::Command,
 };
 
-use mar_domain::{
+use domain::{
     ActionKind, AssertionKind, ExecutablePlan, ExecutionTrace, FailureCode, RuntimeFailure,
     Selector, TargetPlatform,
 };
@@ -239,7 +239,7 @@ mod tests {
     };
 
     use super::*;
-    use mar_domain::{
+    use domain::{
         ArtifactPolicy, CapabilitySet, ExecutionDefaults, FailurePolicy, PlanFormatVersion,
         PlanSource, PlanStep, RetryPolicy, SourceKind, StepIntent, TargetProfile,
     };
@@ -380,7 +380,7 @@ mod tests {
             std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
         }
 
-        assert_eq!(second_trace.status, mar_domain::RunStatus::Passed);
+        assert_eq!(second_trace.status, domain::RunStatus::Passed);
         assert!(artifact_dir_one.join("android-tap-counter-1.png").is_file());
         assert!(artifact_dir_two.join("android-tap-counter-1.png").is_file());
     }
@@ -557,7 +557,7 @@ mod tests {
             std::env::remove_var("CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS");
         }
 
-        assert_eq!(trace.status, mar_domain::RunStatus::Passed);
+        assert_eq!(trace.status, domain::RunStatus::Passed);
         assert!(artifact_dir.join("ui-before-tap.xml").is_file());
         assert!(artifact_dir.join("ui-after-tap.xml").is_file());
     }
@@ -602,7 +602,7 @@ mod tests {
             std::env::remove_var("CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS");
         }
 
-        assert_eq!(trace.status, mar_domain::RunStatus::Passed);
+        assert_eq!(trace.status, domain::RunStatus::Passed);
     }
 
     fn supported_smoke_plan() -> ExecutablePlan {

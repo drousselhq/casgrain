@@ -1,11 +1,11 @@
 use std::{env, fs};
 
-use mar_android::run_smoke_fixture_plan as run_android_smoke_fixture_plan;
-use mar_application::{CompileOutput, PlanCompiler};
-use mar_compiler::GherkinCompiler;
-use mar_domain::{CompilationDiagnostic, ExecutionTrace};
-use mar_ios::run_smoke_fixture_plan;
-use mar_runner::{mock::MockDeviceEngine, DeterministicRunner};
+use android::run_smoke_fixture_plan as run_android_smoke_fixture_plan;
+use application::{CompileOutput, PlanCompiler};
+use compiler::GherkinCompiler;
+use domain::{CompilationDiagnostic, ExecutionTrace};
+use ios::run_smoke_fixture_plan;
+use runner::{mock::MockDeviceEngine, DeterministicRunner};
 
 const CLI_NAME: &str = "casgrain";
 
@@ -176,11 +176,11 @@ fn render_run_summary(title: &str, output: &CompileOutput, trace: &ExecutionTrac
     lines.join("\n")
 }
 
-fn status_marker(status: &mar_domain::StepStatus) -> &'static str {
+fn status_marker(status: &domain::StepStatus) -> &'static str {
     match status {
-        mar_domain::StepStatus::Passed => "PASS",
-        mar_domain::StepStatus::Failed => "FAIL",
-        mar_domain::StepStatus::Skipped => "SKIP",
+        domain::StepStatus::Passed => "PASS",
+        domain::StepStatus::Failed => "FAIL",
+        domain::StepStatus::Skipped => "SKIP",
     }
 }
 

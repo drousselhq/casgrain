@@ -252,11 +252,11 @@ Core direction:
 - Kotlin/Java for Android-native adapter work where needed
 
 Layering:
-- `mar_domain` — canonical execution-plan and runtime contracts
-- `mar_application` — use-case boundaries and validation
-- `mar_compiler` — spec lowering into executable plans
-- `mar_runner` — deterministic execution against a `DeviceEngine`
-- `mar_cli` — internal Rust crate that powers the `casgrain` CLI binary
+- `domain` — canonical execution-plan and runtime contracts
+- `application` — use-case boundaries and validation
+- `compiler` — spec lowering into executable plans
+- `runner` — deterministic execution against a `DeviceEngine`
+- `casgrain` — internal Rust crate that powers the `casgrain` CLI binary
 
 Important constraint:
 - LLMs may assist with authoring, exploration, or repair

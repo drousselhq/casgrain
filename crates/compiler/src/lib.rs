@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use mar_application::{validate_plan, CompileOutput, PlanCompiler};
-use mar_domain::{
+use application::{validate_plan, CompileOutput, PlanCompiler};
+use domain::{
     ActionKind, ArtifactPolicy, AssertionKind, CapabilitySet, CompilationDiagnostic,
     DiagnosticSeverity, ExecutablePlan, ExecutionDefaults, FailurePolicy, PlanFormatVersion,
     PlanSource, PlanStep, RetryPolicy, Selector, SourceKind, StepIntent, StringMatchKind,
@@ -528,7 +528,7 @@ fn slugify(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use mar_domain::{
+    use domain::{
         ActionKind, AssertionKind, DiagnosticSeverity, Selector, StepIntent, StringMatchKind,
         TargetPlatform, WaitKind,
     };
@@ -549,7 +549,7 @@ Feature: Login
         let second = compile_gherkin(source, "login.feature", "0.1.0").unwrap();
 
         assert_eq!(first.plan, second.plan);
-        assert_eq!(first.plan.source.kind, mar_domain::SourceKind::Gherkin);
+        assert_eq!(first.plan.source.kind, domain::SourceKind::Gherkin);
         assert_eq!(first.plan.steps.len(), 3);
         assert_eq!(first.plan.steps[0].intent, StepIntent::Setup);
         assert_eq!(first.plan.steps[1].intent, StepIntent::Interact);
