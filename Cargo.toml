@@ -16,7 +16,7 @@ edition = "2021"
 rust-version = "1.85"
 license = "Apache-2.0"
 authors = ["Daniel Roussel and contributors"]
-repository = "https://github.com/drousselbot/casgrain"
+repository = "https://github.com/drousselhq/casgrain"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

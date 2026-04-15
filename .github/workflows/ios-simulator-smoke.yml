@@ -7,20 +7,9 @@ on:
         description: Why run this check?
         required: false
         type: string
-  pull_request:
-    paths:
-      - Cargo.toml
-      - Cargo.lock
-      - crates/mar_application/**
-      - crates/mar_cli/**
-      - crates/mar_compiler/**
-      - crates/mar_domain/**
-      - crates/mar_runner/**
-      - crates/mar_ios/**
-      - fixtures/ios-smoke/**
-      - scripts/ios_smoke.sh
-      - scripts/ios_smoke_run_plan.py
-      - .github/workflows/ios-simulator-smoke.yml
+
+permissions:
+  contents: read
 
 concurrency:
   group: ios-simulator-smoke-${{ github.ref }}
@@ -36,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@1.85.0
