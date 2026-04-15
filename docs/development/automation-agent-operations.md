@@ -350,6 +350,76 @@ When multiple roles could respond to the same situation, prefer this order:
 
 This ordering keeps repo maintenance grounded in evidence rather than jumping directly to fixes.
 
+## Workflow diagrams
+
+### Issue and PR state machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Backlog: issue opened / not yet released
+
+    Backlog --> ReadyDev: PO releases issue\nadd ready-for-dev
+    Backlog --> ReadyDevOps: PO releases infra issue\nadd ready-for-dev + devops
+    Backlog --> Blocked: dependency or external blocker\nadd blocked
+    Backlog --> WaitingHuman: explicit human action needed\nadd waiting-on-human
+
+    Blocked --> ReadyDev: dependency cleared\nremove blocked, add ready-for-dev
+    Blocked --> ReadyDevOps: dependency cleared for devops lane\nremove blocked, add ready-for-dev + devops
+    Blocked --> WaitingHuman: blocker becomes human-owned
+    WaitingHuman --> Backlog: human action completed\nremove waiting-on-human
+    WaitingHuman --> ReadyDev: human action completed and released\nadd ready-for-dev
+    WaitingHuman --> ReadyDevOps: human action completed and released to devops\nadd ready-for-dev + devops
+
+    state "Ready for dev lane" as ReadyDev
+    state "Ready for DevOps lane" as ReadyDevOps
+    state "In progress" as InDev
+    state "PR in QA" as NeedsQA
+    state "QA failed" as QAFailed
+    state "QA passed" as QAPassed
+    state "PO approved" as POApproved
+    state "Merged" as Merged
+
+    ReadyDev --> InDev: Dev Delivery Agent\nclaims bounded slice\nadd in-dev
+    ReadyDevOps --> InDev: DevOps Agent\nclaims bounded slice\nadd in-dev
+
+    InDev --> NeedsQA: open/update PR\nadd needs-qa
+    NeedsQA --> QAFailed: QA Validation Agent\nadd qa-failed, remove needs-qa
+    NeedsQA --> QAPassed: QA Validation Agent\nadd qa-passed, remove needs-qa
+    QAFailed --> InDev: Dev or DevOps agent\naddresses feedback
+    QAPassed --> POApproved: PO Approval Agent\nadd po-approved
+    QAPassed --> InDev: scope or evidence gap found
+    POApproved --> Merged: Merge Steward\nrequired checks green\nsquash merge
+    Merged --> [*]
+```
+
+### Agent responsibilities and handoff points
+
+```mermaid
+flowchart TD
+    PO[PO Approval Agent\nreleases backlog and approves merge] -->|ready-for-dev| DEVSEL{devops label present?}
+    DEVSEL -->|no| DEV[Dev Delivery Agent\nproduct and general implementation lane]
+    DEVSEL -->|yes| DOPS[DevOps Agent\nCI, workflow, security, release automation lane]
+
+    DEV --> PR[Open or update PR\nadd needs-qa when ready]
+    DOPS --> PR
+
+    PR --> QA[QA Validation Agent\nindependent verification]
+    QA -->|qa-failed| DEV
+    QA -->|qa-failed on devops PR| DOPS
+    QA -->|qa-passed| PO2[PO Approval Agent\nmerge-readiness decision]
+    PO2 -->|po-approved| MERGE[Merge Steward\nmanual gate verification\nand squash merge]
+
+    PR -. docs concern .-> DOCS[Docs Steward\noptional reviewer/fixer]
+    PR -. security concern .-> SEC[Security Steward\noptional reviewer/fixer]
+
+    FAIL[Failed CI or suspicious validation] --> REPRO[Reproduction Agent\nevidence first when unclear]
+    FAIL --> DOPS
+    FAIL --> CI[CI Shepherd Agent\nmerge-gate/workflow diagnosis]
+    CI --> FLAKE{nondeterministic?}
+    FLAKE -->|yes| FLAKY[Flaky-test Owner\ncontain and remove flake]
+    FLAKE -->|no| REPRO
+```
+
 ## Governance status
 
 This document now defines the bounded operating procedures for the backlog hygiene, reproduction, CI shepherd, DevOps, and flaky-test owner roles. Any further rollout work should be tracked as concrete GitHub Issues rather than assumed implicitly from these role definitions.
