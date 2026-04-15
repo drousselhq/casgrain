@@ -80,6 +80,7 @@ Today, the repository already demonstrates the core shape of that approach:
 - a minimal Gherkin-to-test-plan compiler scaffold
 - a deterministic mock runner
 - a real iOS smoke CLI path that writes `plan.json` and emits structured trace/artifact output
+- a first Android smoke CLI contract path that lowers the canonical Android fixture feature into an Android-targeted plan and dispatches it through an explicit runner boundary
 - CI validation, security scanning, and coverage gating
 
 Conceptually, Casgrain works like this:
@@ -137,6 +138,20 @@ Run the first fixture-specific iOS CLI slice against the canonical smoke feature
 ```bash
 cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
 ```
+
+Compile the canonical Android fixture contract into a deterministic Android-targeted plan:
+
+```bash
+cargo run -p mar_cli -- compile fixtures/android-smoke/features/tap_counter.feature
+```
+
+Dispatch the first Android smoke contract path:
+
+```bash
+cargo run -p mar_cli -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
+```
+
+Today that Android command is intentionally honest: without an injected Android smoke runner, it validates the generated plan contract and exits with a message that the real emulator-backed harness is still pending.
 
 If you want machine-readable trace output:
 

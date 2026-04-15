@@ -126,7 +126,10 @@ pub fn compile_gherkin(
                 .as_ref()
                 .map(|vocabulary| vocabulary.target_platform.clone())
                 .unwrap_or(TargetPlatform::CrossPlatform),
-            device_class: "simulator".into(),
+            device_class: fixture_vocabulary
+                .as_ref()
+                .map(|vocabulary| vocabulary.device_class.to_string())
+                .unwrap_or_else(|| "simulator".into()),
         },
         capabilities_required: fixture_vocabulary
             .as_ref()
@@ -166,6 +169,7 @@ struct LoweredStep {
 struct FixtureVocabulary {
     name: &'static str,
     target_platform: TargetPlatform,
+    device_class: &'static str,
     screenshot_name: &'static str,
 }
 
@@ -257,7 +261,17 @@ fn fixture_vocabulary_for(source_name: &str) -> Option<FixtureVocabulary> {
         Some(FixtureVocabulary {
             name: "the iOS smoke fixture",
             target_platform: TargetPlatform::Ios,
+            device_class: "simulator",
             screenshot_name: "tap-counter",
+        })
+    } else if normalized_source_name
+        .ends_with("fixtures/android-smoke/features/tap_counter.feature")
+    {
+        Some(FixtureVocabulary {
+            name: "the Android smoke fixture",
+            target_platform: TargetPlatform::Android,
+            device_class: "emulator",
+            screenshot_name: "android-tap-counter",
         })
     } else {
         None
@@ -596,6 +610,7 @@ Feature: Login
         let steps = output.plan.steps;
 
         assert_eq!(output.plan.target.platform, TargetPlatform::Ios);
+        assert_eq!(output.plan.target.device_class, "simulator");
         assert_eq!(
             output.plan.capabilities_required.capabilities,
             vec![String::from("screenshot")]
@@ -616,6 +631,43 @@ Feature: Login
         assert!(matches!(
             steps[3].action,
             ActionKind::TakeScreenshot { name: Some(ref name) } if name == "tap-counter"
+        ));
+    }
+
+    #[test]
+    fn android_fixture_feature_compiles_to_android_specific_deterministic_selectors() {
+        let source = include_str!("../../../fixtures/android-smoke/features/tap_counter.feature");
+
+        let output = compile_gherkin(
+            source,
+            "fixtures/android-smoke/features/tap_counter.feature",
+            "0.1.0",
+        )
+        .unwrap();
+        let steps = output.plan.steps;
+
+        assert_eq!(output.plan.target.platform, TargetPlatform::Android);
+        assert_eq!(output.plan.target.device_class, "emulator");
+        assert_eq!(
+            output.plan.capabilities_required.capabilities,
+            vec![String::from("screenshot")]
+        );
+        assert!(matches!(
+            steps[1].action,
+            ActionKind::Tap {
+                target: Selector::AccessibilityId(ref value)
+            } if value == "tap-button"
+        ));
+        assert!(matches!(
+            steps[2].postconditions.as_slice(),
+            [AssertionKind::TextEquals {
+                target: Selector::AccessibilityId(value),
+                value: assertion_value,
+            }] if value == "count-label" && assertion_value == "Count: 1"
+        ));
+        assert!(matches!(
+            steps[3].action,
+            ActionKind::TakeScreenshot { name: Some(ref name) } if name == "android-tap-counter"
         ));
     }
 
