@@ -20,6 +20,11 @@ Required checks:
 - `gitleaks dir .`
 - `cargo deny check licenses sources`
 
+First iOS vertical-slice note:
+- the current product-true execution proof is intentionally narrow: one fixture-specific iOS scenario compiled from `fixtures/ios-smoke/features/tap_counter.feature` and executed through `mar run-ios-smoke`
+- changes that touch this slice must preserve both halves of the user-facing contract: deterministic compile output shape and the CLI execution/reporting path
+- the older handwritten XCTest remains harness plumbing and debugging support under `scripts/ios_smoke.sh`; it is not sufficient evidence by itself for the user-facing slice
+
 ## Validation style
 
 - Prefer cheap evidence before expensive exploration.

@@ -203,6 +203,53 @@ mod tests {
     }
 
     #[test]
+    fn usage_contract_lists_the_first_ios_slice_commands_explicitly() {
+        let usage = super::usage();
+
+        assert_eq!(
+            usage,
+            "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]"
+        );
+    }
+
+    #[test]
+    fn compile_command_preserves_the_first_ios_slice_plan_shape() {
+        let feature = tempfile_feature(
+            include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature"),
+            "fixtures/ios-smoke/features/tap_counter.feature",
+        );
+
+        let output = run(vec!["compile".into(), feature]).expect("compile should succeed");
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+
+        assert_eq!(json["plan_id"], "increment-the-counter-once");
+        assert_eq!(json["source"]["kind"], "gherkin");
+        assert!(json["source"]["source_name"]
+            .as_str()
+            .expect("source name should be a string")
+            .ends_with("/fixtures/ios-smoke/features/tap_counter.feature"));
+        assert_eq!(json["target"]["platform"], "ios");
+        assert_eq!(json["target"]["device_class"], "simulator");
+        assert_eq!(
+            json["capabilities_required"]["capabilities"][0],
+            "screenshot"
+        );
+        assert_eq!(json["steps"][1]["action"]["kind"], "tap");
+        assert_eq!(
+            json["steps"][1]["action"]["target"]["kind"],
+            "accessibility_id"
+        );
+        assert_eq!(json["steps"][1]["action"]["target"]["value"], "tap-button");
+        assert_eq!(json["steps"][2]["postconditions"][0]["kind"], "text_equals");
+        assert_eq!(
+            json["steps"][2]["postconditions"][0]["target"]["value"],
+            "count-label"
+        );
+        assert_eq!(json["steps"][3]["action"]["kind"], "take_screenshot");
+        assert_eq!(json["steps"][3]["action"]["name"], "tap-counter");
+    }
+
+    #[test]
     fn run_mock_reports_successful_flow() {
         let feature = tempfile_feature(
             r#"Feature: Login
@@ -224,13 +271,7 @@ mod tests {
     #[test]
     fn run_ios_smoke_reports_successful_tap_counter_flow() {
         let feature = tempfile_feature(
-            r#"Feature: iOS smoke tap counter
-  Scenario: Increment the counter once
-    Given the app is launched
-    When the user taps tap button
-    Then count label text is "Count: 1"
-    When the user takes a screenshot
-"#,
+            include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature"),
             "fixtures/ios-smoke/features/tap_counter.feature",
         );
         let repo_root = temp_path("casgrain-cli-repo");
@@ -254,6 +295,9 @@ mod tests {
         }
 
         assert!(output.contains("Casgrain iOS smoke run: Increment the counter once"));
+        assert!(output.contains("Plan ID: increment-the-counter-once"));
+        assert!(output.contains("Source: "));
+        assert!(output.contains("/fixtures/ios-smoke/features/tap_counter.feature"));
         assert!(output.contains("Device: iPhone 16 18.0 (Ios)"));
         assert!(output.contains("Run status: Passed"));
         assert!(output.contains("tap-counter-1 (screenshot) ->"));
@@ -262,13 +306,7 @@ mod tests {
     #[test]
     fn run_ios_smoke_trace_json_is_machine_readable() {
         let feature = tempfile_feature(
-            r#"Feature: iOS smoke tap counter
-  Scenario: Increment the counter once
-    Given the app is launched
-    When the user taps tap button
-    Then count label text is "Count: 1"
-    When the user takes a screenshot
-"#,
+            include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature"),
             "fixtures/ios-smoke/features/tap_counter.feature",
         );
         let repo_root = temp_path("casgrain-cli-repo");
