@@ -16,6 +16,7 @@ ACTIVITY_ENV = "CASGRAIN_ANDROID_SMOKE_ACTIVITY"
 APK_ENV = "CASGRAIN_ANDROID_SMOKE_APK"
 ADB_ENV = "CASGRAIN_ANDROID_ADB"
 DEVICE_TIMEOUT_ENV = "CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS"
+LAUNCH_TIMEOUT_ENV = "CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS"
 DEFAULT_APP_ID = "hq.droussel.casgrain.smoke"
 DEFAULT_APK = "fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk"
 DEFAULT_APK_GLOB = "fixtures/android-smoke/app/build/outputs/apk/debug/*.apk"
@@ -23,6 +24,10 @@ DEFAULT_DEVICE_TIMEOUT_SECS = 20.0
 DEFAULT_LAUNCH_TIMEOUT_SECS = 20.0
 DEFAULT_MAIN_ACTIVITY = ".MainActivity"
 UI_DUMP_REMOTE_PATH = "/sdcard/window_dump.xml"
+FOREGROUND_WINDOW_ARTIFACT = "foreground-window.txt"
+FOREGROUND_ACTIVITY_ARTIFACT = "foreground-activity.txt"
+LAST_UI_DUMP_ARTIFACT = "ui-last.xml"
+FAILURE_ARTIFACT = "failure.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -167,13 +172,22 @@ def resolve_apk_path(repo_root: Path) -> Path:
 
 def resolve_device_timeout() -> float:
     raw = os.environ.get(DEVICE_TIMEOUT_ENV, str(DEFAULT_DEVICE_TIMEOUT_SECS))
+    return resolve_positive_timeout(raw, DEVICE_TIMEOUT_ENV)
+
+
+def resolve_launch_timeout() -> float:
+    raw = os.environ.get(LAUNCH_TIMEOUT_ENV, str(DEFAULT_LAUNCH_TIMEOUT_SECS))
+    return resolve_positive_timeout(raw, LAUNCH_TIMEOUT_ENV)
+
+
+def resolve_positive_timeout(raw: str, env_name: str) -> float:
     try:
         timeout = float(raw)
     except ValueError as error:
         raise SystemExit(
-            f"invalid {DEVICE_TIMEOUT_ENV} value {raw!r}; expected a positive number of seconds"
+            f"invalid {env_name} value {raw!r}; expected a positive number of seconds"
         ) from error
-    expect(timeout > 0, f"{DEVICE_TIMEOUT_ENV} must be greater than zero")
+    expect(timeout > 0, f"{env_name} must be greater than zero")
     return timeout
 
 
@@ -219,40 +233,66 @@ def launch_fixture_app(adb: str, app_id: str) -> None:
     run_adb(adb, "shell", "am", "start", "-W", "-n", resolve_launch_component(app_id))
 
 
-def dump_foreground_state(adb: str) -> str:
-    snapshots: list[str] = []
+def dump_foreground_state(adb: str) -> dict[str, str]:
+    snapshots: dict[str, str] = {}
     for label, command in (
         ("window", ("shell", "dumpsys", "window", "windows")),
         ("activity", ("shell", "dumpsys", "activity", "activities")),
     ):
         try:
-            output = run_adb(adb, *command).stdout.strip()
+            snapshots[label] = run_adb(adb, *command).stdout.strip()
         except SystemExit as error:
-            output = f"<failed to capture {label} state: {error}>"
-        snapshots.append(f"[{label}]\n{output}")
-    return "\n\n".join(snapshots)
+            snapshots[label] = f"<failed to capture {label} state: {error}>"
+    return snapshots
 
 
-def app_is_in_foreground(snapshot: str, app_id: str) -> bool:
-    for line in snapshot.splitlines():
-        if any(
-            marker in line
-            for marker in ("mCurrentFocus", "mFocusedApp", "topResumedActivity", "ResumedActivity")
-        ) and app_id in line:
-            return True
-    return False
+def relevant_foreground_line(snapshot: str, markers: tuple[str, ...]) -> str | None:
+    matches = [line.strip() for line in snapshot.splitlines() if any(marker in line for marker in markers)]
+    return matches[-1] if matches else None
 
 
-def wait_for_app_foreground(adb: str, app_id: str, timeout_s: float = DEFAULT_LAUNCH_TIMEOUT_SECS) -> str:
+def app_is_in_foreground(snapshots: dict[str, str], app_id: str) -> bool:
+    window_line = relevant_foreground_line(snapshots.get("window", ""), ("mCurrentFocus", "mFocusedApp"))
+    activity_line = relevant_foreground_line(
+        snapshots.get("activity", ""),
+        ("topResumedActivity", "ResumedActivity"),
+    )
+
+    evidence = []
+    if window_line is not None:
+        evidence.append(app_id in window_line)
+    if activity_line is not None:
+        evidence.append(app_id in activity_line)
+    return bool(evidence) and all(evidence)
+
+
+def wait_for_app_foreground(
+    adb: str,
+    app_id: str,
+    *,
+    artifact_dir: Path | None = None,
+    timeout_s: float = DEFAULT_LAUNCH_TIMEOUT_SECS,
+) -> dict[str, str]:
     deadline = time.monotonic() + timeout_s
-    last_snapshot = ""
+    last_snapshot: dict[str, str] = {}
     while time.monotonic() < deadline:
         last_snapshot = dump_foreground_state(adb)
         if app_is_in_foreground(last_snapshot, app_id):
             return last_snapshot
         time.sleep(0.5)
+
+    window_snapshot = last_snapshot.get("window", "")
+    activity_snapshot = last_snapshot.get("activity", "")
+    if artifact_dir is not None:
+        write_failure_diagnostics(
+            artifact_dir,
+            f"fixture app {app_id!r} did not reach the foreground after launch",
+            window_snapshot=window_snapshot or None,
+            activity_snapshot=activity_snapshot or None,
+        )
     raise SystemExit(
-        f"fixture app {app_id!r} did not reach the foreground after launch; latest focus state:\n{last_snapshot}"
+        f"fixture app {app_id!r} did not reach the foreground after launch; latest focus state:\n"
+        f"[window]\n{window_snapshot}\n\n[activity]\n{activity_snapshot}"
     )
 
 
@@ -266,6 +306,33 @@ def dump_ui_xml(adb: str) -> str:
 def write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
+
+
+def write_failure_diagnostics(
+    artifact_dir: Path,
+    reason: str,
+    *,
+    window_snapshot: str | None = None,
+    activity_snapshot: str | None = None,
+    ui_xml: str | None = None,
+) -> None:
+    if window_snapshot is not None:
+        write_text(artifact_dir / FOREGROUND_WINDOW_ARTIFACT, window_snapshot)
+    if activity_snapshot is not None:
+        write_text(artifact_dir / FOREGROUND_ACTIVITY_ARTIFACT, activity_snapshot)
+    if ui_xml is not None:
+        write_text(artifact_dir / LAST_UI_DUMP_ARTIFACT, ui_xml)
+
+    payload = {
+        "reason": reason,
+        "captured_at": utc_now(),
+        "artifacts": {
+            "foreground_window": FOREGROUND_WINDOW_ARTIFACT if window_snapshot is not None else None,
+            "foreground_activity": FOREGROUND_ACTIVITY_ARTIFACT if activity_snapshot is not None else None,
+            "last_ui_dump": LAST_UI_DUMP_ARTIFACT if ui_xml is not None else None,
+        },
+    }
+    write_text(artifact_dir / FAILURE_ARTIFACT, json.dumps(payload, indent=2) + "\n")
 
 
 def parse_ui(xml_text: str) -> ET.Element:
@@ -307,7 +374,13 @@ def center_point(node: ET.Element) -> tuple[int, int]:
     return ((left + right) // 2, (top + bottom) // 2)
 
 
-def wait_for_selector(adb: str, selector: str, timeout_s: float = 15.0) -> tuple[ET.Element, str]:
+def wait_for_selector(
+    adb: str,
+    selector: str,
+    *,
+    artifact_dir: Path | None = None,
+    timeout_s: float = 15.0,
+) -> tuple[ET.Element, str]:
     deadline = time.monotonic() + timeout_s
     last_xml = ""
     while time.monotonic() < deadline:
@@ -317,10 +390,26 @@ def wait_for_selector(adb: str, selector: str, timeout_s: float = 15.0) -> tuple
         if node is not None:
             return node, last_xml
         time.sleep(0.5)
+    if artifact_dir is not None:
+        latest_foreground = dump_foreground_state(adb)
+        write_failure_diagnostics(
+            artifact_dir,
+            f"timed out waiting for selector {selector!r} in emulator UI hierarchy",
+            window_snapshot=latest_foreground.get("window"),
+            activity_snapshot=latest_foreground.get("activity"),
+            ui_xml=last_xml or None,
+        )
     raise SystemExit(f"timed out waiting for selector {selector!r} in emulator UI hierarchy")
 
 
-def wait_for_text(adb: str, selector: str, expected_text: str, timeout_s: float = 15.0) -> tuple[ET.Element, str]:
+def wait_for_text(
+    adb: str,
+    selector: str,
+    expected_text: str,
+    *,
+    artifact_dir: Path | None = None,
+    timeout_s: float = 15.0,
+) -> tuple[ET.Element, str]:
     deadline = time.monotonic() + timeout_s
     last_xml = ""
     while time.monotonic() < deadline:
@@ -330,6 +419,15 @@ def wait_for_text(adb: str, selector: str, expected_text: str, timeout_s: float 
         if node is not None and node.attrib.get("text") == expected_text:
             return node, last_xml
         time.sleep(0.5)
+    if artifact_dir is not None:
+        latest_foreground = dump_foreground_state(adb)
+        write_failure_diagnostics(
+            artifact_dir,
+            f"timed out waiting for selector {selector!r} to have text {expected_text!r}",
+            window_snapshot=latest_foreground.get("window"),
+            activity_snapshot=latest_foreground.get("activity"),
+            ui_xml=last_xml or None,
+        )
     raise SystemExit(
         f"timed out waiting for selector {selector!r} to have text {expected_text!r}"
     )
@@ -374,9 +472,18 @@ def main() -> int:
     install_fixture_app(adb, apk_path)
     reset_fixture_app(adb, app_id)
     launch_fixture_app(adb, app_id)
-    wait_for_app_foreground(adb, app_id)
+    wait_for_app_foreground(
+        adb,
+        app_id,
+        artifact_dir=artifact_dir,
+        timeout_s=resolve_launch_timeout(),
+    )
 
-    tap_button, before_tap_xml = wait_for_selector(adb, "tap-button")
+    tap_button, before_tap_xml = wait_for_selector(
+        adb,
+        "tap-button",
+        artifact_dir=artifact_dir,
+    )
     write_text(before_tap_dump_path, before_tap_xml)
 
     count_label_root = parse_ui(before_tap_xml)
@@ -388,7 +495,12 @@ def main() -> int:
     )
 
     tap_selector(adb, tap_button)
-    _, after_tap_xml = wait_for_text(adb, "count-label", "Count: 1")
+    _, after_tap_xml = wait_for_text(
+        adb,
+        "count-label",
+        "Count: 1",
+        artifact_dir=artifact_dir,
+    )
     write_text(after_tap_dump_path, after_tap_xml)
     capture_screenshot(adb, screenshot_path)
 

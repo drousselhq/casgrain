@@ -34,6 +34,7 @@ Runtime prerequisites for the default harness:
 - optionally set `CASGRAIN_ANDROID_SMOKE_APP_ID` to override the default package id `hq.droussel.casgrain.smoke`
 - optionally set `CASGRAIN_ANDROID_SMOKE_ACTIVITY` to override the launcher activity component or suffix (defaults to `.MainActivity` for the in-repo fixture app)
 - optionally set `CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS` to control how long the runner waits for `adb wait-for-device` before failing fast
+- optionally set `CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS` to control how long the runner waits for the fixture app to actually reach the foreground after launch
 
 Artifacts emitted by the default harness:
 - `plan.json`
@@ -41,6 +42,12 @@ Artifacts emitted by the default harness:
 - `emulator.json`
 - `ui-before-tap.xml`
 - `ui-after-tap.xml`
+
+Failure diagnostics emitted when the real emulator path cannot find the expected selector/state:
+- `failure.json`
+- `foreground-window.txt`
+- `foreground-activity.txt`
+- `ui-last.xml`
 
 CI proof path:
 - `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, enables `/dev/kvm` access on the hosted Ubuntu runner so the x86_64 emulator can boot with hardware acceleration, runs `mar run-android-smoke`, and uploads the emitted artifacts as `casgrain-android-smoke`
