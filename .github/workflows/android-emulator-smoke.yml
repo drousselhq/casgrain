@@ -1,0 +1,126 @@
+name: android-emulator-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Why run this check?
+        required: false
+        type: string
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - crates/mar_application/**
+      - crates/mar_cli/**
+      - crates/mar_compiler/**
+      - crates/mar_domain/**
+      - crates/mar_runner/**
+      - crates/mar_android/**
+      - fixtures/android-smoke/**
+      - scripts/android_smoke_run_plan.py
+      - .github/workflows/android-emulator-smoke.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-emulator-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ARTIFACT_DIR: ${{ github.workspace }}/artifacts/android-smoke
+      CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/android-smoke
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Enable KVM acceleration for Android emulator
+        run: |
+          set -euxo pipefail
+          if [ -e /dev/kvm ]; then
+            sudo chown root:"$(id -gn)" /dev/kvm
+            sudo chmod 0660 /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo "/dev/kvm is not available on this runner" >&2
+            exit 1
+          fi
+
+      - name: Build Android smoke fixture APK
+        run: |
+          set -euxo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          gradle -p fixtures/android-smoke/app assembleDebug
+          APK_DIR=fixtures/android-smoke/app/build/outputs/apk/debug
+          DEFAULT_APK="$APK_DIR/app-debug.apk"
+          if [ -f "$DEFAULT_APK" ]; then
+            APK_PATH="$DEFAULT_APK"
+          else
+            mapfile -t APK_CANDIDATES < <(find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' | sort)
+            case "${#APK_CANDIDATES[@]}" in
+              1) APK_PATH="${APK_CANDIDATES[0]}" ;;
+              0)
+                echo "No debug APK found under $APK_DIR" >&2
+                exit 1
+                ;;
+              *)
+                printf 'Multiple debug APK candidates found under %s:\n' "$APK_DIR" >&2
+                printf '  %s\n' "${APK_CANDIDATES[@]}" >&2
+                exit 1
+                ;;
+            esac
+          fi
+          test -f "$APK_PATH"
+          printf 'CASGRAIN_ANDROID_SMOKE_APK=%s\n' "$APK_PATH" >> "$GITHUB_ENV"
+
+      - name: Run generated-plan Android smoke path
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot-save -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash -euxo pipefail -c 'adb devices; cargo run -p mar_cli -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"'
+
+      - name: Assert generated-plan Android smoke artifacts
+        run: |
+          set -euxo pipefail
+          test -f "$ARTIFACT_DIR/trace.json"
+          test -f "$ARTIFACT_DIR/plan.json"
+          test -f "$ARTIFACT_DIR/android-tap-counter-1.png"
+          test -f "$ARTIFACT_DIR/emulator.json"
+          test -f "$ARTIFACT_DIR/ui-before-tap.xml"
+          test -f "$ARTIFACT_DIR/ui-after-tap.xml"
+          ls -R "$ARTIFACT_DIR"
+
+      - name: Upload Android smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: casgrain-android-smoke
+          path: ${{ github.workspace }}/artifacts/android-smoke
+          if-no-files-found: error

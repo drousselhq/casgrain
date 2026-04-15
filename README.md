@@ -151,7 +151,7 @@ Dispatch the first Android smoke contract path:
 cargo run -p mar_cli -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
 ```
 
-Today that Android command is intentionally honest: without an injected Android smoke runner, it validates the generated plan contract and exits with a message that the real emulator-backed harness is still pending.
+The default Android smoke path now drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, and uploads the resulting trace and screenshot artifacts.
 
 If you want machine-readable trace output:
 
@@ -197,7 +197,7 @@ Implemented foundation already in the repo:
 
 Not implemented yet:
 - real general-purpose iOS simulator adapter
-- real Android emulator adapter
+- real general-purpose Android emulator adapter beyond the fixture-specific smoke path
 - fixture-app-backed end-to-end breadth beyond the current smoke slice
 - stable public CLI/API surface
 
