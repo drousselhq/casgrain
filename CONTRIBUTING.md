@@ -20,7 +20,7 @@ The most important architectural rule is:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/drousselbot/casgrain.git
+git clone https://github.com/drousselhq/casgrain.git
 cd casgrain
 ```
 
