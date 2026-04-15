@@ -217,12 +217,12 @@ mod tests {
     }
 
     #[test]
-    fn usage_contract_lists_the_first_ios_slice_commands_explicitly() {
+    fn usage_contract_lists_all_current_cli_commands_explicitly() {
         let usage = super::usage();
 
         assert_eq!(
             usage,
-            "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]"
+            "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]\n  mar run-android-smoke <feature-file> [--trace-json]"
         );
     }
 
