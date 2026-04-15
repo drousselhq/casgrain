@@ -96,3 +96,9 @@ If work uncovers:
 - a follow-up requirement
 
 track it in a GitHub issue rather than relying on chat memory alone.
+
+When releasing work into automation, use the workflow-state labels documented in `docs/development/automation-agent-operations.md`.
+In particular:
+- `ready-for-dev` means released into execution
+- `devops` routes repo-infrastructure work to the DevOps lane instead of the general Dev Delivery lane
+- `blocked` and `waiting-on-human` should be explicit when execution is not currently safe
