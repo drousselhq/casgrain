@@ -156,14 +156,14 @@ cargo run --bin casgrain -- run-mock docs/specs/casgrain-product-spec.md --trace
 Use the included tap-counter fixture if you are on macOS with Xcode command-line tools and iOS Simulator runtimes installed:
 
 ```bash
-cargo run --bin casgrain -- compile fixtures/ios-smoke/features/tap_counter.feature
-cargo run --bin casgrain -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- compile tests/test-support/fixtures/ios-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-ios-smoke tests/test-support/fixtures/ios-smoke/features/tap_counter.feature
 ```
 
 JSON trace output:
 
 ```bash
-cargo run --bin casgrain -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json
+cargo run --bin casgrain -- run-ios-smoke tests/test-support/fixtures/ios-smoke/features/tap_counter.feature --trace-json
 ```
 
 #### Run the built-in Android fixture app
@@ -173,14 +173,14 @@ Use the included Android tap-counter fixture when you have an emulator available
 Build the fixture APK:
 
 ```bash
-gradle -p fixtures/android-smoke/app assembleDebug
+gradle -p tests/test-support/fixtures/android-smoke/app assembleDebug
 ```
 
 Then compile and run the fixture scenario:
 
 ```bash
-cargo run --bin casgrain -- compile fixtures/android-smoke/features/tap_counter.feature
-cargo run --bin casgrain -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- compile tests/test-support/fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature
 ```
 
 The default Android smoke path drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, and uploads the resulting trace and screenshot artifacts.
@@ -282,7 +282,7 @@ Important files and directories:
 - `docs/branding/` — naming exploration and product naming context
 - `docs/plans/current-plan.md` — live execution plan
 - `docs/specs/casgrain-product-spec.md` — canonical product behavior spec
-- `fixtures/ios-smoke/` — smallest honest iOS simulator-backed smoke slice
+- `tests/test-support/fixtures/ios-smoke/` — smallest honest iOS simulator-backed smoke slice
 - `crates/` — Rust implementation
 - `.github/workflows/` — CI and security automation
 

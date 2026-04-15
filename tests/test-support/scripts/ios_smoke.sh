@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR="$ROOT_DIR/fixtures/ios-smoke/CasgrainSmoke.xcodeproj"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+PROJECT_DIR="$ROOT_DIR/tests/test-support/fixtures/ios-smoke/CasgrainSmoke.xcodeproj"
 SCHEME="CasgrainSmoke"
 ARTIFACT_DIR="${ARTIFACT_DIR:-$ROOT_DIR/artifacts/ios-smoke}"
 DERIVED_DATA="$ARTIFACT_DIR/DerivedData"
@@ -15,7 +15,7 @@ PREFERRED_DEVICE_NAMES="${CASGRAIN_SMOKE_DEVICE_NAMES:-iPhone 16;iPhone 15;iPhon
 export PREFERRED_RUNTIME_NAME PREFERRED_DEVICE_NAMES
 require_macos_xcode() {
   if [[ "$(uname -s)" != "Darwin" ]]; then
-    echo "scripts/ios_smoke.sh requires macOS with Xcode and iOS Simulator support." >&2
+    echo "tests/test-support/scripts/ios_smoke.sh requires macOS with Xcode and iOS Simulator support." >&2
     exit 1
   fi
 

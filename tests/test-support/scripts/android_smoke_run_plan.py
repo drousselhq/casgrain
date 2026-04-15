@@ -18,8 +18,8 @@ ADB_ENV = "CASGRAIN_ANDROID_ADB"
 DEVICE_TIMEOUT_ENV = "CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS"
 LAUNCH_TIMEOUT_ENV = "CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS"
 DEFAULT_APP_ID = "hq.droussel.casgrain.smoke"
-DEFAULT_APK = "fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk"
-DEFAULT_APK_GLOB = "fixtures/android-smoke/app/build/outputs/apk/debug/*.apk"
+DEFAULT_APK = "tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk"
+DEFAULT_APK_GLOB = "tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug/*.apk"
 DEFAULT_DEVICE_TIMEOUT_SECS = 20.0
 DEFAULT_LAUNCH_TIMEOUT_SECS = 20.0
 DEFAULT_MAIN_ACTIVITY = ".MainActivity"
@@ -152,7 +152,7 @@ def resolve_apk_path(repo_root: Path) -> Path:
     if default_path.is_file():
         return default_path
 
-    candidates = sorted((repo_root / "fixtures/android-smoke/app/build/outputs/apk/debug").glob("*.apk"))
+    candidates = sorted((repo_root / "tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug").glob("*.apk"))
     if len(candidates) == 1:
         return candidates[0]
 
@@ -160,7 +160,7 @@ def resolve_apk_path(repo_root: Path) -> Path:
         candidate_list = ", ".join(str(path) for path in candidates)
         raise SystemExit(
             "found multiple Android smoke fixture APK candidates under "
-            f"{repo_root / 'fixtures/android-smoke/app/build/outputs/apk/debug'}: {candidate_list}; "
+            f"{repo_root / 'tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug'}: {candidate_list}; "
             f"set {APK_ENV} explicitly"
         )
 
