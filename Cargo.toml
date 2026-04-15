@@ -5,6 +5,7 @@ members = [
   "crates/mar_compiler",
   "crates/mar_runner",
   "crates/mar_ios",
+  "crates/mar_android",
   "crates/mar_cli",
 ]
 resolver = "2"

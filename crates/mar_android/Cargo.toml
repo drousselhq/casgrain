@@ -1,5 +1,5 @@
 [package]
-name = "mar_cli"
+name = "mar_android"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,10 +8,5 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-mar_android = { path = "../mar_android" }
-mar_application = { path = "../mar_application" }
-mar_compiler = { path = "../mar_compiler" }
 mar_domain = { path = "../mar_domain" }
-mar_ios = { path = "../mar_ios" }
-mar_runner = { path = "../mar_runner" }
 serde_json.workspace = true

@@ -1,5 +1,6 @@
 use std::{env, fs};
 
+use mar_android::run_smoke_fixture_plan as run_android_smoke_fixture_plan;
 use mar_application::{CompileOutput, PlanCompiler};
 use mar_compiler::GherkinCompiler;
 use mar_domain::{CompilationDiagnostic, ExecutionTrace};
@@ -31,6 +32,7 @@ fn run(args: Vec<String>) -> Result<String, String> {
         }
         "run-mock" => run_mock(&args),
         "run-ios-smoke" => run_ios_smoke(&args),
+        "run-android-smoke" => run_android_smoke(&args),
         _ => Err(usage()),
     }
 }
@@ -58,6 +60,17 @@ fn run_ios_smoke(args: &[String]) -> Result<String, String> {
     render_trace_output("Casgrain iOS smoke run", trace_json, &output, &trace)
 }
 
+fn run_android_smoke(args: &[String]) -> Result<String, String> {
+    let input = args.get(1).ok_or_else(usage)?;
+    let source = read_source(input)?;
+    let trace_json = trace_json_requested(args);
+    let output = compile_source(&source, input)?;
+    let trace = run_android_smoke_fixture_plan(&output.plan)
+        .map_err(|error| format!("failed to run Android smoke harness: {error}"))?;
+
+    render_trace_output("Casgrain Android smoke run", trace_json, &output, &trace)
+}
+
 fn render_trace_output(
     title: &str,
     trace_json: bool,
@@ -76,7 +89,7 @@ fn trace_json_requested(args: &[String]) -> bool {
 }
 
 fn usage() -> String {
-    "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]".into()
+    "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]\n  mar run-android-smoke <feature-file> [--trace-json]".into()
 }
 
 fn read_source(path: &str) -> Result<String, String> {
@@ -192,6 +205,7 @@ mod tests {
         let error = run(vec!["wat".into()]).expect_err("expected usage error");
         assert!(error.contains("run-mock"));
         assert!(error.contains("run-ios-smoke"));
+        assert!(error.contains("run-android-smoke"));
     }
 
     #[test]
@@ -277,7 +291,9 @@ mod tests {
         let repo_root = temp_path("casgrain-cli-repo");
         let artifact_dir = temp_path("casgrain-cli-artifacts");
         let runner = install_fake_ios_smoke_runner(&repo_root);
-        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
 
         unsafe {
             std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
@@ -312,7 +328,9 @@ mod tests {
         let repo_root = temp_path("casgrain-cli-repo");
         let artifact_dir = temp_path("casgrain-cli-artifacts");
         let runner = install_fake_ios_smoke_runner(&repo_root);
-        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
 
         unsafe {
             std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
@@ -337,6 +355,134 @@ mod tests {
             .as_str()
             .expect("artifact path should be a string")
             .ends_with("tap-counter-1.png"));
+    }
+
+    #[test]
+    fn run_android_smoke_reports_successful_tap_counter_flow() {
+        let feature = tempfile_feature(
+            r#"Feature: Android smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "fixtures/android-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_android_smoke_runner(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let output = run(vec!["run-android-smoke".into(), feature])
+            .expect("run-android-smoke should succeed");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+        }
+
+        assert!(output.contains("Casgrain Android smoke run: Increment the counter once"));
+        assert!(output.contains("Device: Pixel 8 15 (Android)"));
+        assert!(output.contains("Run status: Passed"));
+        assert!(output.contains("android-tap-counter-1 (screenshot) ->"));
+    }
+
+    #[test]
+    fn run_android_smoke_trace_json_is_machine_readable() {
+        let feature = tempfile_feature(
+            r#"Feature: Android smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "fixtures/android-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_android_smoke_runner(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let output = run(vec![
+            "run-android-smoke".into(),
+            feature,
+            "--trace-json".into(),
+        ])
+        .expect("run-android-smoke json output should succeed");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+        }
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+
+        assert_eq!(json["run_id"], "android-smoke-increment-the-counter-once");
+        assert_eq!(json["device"]["platform"], "android");
+        assert_eq!(json["status"], "passed");
+        assert!(json["artifacts"][0]["path"]
+            .as_str()
+            .expect("artifact path should be a string")
+            .ends_with("android-tap-counter-1.png"));
+    }
+
+    #[test]
+    fn run_android_smoke_without_injected_runner_fails_honestly() {
+        let feature = tempfile_feature(
+            r#"Feature: Android smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "fixtures/android-smoke/features/tap_counter.feature",
+        );
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|path| path.parent())
+            .expect("workspace root should exist")
+            .to_path_buf();
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let error = run(vec!["run-android-smoke".into(), feature])
+            .expect_err("default android smoke script should fail until emulator harness lands");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+        }
+
+        assert!(error.contains("validates the generated plan contract only"));
+        assert!(artifact_dir.join("plan.json").is_file());
     }
 
     fn install_fake_ios_smoke_runner(repo_root: &std::path::Path) -> PathBuf {
@@ -385,6 +531,71 @@ print(json.dumps({
     "artifacts": [
         {
             "artifact_id": "tap-counter-1",
+            "artifact_type": "screenshot",
+            "path": str(artifact_path),
+            "sha256": None,
+            "step_id": plan["steps"][-1]["step_id"]
+        }
+    ],
+    "diagnostics": []
+}))
+"#,
+        )
+        .expect("fake runner should be written");
+        let mut permissions = fs::metadata(&runner)
+            .expect("runner metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&runner, permissions).expect("runner should be executable");
+        runner
+    }
+
+    fn install_fake_android_smoke_runner(repo_root: &std::path::Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let runner = repo_root.join("android-runner.py");
+        fs::write(
+            &runner,
+            r#"#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--repo-root", required=True)
+parser.add_argument("--plan", required=True)
+parser.add_argument("--artifact-dir", required=True)
+args = parser.parse_args()
+
+plan = json.loads(Path(args.plan).read_text())
+artifact_dir = Path(args.artifact_dir)
+artifact_dir.mkdir(parents=True, exist_ok=True)
+artifact_path = artifact_dir / "android-tap-counter-1.png"
+artifact_path.write_bytes(b"png")
+
+print(json.dumps({
+    "run_id": f"android-smoke-{plan['plan_id']}",
+    "plan_id": plan["plan_id"],
+    "device": {
+        "platform": "android",
+        "name": "Pixel 8",
+        "os_version": "15"
+    },
+    "started_at": "2026-01-01T00:00:00Z",
+    "finished_at": "2026-01-01T00:00:01Z",
+    "status": "passed",
+    "steps": [
+        {
+            "step_id": step["step_id"],
+            "status": "passed",
+            "attempts": 1,
+            "failure": None,
+            "artifacts": []
+        }
+        for step in plan["steps"]
+    ],
+    "artifacts": [
+        {
+            "artifact_id": "android-tap-counter-1",
             "artifact_type": "screenshot",
             "path": str(artifact_path),
             "sha256": None,
