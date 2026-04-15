@@ -20,7 +20,7 @@ The most important architectural rule is:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/drousselbot/casgrain.git
+git clone https://github.com/drousselhq/casgrain.git
 cd casgrain
 ```
 
@@ -93,6 +93,12 @@ Before opening a PR, review:
 
 If your change adds fixtures, traces, sample configs, or other content that can resemble credentials, run `gitleaks dir .` locally before opening the PR.
 Casgrain keeps the repo policy in `.gitleaks.toml`; prefer a narrow path- or rule-scoped allowlist there instead of weakening the scanner globally.
+
+## External contributions
+
+Casgrain is public, but maintainers may not have bandwidth to actively review unsolicited external pull requests yet.
+
+If you are not already a maintainer, please open an issue first before investing in a larger change. For now, prefer issue discussion over surprise PRs, and assume external PRs may be closed without review if they are off-roadmap or difficult to validate quickly.
 
 ## Quality gates
 
