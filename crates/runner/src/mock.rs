@@ -1,4 +1,4 @@
-use mar_domain::{
+use domain::{
     ActionKind, ArtifactRef, DeviceDescriptor, DeviceEngine, DeviceSnapshot, FailureCode,
     ObservedElement, RuntimeFailure, TargetPlatform, UiRole,
 };
@@ -151,7 +151,7 @@ impl DeviceEngine for MockDeviceEngine {
 
 #[cfg(test)]
 mod tests {
-    use mar_domain::{ActionKind, DeviceEngine, Selector, StringMatchKind, TextSelector};
+    use domain::{ActionKind, DeviceEngine, Selector, StringMatchKind, TextSelector};
 
     use super::MockDeviceEngine;
 

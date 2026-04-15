@@ -3,74 +3,66 @@
 version = 4
 
 [[package]]
+name = "android"
+version = "0.1.0"
+dependencies = [
+ "domain",
+ "serde_json",
+]
+
+[[package]]
+name = "application"
+version = "0.1.0"
+dependencies = [
+ "domain",
+ "serde",
+]
+
+[[package]]
+name = "casgrain"
+version = "0.1.0"
+dependencies = [
+ "android",
+ "application",
+ "compiler",
+ "domain",
+ "ios",
+ "runner",
+ "serde_json",
+]
+
+[[package]]
+name = "compiler"
+version = "0.1.0"
+dependencies = [
+ "application",
+ "domain",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "domain"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "ios"
+version = "0.1.0"
+dependencies = [
+ "domain",
+ "serde_json",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
-
-[[package]]
-name = "mar_android"
-version = "0.1.0"
-dependencies = [
- "mar_domain",
- "serde_json",
-]
-
-[[package]]
-name = "mar_application"
-version = "0.1.0"
-dependencies = [
- "mar_domain",
- "serde",
-]
-
-[[package]]
-name = "mar_cli"
-version = "0.1.0"
-dependencies = [
- "mar_android",
- "mar_application",
- "mar_compiler",
- "mar_domain",
- "mar_ios",
- "mar_runner",
- "serde_json",
-]
-
-[[package]]
-name = "mar_compiler"
-version = "0.1.0"
-dependencies = [
- "mar_application",
- "mar_domain",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "mar_domain"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "mar_ios"
-version = "0.1.0"
-dependencies = [
- "mar_domain",
- "serde_json",
-]
-
-[[package]]
-name = "mar_runner"
-version = "0.1.0"
-dependencies = [
- "mar_domain",
- "thiserror",
-]
 
 [[package]]
 name = "memchr"
@@ -94,6 +86,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "runner"
+version = "0.1.0"
+dependencies = [
+ "domain",
+ "thiserror",
 ]
 
 [[package]]

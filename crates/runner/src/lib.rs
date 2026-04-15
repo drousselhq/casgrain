@@ -1,6 +1,6 @@
 pub mod mock;
 
-use mar_domain::{
+use domain::{
     ActionKind, ArtifactRef, AssertionKind, DeviceEngine, DeviceSnapshot, ExecutablePlan,
     ExecutionTrace, FailureCode, FailurePolicy, FailureReport, ObservedElement, RunStatus,
     RuntimeFailure, Selector, StepStatus, StepTrace, StringMatchKind, WaitKind,
@@ -239,7 +239,7 @@ pub(crate) fn element_matches_selector(element: &ObservedElement, selector: &Sel
 
 #[cfg(test)]
 mod tests {
-    use mar_domain::{
+    use domain::{
         ArtifactPolicy, CapabilitySet, DeviceDescriptor, DeviceSnapshot, ExecutablePlan,
         ExecutionDefaults, FailurePolicy, ObservedElement, PlanFormatVersion, PlanSource, PlanStep,
         RetryPolicy, Selector, SourceKind, StepIntent, StringMatchKind, TargetPlatform,

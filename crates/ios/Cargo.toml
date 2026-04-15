@@ -1,5 +1,5 @@
 [package]
-name = "mar_domain"
+name = "ios"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,6 +8,6 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-serde.workspace = true
+domain = { path = "../domain" }
 serde_json.workspace = true
-thiserror.workspace = true
+

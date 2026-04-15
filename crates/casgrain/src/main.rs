@@ -1,11 +1,13 @@
 use std::{env, fs};
 
-use mar_android::run_smoke_fixture_plan as run_android_smoke_fixture_plan;
-use mar_application::{CompileOutput, PlanCompiler};
-use mar_compiler::GherkinCompiler;
-use mar_domain::{CompilationDiagnostic, ExecutionTrace};
-use mar_ios::run_smoke_fixture_plan;
-use mar_runner::{mock::MockDeviceEngine, DeterministicRunner};
+use android::run_smoke_fixture_plan as run_android_smoke_fixture_plan;
+use application::{CompileOutput, PlanCompiler};
+use compiler::GherkinCompiler;
+use domain::{CompilationDiagnostic, ExecutionTrace};
+use ios::run_smoke_fixture_plan;
+use runner::{mock::MockDeviceEngine, DeterministicRunner};
+
+const CLI_NAME: &str = "casgrain";
 
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
@@ -89,7 +91,9 @@ fn trace_json_requested(args: &[String]) -> bool {
 }
 
 fn usage() -> String {
-    "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]\n  mar run-android-smoke <feature-file> [--trace-json]".into()
+    format!(
+        "usage:\n  {CLI_NAME} compile <feature-file>\n  {CLI_NAME} run-mock <feature-file> [--trace-json]\n  {CLI_NAME} run-ios-smoke <feature-file> [--trace-json]\n  {CLI_NAME} run-android-smoke <feature-file> [--trace-json]"
+    )
 }
 
 fn read_source(path: &str) -> Result<String, String> {
@@ -172,11 +176,11 @@ fn render_run_summary(title: &str, output: &CompileOutput, trace: &ExecutionTrac
     lines.join("\n")
 }
 
-fn status_marker(status: &mar_domain::StepStatus) -> &'static str {
+fn status_marker(status: &domain::StepStatus) -> &'static str {
     match status {
-        mar_domain::StepStatus::Passed => "PASS",
-        mar_domain::StepStatus::Failed => "FAIL",
-        mar_domain::StepStatus::Skipped => "SKIP",
+        domain::StepStatus::Passed => "PASS",
+        domain::StepStatus::Failed => "FAIL",
+        domain::StepStatus::Skipped => "SKIP",
     }
 }
 
@@ -222,7 +226,7 @@ mod tests {
 
         assert_eq!(
             usage,
-            "usage:\n  mar compile <feature-file>\n  mar run-mock <feature-file> [--trace-json]\n  mar run-ios-smoke <feature-file> [--trace-json]\n  mar run-android-smoke <feature-file> [--trace-json]"
+            "usage:\n  casgrain compile <feature-file>\n  casgrain run-mock <feature-file> [--trace-json]\n  casgrain run-ios-smoke <feature-file> [--trace-json]\n  casgrain run-android-smoke <feature-file> [--trace-json]"
         );
     }
 

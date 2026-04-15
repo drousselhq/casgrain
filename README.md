@@ -119,51 +119,92 @@ cd casgrain
 cargo build --workspace
 ```
 
-### Try the current CLI
+### Try the CLI
 
-Compile the current product spec into the JSON plan format:
+The user-facing command is `casgrain`.
 
-```bash
-cargo run -p mar_cli -- compile docs/specs/casgrain-product-spec.md
-```
-
-Run the deterministic mock path from spec to execution trace summary:
+From the repo root, use it like this while developing:
 
 ```bash
-cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md
+cargo run --bin casgrain -- --help
 ```
 
-Run the first fixture-specific iOS CLI slice against the canonical smoke feature:
+If you want a built binary first:
 
 ```bash
-cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
+cargo build --bin casgrain
+./target/debug/casgrain --help
 ```
 
-Compile the canonical Android fixture contract into a deterministic Android-targeted plan:
+#### Fastest way to see something work on any machine
+
+This path does not need a simulator or emulator. It compiles and runs the built-in mock example:
 
 ```bash
-cargo run -p mar_cli -- compile fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- compile docs/specs/casgrain-product-spec.md
+cargo run --bin casgrain -- run-mock docs/specs/casgrain-product-spec.md
 ```
 
-Dispatch the first Android smoke contract path:
+If you want JSON instead of the human summary:
 
 ```bash
-cargo run -p mar_cli -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-mock docs/specs/casgrain-product-spec.md --trace-json
 ```
 
-The default Android smoke path now drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, and uploads the resulting trace and screenshot artifacts.
+#### Run the built-in iOS fixture app
 
-If you want machine-readable trace output:
+Use the included tap-counter fixture if you are on macOS with Xcode command-line tools and iOS Simulator runtimes installed:
 
 ```bash
-cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json
+cargo run --bin casgrain -- compile fixtures/ios-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
 ```
 
-If you want the full mock execution trace as JSON instead of the human summary:
+JSON trace output:
 
 ```bash
-cargo run -p mar_cli -- run-mock docs/specs/casgrain-product-spec.md --trace-json
+cargo run --bin casgrain -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json
 ```
+
+#### Run the built-in Android fixture app
+
+Use the included Android tap-counter fixture when you have an emulator available through `adb`.
+
+Build the fixture APK:
+
+```bash
+gradle -p fixtures/android-smoke/app assembleDebug
+```
+
+Then compile and run the fixture scenario:
+
+```bash
+cargo run --bin casgrain -- compile fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
+```
+
+The default Android smoke path drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, and uploads the resulting trace and screenshot artifacts.
+
+#### Try your own scenario
+
+Today, the easiest way to start with your own input is to write a small `.feature` file and compile it:
+
+```gherkin
+Feature: Login
+  Scenario: Successful login
+    Given the app is launched
+    When the user taps login button
+    When the user enters "daniel@example.com" into email field
+    Then the home screen is visible
+```
+
+Save that as `my.feature`, then run:
+
+```bash
+cargo run --bin casgrain -- compile my.feature
+```
+
+Honest status: the built-in fixture apps are the easiest end-to-end way to play with Casgrain today. General bring-your-own-app execution is still early beyond those fixture-backed smoke paths.
 
 ### Example authoring shape
 
@@ -193,7 +234,7 @@ Implemented foundation already in the repo:
 - minimal Gherkin-to-test-plan compiler scaffold
 - fake deterministic runner with unit tests
 - CI validation, security scanning, and coverage gating
-- first fixture-specific iOS smoke path through `mar run-ios-smoke`
+- first fixture-specific iOS smoke path through `casgrain run-ios-smoke`
 
 Not implemented yet:
 - real general-purpose iOS simulator adapter
@@ -211,11 +252,11 @@ Core direction:
 - Kotlin/Java for Android-native adapter work where needed
 
 Layering:
-- `mar_domain` — canonical execution-plan and runtime contracts
-- `mar_application` — use-case boundaries and validation
-- `mar_compiler` — spec lowering into executable plans
-- `mar_runner` — deterministic execution against a `DeviceEngine`
-- `mar_cli` — CLI entrypoints
+- `domain` — canonical execution-plan and runtime contracts
+- `application` — use-case boundaries and validation
+- `compiler` — spec lowering into executable plans
+- `runner` — deterministic execution against a `DeviceEngine`
+- `casgrain` — internal Rust crate that powers the `casgrain` CLI binary
 
 Important constraint:
 - LLMs may assist with authoring, exploration, or repair

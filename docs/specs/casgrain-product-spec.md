@@ -13,7 +13,7 @@ Current product framing:
 - Casgrain compiles or derives deterministic test plans that can run repeatably.
 - Casgrain should also support discovery-oriented workflows that observe an app and generate candidate Gherkin from evidence.
 - LLMs may assist authoring, exploration, repair, and summarization, but are not part of the deterministic execution path.
-- The first product-true vertical slice is intentionally minimal: one fixture-specific iOS scenario compiled from `fixtures/ios-smoke/features/tap_counter.feature` and executed through `mar run-ios-smoke`.
+- The first product-true vertical slice is intentionally minimal: one fixture-specific iOS scenario compiled from `fixtures/ios-smoke/features/tap_counter.feature` and executed through `casgrain run-ios-smoke`.
 - That first slice is iOS-only for now and exists to prove the honest end-to-end path from user-authored Gherkin to simulator-backed execution with structured artifacts.
 - The mock runner and handwritten XCTest harness are still useful development infrastructure, but they are not the canonical proof for this first user-facing slice.
 
