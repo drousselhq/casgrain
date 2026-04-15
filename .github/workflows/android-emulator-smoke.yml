@@ -21,6 +21,9 @@ on:
       - scripts/android_smoke_run_plan.py
       - .github/workflows/android-emulator-smoke.yml
 
+permissions:
+  contents: read
+
 concurrency:
   group: android-emulator-smoke-${{ github.ref }}
   cancel-in-progress: true
