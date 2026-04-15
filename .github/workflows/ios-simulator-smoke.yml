@@ -52,11 +52,21 @@ jobs:
           xcrun simctl list runtimes | sed -n '1,20p'
           xcrun simctl list devices available | sed -n '1,40p'
 
-      - name: Run iOS smoke CLI bridge
+      - name: Run generated-plan iOS smoke path
         run: |
           set -euxo pipefail
           mkdir -p "$ARTIFACT_DIR"
           cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"
+
+      - name: Assert generated-plan smoke artifacts
+        run: |
+          set -euxo pipefail
+          test -f "$ARTIFACT_DIR/trace.json"
+          test -f "$ARTIFACT_DIR/plan.json"
+          test -f "$ARTIFACT_DIR/xcodebuild.log"
+          test -f "$ARTIFACT_DIR/simulator.json"
+          test -d "$ARTIFACT_DIR/CasgrainSmoke.xcresult"
+          ls -R "$ARTIFACT_DIR"
 
       - name: Upload smoke artifacts
         uses: actions/upload-artifact@v4

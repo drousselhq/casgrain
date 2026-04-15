@@ -20,7 +20,8 @@ Product-true vertical-slice source of truth:
   - `When the user taps tap button`
   - `Then count label text is "Count: 1"`
   - `When the user takes a screenshot`
-- the current handwritten XCTest remains harness plumbing until the generated-plan execution path replaces it in CI
+- the canonical macOS `ios-simulator-smoke` workflow now uses the generated-plan `mar run-ios-smoke` path as the primary proof of product behavior
+- the handwritten XCTest remains harness plumbing underneath `scripts/ios_smoke.sh`, not the top-level CI proof entrypoint
 
 Run locally on macOS with Xcode command-line tools and iOS Simulator runtimes installed:
 
@@ -40,7 +41,7 @@ Run the fixture through the first iOS-specific CLI execution path from the repo 
 cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature
 ```
 
-That command now writes the compiled plan to `artifacts/ios-smoke-generated/<plan-id>/plan.json`, invokes the real simulator-backed fixture harness through `scripts/ios_smoke_run_plan.py`, and emits structured trace/artifact output for QA and CI archival.
+That command writes the compiled plan to the chosen artifact directory as `plan.json`, invokes the real simulator-backed fixture harness through `scripts/ios_smoke_run_plan.py`, and emits structured trace/artifact output for QA and CI archival.
 
 Emit machine-readable trace JSON, including deterministic artifact references, with:
 
@@ -57,4 +58,4 @@ The script now prefers a small, explicit simulator selection order and supports 
 - `CASGRAIN_SMOKE_DEVICE_NAMES` to provide a semicolon-separated device preference list
 - `CASGRAIN_SMOKE_DESTINATION_TIMEOUT` to extend destination matching time if Apple changes simulator startup timing
 
-The workflow uploads the xcresult bundle and logs as artifacts.
+The workflow uploads the generated `plan.json`, machine-readable `trace.json`, the xcresult bundle, simulator metadata, and xcodebuild logs as artifacts. When the deterministic PNG export succeeds, `tap-counter-1.png` is included in that same artifact directory.
