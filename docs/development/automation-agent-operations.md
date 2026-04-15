@@ -220,7 +220,44 @@ Escalate instead of editing code or workflows when:
 - the repo needs branch protection or other settings that cannot be changed in-tree
 - the failure points to product-direction ambiguity rather than maintenance drift
 
-### 4. Flaky-test owner agent
+### 4. DevOps agent
+
+Purpose:
+- operate repository infrastructure and delivery plumbing that support Casgrain without changing product behavior
+- keep public-repo hardening, CI security posture, and release automation explicit and reviewable
+
+Typical triggers:
+- GitHub Actions workflow changes
+- branch protection or repository settings reviews
+- CodeQL, Dependabot, Renovate, or secret-scanning setup
+- SHA pinning, permission tightening, or checkout hardening
+- release automation, Docker publishing, or other delivery pipeline adjustments
+
+Expected outputs:
+- small PRs for workflow or docs changes
+- validation evidence for security or CI hardening changes
+- concrete follow-up issues for settings-side blockers or missing platform capabilities
+- clear notes about what is enforced in-repo versus what still depends on GitHub settings
+
+Must not:
+- change product behavior or developer experience without explicit human review
+- widen scope from infrastructure hardening into product architecture
+- assume a settings-side control exists when the repo cannot actually enforce it
+
+#### DevOps agent operating procedure
+
+When a request is about repo infrastructure, the DevOps agent should work in this order:
+1. inspect the current repo state, active workflows, branch protection, repo security settings, and recent CI runs
+2. determine whether the change is a workflow edit, a GitHub settings change, or a blocker that requires a follow-up issue
+3. implement the narrowest safe slice that restores or improves the delivery/security contract
+4. validate the result and record the remaining risk or dependency explicitly
+
+Escalate instead of proceeding when:
+- the change would alter product behavior, CLI ergonomics, or runtime architecture
+- the safest fix depends on GitHub settings or billing/plan changes that cannot be expressed in-repo
+- the rollout would leave the default branch or public contribution path in a worse state than before
+
+### 5. Flaky-test owner agent
 
 Purpose:
 - identify, isolate, and reduce nondeterminism in validation
@@ -281,14 +318,15 @@ The flaky-test owner should hand work back to the CI shepherd agent when the pri
 When multiple roles could respond to the same situation, prefer this order:
 1. backlog hygiene agent confirms the work is safe and not already in progress
 2. reproduction agent gathers evidence if the failure or bug is unclear
-3. CI shepherd agent tightens validation or workflow behavior when the failure is in the merge gate
-4. flaky-test owner agent handles confirmed nondeterminism separately from deterministic defects
+3. DevOps agent handles repo infrastructure, security posture, workflow, or settings work
+4. CI shepherd agent tightens validation or workflow behavior when the failure is in the merge gate
+5. flaky-test owner agent handles confirmed nondeterminism separately from deterministic defects
 
 This ordering keeps repo maintenance grounded in evidence rather than jumping directly to fixes.
 
 ## Governance status
 
-This document now defines the bounded operating procedures for the backlog hygiene, reproduction, CI shepherd, and flaky-test owner roles. Any further rollout work should be tracked as concrete GitHub Issues rather than assumed implicitly from these role definitions.
+This document now defines the bounded operating procedures for the backlog hygiene, reproduction, CI shepherd, DevOps, and flaky-test owner roles. Any further rollout work should be tracked as concrete GitHub Issues rather than assumed implicitly from these role definitions.
 
 Related completed follow-up work:
 - issue #43 — deterministic bug reproduction evidence contract in `docs/development/bug-reproduction-evidence-contract.md`
