@@ -58,29 +58,18 @@ The project is named in honour of Thérèse Casgrain.
 
 ## Why Casgrain
 
-Existing mobile automation tools are strong in different places, but teams still tend to feel a gap between:
-- a workflow that is pleasant for local developers
-- a runtime they can trust in CI
-- an interface that autonomous agents can inspect and operate safely
-
-Casgrain exists to close that gap with a stricter execution boundary:
-- human or agent-authored input can start as Gherkin or observed behavior
-- Casgrain compiles that input into an explicit deterministic execution plan
-- the runtime executes the plan without an LLM deciding the next step
-- every run produces structured traces and artifacts that can be replayed, archived, and analyzed
-
-That makes Casgrain less about “another mobile test DSL” and more about “a deterministic execution substrate for mobile product flows.”
+Casgrain turns mobile automation into something teams can actually trust:
+- deterministic execution for local runs and CI
+- explicit execution plans instead of hidden runtime decisions
+- structured traces and artifacts for debugging and repair
+- agent-friendly workflows without putting an LLM in the runtime path
 
 ## How Casgrain differs
 
-Casgrain is not trying to out-Appium Appium or out-Maestro Maestro.
-It is drawing the boundary in a different place:
+Casgrain is built around a simple idea: author or derive a scenario, compile it into an explicit plan, run it deterministically, and keep the evidence.
 
-- **Appium** gives you a flexible WebDriver-based automation ecosystem
-- **Maestro** gives you fast, human-friendly interpreted flows
-- **Casgrain** is being built around compiled execution plans, deterministic runtime behavior, and structured traces for local dev, CI, and agent workflows
+That means readable inputs, predictable execution, and machine-consumable outputs — all in the same system.
 
-In short: Casgrain is a deterministic, plan-driven mobile execution system — not just another mobile test DSL.
 ## What Casgrain does today
 
 Today, the repository already demonstrates the core shape of that approach:
