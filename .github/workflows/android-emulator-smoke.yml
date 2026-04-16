@@ -21,6 +21,7 @@ on:
       - crates/android/**
       - tests/test-support/fixtures/android-smoke/**
       - tests/test-support/scripts/android_smoke_run_plan.py
+      - tests/test-support/scripts/validate_android_smoke_artifacts.py
       - .github/workflows/android-emulator-smoke.yml
 
 permissions:
@@ -107,17 +108,13 @@ jobs:
           profile: pixel_7
           disable-animations: true
           emulator-options: -no-window -no-snapshot-save -gpu swiftshader_indirect -noaudio -no-boot-anim
-          script: bash -euxo pipefail -c 'adb devices; cargo run -p casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"'
+          script: bash -euxo pipefail -c 'adb devices; TRACE_TMP="$(mktemp "$RUNNER_TEMP/android-smoke-trace.XXXXXX.json")"; if cargo run -p casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature --trace-json > "$TRACE_TMP"; then mv "$TRACE_TMP" "$ARTIFACT_DIR/trace.json"; else rm -f "$TRACE_TMP"; exit 1; fi'
 
-      - name: Assert generated-plan Android smoke artifacts
+      - name: Validate Android smoke artifact contract
+        if: always()
         run: |
           set -euxo pipefail
-          test -f "$ARTIFACT_DIR/trace.json"
-          test -f "$ARTIFACT_DIR/plan.json"
-          test -f "$ARTIFACT_DIR/android-tap-counter-1.png"
-          test -f "$ARTIFACT_DIR/emulator.json"
-          test -f "$ARTIFACT_DIR/ui-before-tap.xml"
-          test -f "$ARTIFACT_DIR/ui-after-tap.xml"
+          python3 tests/test-support/scripts/validate_android_smoke_artifacts.py --artifact-dir "$ARTIFACT_DIR"
           ls -R "$ARTIFACT_DIR"
 
       - name: Upload Android smoke artifacts

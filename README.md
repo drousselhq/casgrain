@@ -183,7 +183,7 @@ cargo run --bin casgrain -- compile tests/test-support/fixtures/android-smoke/fe
 cargo run --bin casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature
 ```
 
-The default Android smoke path drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, and uploads the resulting trace and screenshot artifacts.
+The default Android smoke path drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, validates the artifact contract, and uploads a bundle that includes `trace.json`/`plan.json` on success or a runner-managed `failure.json` plus the referenced diagnostics when the smoke runner reaches a structured failure path, along with a machine-readable `evidence-summary.json` for debugging. If neither bundle exists, the workflow now fails explicitly instead of silently uploading partial evidence.
 
 #### Try your own scenario
 
