@@ -49,6 +49,23 @@ def coerce_list(value: Any) -> list[Any]:
     return [value]
 
 
+def object_field(
+    container: dict[str, Any],
+    field_name: str,
+    *,
+    error_context: str,
+    required: bool = True,
+) -> dict[str, Any]:
+    value = container.get(field_name, ...)
+    if value is ...:
+        if required:
+            raise AuditReportError(f"{error_context} field '{field_name}' must be an object")
+        return {}
+    if not isinstance(value, dict):
+        raise AuditReportError(f"{error_context} field '{field_name}' must be an object")
+    return value
+
+
 def sanitize_cell(value: Any) -> str:
     text = "—" if value in (None, "") else str(value)
     return text.replace("|", "\\|").replace("\n", " ")
@@ -66,9 +83,12 @@ def advisory_cvss(advisory: dict[str, Any]) -> str:
 
 
 def versions_text(entry: dict[str, Any]) -> str:
-    versions = entry.get("versions") or {}
-    if not isinstance(versions, dict):
-        raise AuditReportError("cargo-audit JSON vulnerability entry field 'versions' must be an object")
+    versions = object_field(
+        entry,
+        "versions",
+        error_context="cargo-audit JSON vulnerability entry",
+        required=False,
+    )
     patched = coerce_list(versions.get("patched"))
     unaffected = coerce_list(versions.get("unaffected"))
 
@@ -81,9 +101,11 @@ def versions_text(entry: dict[str, Any]) -> str:
 
 
 def extract_findings(data: dict[str, Any]) -> list[dict[str, Any]]:
-    vulnerabilities = data.get("vulnerabilities") or {}
-    if not isinstance(vulnerabilities, dict):
-        raise AuditReportError("cargo-audit JSON field 'vulnerabilities' must be an object")
+    vulnerabilities = object_field(
+        data,
+        "vulnerabilities",
+        error_context="cargo-audit JSON",
+    )
 
     raw_list = vulnerabilities.get("list", [])
     if not isinstance(raw_list, list):
@@ -94,10 +116,16 @@ def extract_findings(data: dict[str, Any]) -> list[dict[str, Any]]:
     for entry in raw_list:
         if not isinstance(entry, dict):
             raise AuditReportError("cargo-audit JSON vulnerability entries must be objects")
-        advisory = entry.get("advisory") or {}
-        package = entry.get("package") or {}
-        if not isinstance(advisory, dict) or not isinstance(package, dict):
-            raise AuditReportError("cargo-audit JSON vulnerability entries must include object advisory/package fields")
+        advisory = object_field(
+            entry,
+            "advisory",
+            error_context="cargo-audit JSON vulnerability entry",
+        )
+        package = object_field(
+            entry,
+            "package",
+            error_context="cargo-audit JSON vulnerability entry",
+        )
         aliases = [str(alias) for alias in coerce_list(advisory.get("aliases"))]
         findings.append(
             {
@@ -118,12 +146,8 @@ def extract_findings(data: dict[str, Any]) -> list[dict[str, Any]]:
 
 def build_summary(data: dict[str, Any], generated_at: str) -> dict[str, Any]:
     findings = extract_findings(data)
-    database = data.get("database") or {}
-    lockfile = data.get("lockfile") or {}
-    if not isinstance(database, dict):
-        raise AuditReportError("cargo-audit JSON field 'database' must be an object")
-    if not isinstance(lockfile, dict):
-        raise AuditReportError("cargo-audit JSON field 'lockfile' must be an object")
+    database = object_field(data, "database", error_context="cargo-audit JSON")
+    lockfile = object_field(data, "lockfile", error_context="cargo-audit JSON")
 
     return {
         "alert": bool(findings),
