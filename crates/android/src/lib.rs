@@ -812,6 +812,15 @@ def main():
     if args == ["get-state"]:
         print("device")
         return 0
+    if args == ["shell", "getprop", "sys.boot_completed"]:
+        print("1")
+        return 0
+    if args == ["shell", "getprop", "dev.bootcomplete"]:
+        print("1")
+        return 0
+    if args == ["shell", "pm", "path", "android"]:
+        print("package:android")
+        return 0
     if args == ["shell", "getprop", "ro.product.model"]:
         print("Pixel 8")
         return 0
@@ -915,6 +924,15 @@ def main():
     if args == ["get-state"]:
         print("device")
         return 0
+    if args == ["shell", "getprop", "sys.boot_completed"]:
+        print("1")
+        return 0
+    if args == ["shell", "getprop", "dev.bootcomplete"]:
+        print("1")
+        return 0
+    if args == ["shell", "pm", "path", "android"]:
+        print("package:android")
+        return 0
     if len(args) == 3 and args[0] == "install" and args[1] == "-r":
         print("Success")
         return 0
@@ -986,6 +1004,15 @@ def main():
         return 0
     if args == ["get-state"]:
         print("device")
+        return 0
+    if args == ["shell", "getprop", "sys.boot_completed"]:
+        print("1")
+        return 0
+    if args == ["shell", "getprop", "dev.bootcomplete"]:
+        print("1")
+        return 0
+    if args == ["shell", "pm", "path", "android"]:
+        print("package:android")
         return 0
     if len(args) == 3 and args[0] == "install" and args[1] == "-r":
         print("Success")
@@ -1091,6 +1118,15 @@ def main():
         return 0
     if args == ["get-state"]:
         print("device")
+        return 0
+    if args == ["shell", "getprop", "sys.boot_completed"]:
+        print("1")
+        return 0
+    if args == ["shell", "getprop", "dev.bootcomplete"]:
+        print("1")
+        return 0
+    if args == ["shell", "pm", "path", "android"]:
+        print("package:android")
         return 0
     if args == ["shell", "getprop", "ro.product.model"]:
         print("Pixel 8")
