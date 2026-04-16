@@ -82,6 +82,20 @@ def advisory_cvss(advisory: dict[str, Any]) -> str:
     return "unknown"
 
 
+def required_scalar_field(
+    container: dict[str, Any],
+    field_name: str,
+    *,
+    error_context: str,
+) -> str:
+    value = container.get(field_name, ...)
+    if value in (..., None, ""):
+        raise AuditReportError(f"{error_context} field '{field_name}' must be present and non-empty")
+    if isinstance(value, (dict, list, tuple, set)):
+        raise AuditReportError(f"{error_context} field '{field_name}' must be a scalar value")
+    return str(value)
+
+
 def versions_text(entry: dict[str, Any]) -> str:
     versions = object_field(
         entry,
@@ -107,7 +121,9 @@ def extract_findings(data: dict[str, Any]) -> list[dict[str, Any]]:
         error_context="cargo-audit JSON",
     )
 
-    raw_list = vulnerabilities.get("list", [])
+    if "list" not in vulnerabilities:
+        raise AuditReportError("cargo-audit JSON field 'vulnerabilities.list' must be present")
+    raw_list = vulnerabilities["list"]
     if not isinstance(raw_list, list):
         raise AuditReportError("cargo-audit JSON field 'vulnerabilities.list' must be a list")
 
@@ -129,10 +145,26 @@ def extract_findings(data: dict[str, Any]) -> list[dict[str, Any]]:
         aliases = [str(alias) for alias in coerce_list(advisory.get("aliases"))]
         findings.append(
             {
-                "advisory_id": str(advisory.get("id", "unknown")),
-                "title": str(advisory.get("title", "Untitled advisory")),
-                "package": str(package.get("name", "unknown")),
-                "version": str(package.get("version", "unknown")),
+                "advisory_id": required_scalar_field(
+                    advisory,
+                    "id",
+                    error_context="cargo-audit JSON vulnerability advisory",
+                ),
+                "title": required_scalar_field(
+                    advisory,
+                    "title",
+                    error_context="cargo-audit JSON vulnerability advisory",
+                ),
+                "package": required_scalar_field(
+                    package,
+                    "name",
+                    error_context="cargo-audit JSON vulnerability package",
+                ),
+                "version": required_scalar_field(
+                    package,
+                    "version",
+                    error_context="cargo-audit JSON vulnerability package",
+                ),
                 "aliases": aliases,
                 "cvss": advisory_cvss(advisory),
                 "patched_versions": versions_text(entry),

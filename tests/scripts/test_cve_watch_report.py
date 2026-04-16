@@ -215,6 +215,59 @@ class CveWatchReportTests(unittest.TestCase):
         for payload in malformed_payloads:
             with self.subTest(payload=payload), self.assertRaises(MODULE.AuditReportError):
                 MODULE.build_summary(payload, generated_at="2026-04-15T12:00:00+00:00")
+    def test_build_summary_rejects_partial_shapes_used_in_findings(self) -> None:
+        malformed_payloads = [
+            {
+                "database": {},
+                "lockfile": {},
+                "vulnerabilities": {},
+            },
+            {
+                "database": {},
+                "lockfile": {},
+                "vulnerabilities": {"list": [{"advisory": {}, "package": {}}]},
+            },
+            {
+                "database": {},
+                "lockfile": {},
+                "vulnerabilities": {
+                    "list": [
+                        {
+                            "advisory": {"id": "RUSTSEC-2099-0001", "title": "Demo vulnerability"},
+                            "package": {"version": "1.2.3"},
+                        }
+                    ]
+                },
+            },
+            {
+                "database": {},
+                "lockfile": {},
+                "vulnerabilities": {
+                    "list": [
+                        {
+                            "advisory": {"id": ["RUSTSEC-2099-0001"], "title": "Demo vulnerability"},
+                            "package": {"name": "demo-crate", "version": "1.2.3"},
+                        }
+                    ]
+                },
+            },
+            {
+                "database": {},
+                "lockfile": {},
+                "vulnerabilities": {
+                    "list": [
+                        {
+                            "advisory": {"id": "RUSTSEC-2099-0001", "title": "Demo vulnerability"},
+                            "package": {"name": {"nested": "demo-crate"}, "version": "1.2.3"},
+                        }
+                    ]
+                },
+            },
+        ]
+
+        for payload in malformed_payloads:
+            with self.subTest(payload=payload), self.assertRaises(MODULE.AuditReportError):
+                MODULE.build_summary(payload, generated_at="2026-04-15T12:00:00+00:00")
 
 
 if __name__ == "__main__":
