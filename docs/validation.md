@@ -9,10 +9,10 @@ It pairs with `docs/development/test-pyramid-and-runtime-contracts.md`, which ex
 Before merging work, run the required checks below unless the PR is explicitly scoped as a narrowly exempted docs-only or governance-only change and the reviewer accepts the exception.
 
 Repository reality today:
-- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, and `ios-smoke` status checks
-- `ios-simulator-smoke` now runs on every PR, but self-skips unless the change touches iOS-smoke-impacting files; this keeps the required check present without paying the full simulator cost on unrelated work
+- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke` status checks
+- `ios-simulator-smoke` now runs on every PR, but self-skips unless the change touches iOS-smoke-impacting files; this keeps the required `ios-smoke` check present without paying the full simulator cost on unrelated work
 - `android-emulator-smoke` runs automatically on PRs only when Android/shared-runtime paths change, and both mobile smoke workflows also run on a nightly schedule to catch environment drift
-- CodeQL runs on PRs and `main` pushes as an always-on static-analysis baseline for Actions workflow logic and Rust code; keep it advisory until the workflow proves stable on this repo
+- CodeQL now participates in the enforced merge gate through the required `analyze (actions)` and `analyze (rust)` checks, covering GitHub Actions workflow logic and Rust code on PRs and `main` pushes
 - PR authors and mergers must still avoid bypassing the merge gate just because an admin path exists
 
 Required checks:
