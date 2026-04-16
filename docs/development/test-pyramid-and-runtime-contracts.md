@@ -34,12 +34,12 @@ Purpose:
 - catch schema and plan-validation regressions before runner or CLI layers are involved
 
 Current coverage in the repo:
-- `crates/mar_domain`: JSON round-trip coverage for `ExecutablePlan`
-- `crates/mar_application`: plan validation coverage for duplicate step IDs
+- `crates/domain`: JSON round-trip coverage for `ExecutablePlan`
+- `crates/application`: plan validation coverage for duplicate step IDs
 
 Examples today:
-- `mar_domain::tests::executable_plan_round_trips_to_json`
-- `mar_application::tests::validate_plan_rejects_duplicate_step_ids`
+- `domain::tests::executable_plan_round_trips_to_json`
+- `application::tests::validate_plan_rejects_duplicate_step_ids`
 
 Expected growth in this layer:
 - selector normalization and stability rules
@@ -57,8 +57,8 @@ Current coverage in the repo:
 - lowering checks for launch, tap, type, and visibility assertions
 
 Examples today:
-- `mar_compiler::tests::compiles_gherkin_into_stable_plan`
-- `mar_compiler::tests::lowers_common_actions_and_assertions`
+- `compiler::tests::compiles_gherkin_into_stable_plan`
+- `compiler::tests::lowers_common_actions_and_assertions`
 
 Expected growth in this layer:
 - golden tests from representative specs to expected plan JSON
@@ -77,12 +77,12 @@ Current coverage in the repo:
 - fake-engine fixture behavior for controls, tap side effects, and screenshot artifacts
 
 Examples today:
-- `mar_runner::tests::runner_passes_for_matching_selector`
-- `mar_runner::tests::runner_fails_for_missing_selector`
-- `mar_runner::tests::runner_can_execute_small_login_like_flow`
-- `mar_runner::mock::tests::login_fixture_contains_expected_controls`
-- `mar_runner::mock::tests::tapping_login_reveals_home_screen`
-- `mar_runner::mock::tests::screenshot_action_emits_artifact`
+- `runner::tests::runner_passes_for_matching_selector`
+- `runner::tests::runner_fails_for_missing_selector`
+- `runner::tests::runner_can_execute_small_login_like_flow`
+- `runner::mock::tests::login_fixture_contains_expected_controls`
+- `runner::mock::tests::tapping_login_reveals_home_screen`
+- `runner::mock::tests::screenshot_action_emits_artifact`
 
 Expected growth in this layer:
 - retry and timeout semantics
@@ -102,10 +102,10 @@ Current coverage in the repo:
 - `run-mock` success path from feature file to human-readable output
 
 Examples today:
-- `mar_cli::tests::usage_is_returned_for_missing_arguments`
-- `mar_cli::tests::usage_is_returned_for_unknown_command`
-- `mar_cli::tests::compile_failure_is_rendered_cleanly`
-- `mar_cli::tests::run_mock_reports_successful_flow`
+- `casgrain::tests::usage_is_returned_for_missing_arguments`
+- `casgrain::tests::usage_is_returned_for_unknown_command`
+- `casgrain::tests::compile_failure_is_rendered_cleanly`
+- `casgrain::tests::run_mock_reports_successful_flow`
 
 Expected growth in this layer:
 - machine-readable output snapshots
@@ -120,8 +120,8 @@ Purpose:
 
 Status:
 - partially implemented
-- the first iOS fixture-app smoke path now exists under `fixtures/ios-smoke/`
-- the macOS `ios-simulator-smoke` workflow now runs the generated-plan `mar run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
+- the first iOS fixture-app smoke path now exists under `tests/test-support/fixtures/ios-smoke/`
+- the macOS `ios-simulator-smoke` workflow now runs the generated-plan `casgrain run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
 - Android parity remains deferred until the iOS contracts and first generated-plan vertical slice stabilize
 
 Current strategy:

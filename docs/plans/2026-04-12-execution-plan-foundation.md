@@ -5,11 +5,11 @@
 Goal: establish the first executable Rust workspace for the mobile runtime, centered on a deterministic execution-plan IR, a minimal compiler, a fake deterministic runner, and CI/security validation scaffolding.
 
 Architecture:
-- mar_domain owns the canonical plan, selector, action, wait, assertion, trace, and engine contracts.
-- mar_application owns validation and use-case boundaries.
-- mar_compiler lowers Gherkin feature text into the canonical plan.
-- mar_runner executes plans against a DeviceEngine deterministically.
-- mar_cli exposes a machine-friendly compile surface.
+- domain owns the canonical plan, selector, action, wait, assertion, trace, and engine contracts.
+- application owns validation and use-case boundaries.
+- compiler lowers Gherkin feature text into the canonical plan.
+- runner executes plans against a DeviceEngine deterministically.
+- casgrain exposes a machine-friendly compile surface.
 
 Planned verification:
 - cargo fmt --all --check
