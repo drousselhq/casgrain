@@ -53,9 +53,9 @@ See `docs/validation.md` for the canonical validation gate.
 
 ## Where to start in the codebase
 
-- `crates/mar_domain` — start here for the canonical execution model
-- `crates/mar_compiler` — spec lowering
-- `crates/mar_runner` — deterministic execution
+- `crates/domain` — start here for the canonical execution model
+- `crates/compiler` — spec lowering
+- `crates/runner` — deterministic execution
 - `docs/architecture/` — architecture and governance
 - `docs/prd/` — product intent and constraints
 - `docs/specs/` — canonical product behavior specs

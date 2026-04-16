@@ -6,7 +6,7 @@ Goal: prove Casgrain's first product-true vertical slice on iOS: Gherkin in, det
 
 Architecture: keep this slice intentionally narrow and fixture-specific. Reuse the existing compiler, plan, runner, and iOS smoke harness where possible, but make the proof unambiguous by ensuring the primary executable input is generated from Gherkin rather than handwritten XCTest. Prefer one honest path over a flexible abstraction.
 
-Tech stack: Rust workspace crates (`mar_cli`, `mar_compiler`, `mar_runner`, `mar_ios`, `mar_domain`), SwiftUI fixture app under `fixtures/ios-smoke/`, macOS GitHub Actions smoke workflow.
+Tech stack: Rust workspace crates (`casgrain`, `compiler`, `runner`, `ios`, `domain`), SwiftUI fixture app under `tests/test-support/fixtures/ios-smoke/`, macOS GitHub Actions smoke workflow.
 
 ---
 
@@ -37,23 +37,23 @@ Casgrain then:
 Objective: create the smallest possible feature file that expresses the existing smoke-app behavior.
 
 Files:
-- Create: `fixtures/ios-smoke/features/tap_counter.feature`
-- Modify: `fixtures/ios-smoke/README.md`
+- Create: `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature`
+- Modify: `tests/test-support/fixtures/ios-smoke/README.md`
 
 Steps:
-1. Create `fixtures/ios-smoke/features/tap_counter.feature` with one scenario only.
+1. Create `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature` with one scenario only.
 2. Use only step phrases that we are willing to support in the first slice.
 3. Update the fixture README so it explains that this feature is now the product-true source for the vertical slice.
 4. Validation:
-   - `cargo run -p mar_cli -- compile fixtures/ios-smoke/features/tap_counter.feature`
+   - `cargo run -p casgrain -- compile tests/test-support/fixtures/ios-smoke/features/tap_counter.feature`
 
 ## Task 2: Narrow and pin the first supported Gherkin vocabulary
 
 Objective: make compiler behavior explicit and stable for the fixture scenario.
 
 Files:
-- Modify: `crates/mar_compiler/src/lib.rs`
-- Test: `crates/mar_compiler/src/lib.rs`
+- Modify: `crates/compiler/src/lib.rs`
+- Test: `crates/compiler/src/lib.rs`
 
 Steps:
 1. Add or tighten tests for the exact step phrases used by `tap_counter.feature`.
@@ -63,17 +63,17 @@ Steps:
 3. Ensure screenshot capture can be expressed by a supported step phrase.
 4. Ensure unsupported nearby phrases fail clearly with structured diagnostics.
 5. Validation:
-   - `cargo test -p mar_compiler`
+   - `cargo test -p compiler`
 
 ## Task 3: Add a real iOS execution path in the CLI
 
 Objective: stop at the smallest user-visible product command that runs the compiled plan against iOS instead of the mock engine.
 
 Files:
-- Modify: `crates/mar_cli/src/main.rs`
-- Modify: `crates/mar_runner/src/lib.rs` if trace/result shaping needs a small addition
-- Modify: `crates/mar_ios/src/lib.rs`
-- Test: `crates/mar_cli/src/main.rs`
+- Modify: `crates/casgrain/src/main.rs`
+- Modify: `crates/runner/src/lib.rs` if trace/result shaping needs a small addition
+- Modify: `crates/ios/src/lib.rs`
+- Test: `crates/casgrain/src/main.rs`
 
 Steps:
 1. Add a bounded CLI command for this slice, for example `run-ios-smoke <feature-file>`.
@@ -81,19 +81,19 @@ Steps:
 3. Execute the compiled plan through an iOS-specific engine path rather than `run-mock`.
 4. Return machine-readable output as JSON when requested, or at minimum a deterministic structured summary plus artifact references.
 5. Validation:
-   - `cargo test -p mar_cli`
-   - `cargo test -p mar_runner`
-   - `cargo test -p mar_ios`
+   - `cargo test -p casgrain`
+   - `cargo test -p runner`
+   - `cargo test -p ios`
 
 ## Task 4: Bridge the runner to the real fixture harness
 
 Objective: make the compiled plan drive the real fixture app, not just an in-memory adapter.
 
 Files:
-- Modify: `crates/mar_ios/src/lib.rs`
-- Modify: `scripts/ios_smoke.sh`
-- Possibly create: `scripts/ios_smoke_run_plan.py` or `scripts/ios_smoke_run_plan.sh`
-- Possibly create: `artifacts/` contract documentation in `fixtures/ios-smoke/README.md`
+- Modify: `crates/ios/src/lib.rs`
+- Modify: `tests/test-support/scripts/ios_smoke.sh`
+- Possibly create: `tests/test-support/scripts/ios_smoke_run_plan.py` or `tests/test-support/scripts/ios_smoke_run_plan.sh`
+- Possibly create: `artifacts/` contract documentation in `tests/test-support/fixtures/ios-smoke/README.md`
 
 Steps:
 1. Decide the thinnest honest bridge from Rust plan execution to the real simulator-backed fixture.
@@ -114,7 +114,7 @@ Objective: make CI prove the product loop, not only the harness loop.
 
 Files:
 - Modify: `.github/workflows/ios-simulator-smoke.yml`
-- Modify: `fixtures/ios-smoke/README.md`
+- Modify: `tests/test-support/fixtures/ios-smoke/README.md`
 - Possibly modify: `docs/validation.md`
 
 Steps:
@@ -129,7 +129,7 @@ Steps:
 Objective: lock in the exact proof and prevent silent regression back to mock-only behavior.
 
 Files:
-- Modify: `crates/mar_cli/src/main.rs` tests
+- Modify: `crates/casgrain/src/main.rs` tests
 - Modify: relevant docs under `docs/validation.md` and `docs/specs/casgrain-product-spec.md` if wording needs tightening
 
 Steps:

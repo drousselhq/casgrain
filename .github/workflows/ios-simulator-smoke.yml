@@ -7,6 +7,9 @@ on:
         description: Why run this check?
         required: false
         type: string
+  schedule:
+    - cron: '15 7 * * *'
+  pull_request:
 
 permissions:
   contents: read
@@ -17,6 +20,7 @@ concurrency:
 
 jobs:
   smoke:
+    name: ios-smoke
     runs-on: macos-15
     timeout-minutes: 30
     env:
@@ -26,17 +30,67 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           persist-credentials: false
 
+      - name: Decide whether iOS smoke is required
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
+          cat /tmp/changed-files.txt
+
+          python3 - <<'PY'
+          import fnmatch
+          from pathlib import Path
+
+          changed = [line.strip() for line in Path('/tmp/changed-files.txt').read_text().splitlines() if line.strip()]
+          patterns = [
+              'Cargo.toml',
+              'Cargo.lock',
+              'crates/application/**',
+              'crates/casgrain/**',
+              'crates/compiler/**',
+              'crates/domain/**',
+              'crates/runner/**',
+              'crates/ios/**',
+              'tests/test-support/fixtures/ios-smoke/**',
+              'tests/test-support/scripts/ios_smoke.sh',
+              'tests/test-support/scripts/ios_smoke_run_plan.py',
+              '.github/workflows/ios-simulator-smoke.yml',
+          ]
+
+          def matches(path: str) -> bool:
+              return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
+
+          should_run = any(matches(path) for path in changed)
+          Path('/tmp/ios-should-run.txt').write_text('true' if should_run else 'false')
+          PY
+
+          echo "should_run=$(cat /tmp/ios-should-run.txt)" >> "$GITHUB_OUTPUT"
+
       - name: Install Rust toolchain
+        if: steps.changes.outputs.should_run == 'true'
         uses: dtolnay/rust-toolchain@1.85.0
         with:
           components: rustfmt, clippy
 
       - name: Cache cargo
+        if: steps.changes.outputs.should_run == 'true'
         uses: Swatinem/rust-cache@v2
 
       - name: Show macOS simulator tooling
+        if: steps.changes.outputs.should_run == 'true'
         run: |
           set -euxo pipefail
           xcodebuild -version
@@ -44,12 +98,14 @@ jobs:
           xcrun simctl list devices available | sed -n '1,40p'
 
       - name: Run generated-plan iOS smoke path
+        if: steps.changes.outputs.should_run == 'true'
         run: |
           set -euxo pipefail
           mkdir -p "$ARTIFACT_DIR"
-          cargo run -p mar_cli -- run-ios-smoke fixtures/ios-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"
+          cargo run -p casgrain -- run-ios-smoke tests/test-support/fixtures/ios-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"
 
       - name: Assert generated-plan smoke artifacts
+        if: steps.changes.outputs.should_run == 'true'
         run: |
           set -euxo pipefail
           test -f "$ARTIFACT_DIR/trace.json"
@@ -59,7 +115,14 @@ jobs:
           test -d "$ARTIFACT_DIR/CasgrainSmoke.xcresult"
           ls -R "$ARTIFACT_DIR"
 
+      - name: Skip iOS smoke for unaffected changes
+        if: steps.changes.outputs.should_run != 'true'
+        run: |
+          set -euxo pipefail
+          echo "No iOS-smoke-impacting files changed on this PR; reporting success without running the simulator path."
+
       - name: Upload smoke artifacts
+        if: steps.changes.outputs.should_run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: casgrain-ios-smoke
