@@ -2,6 +2,8 @@
 
 This document is the canonical place for Casgrain validation rules and quality gates.
 
+It pairs with `docs/development/test-pyramid-and-runtime-contracts.md`, which explains what kinds of tests should exist, what stronger expectations apply to critical logic, and how to interpret coverage beyond the baseline CI floor.
+
 ## Default merge gate
 
 Before merging work, run the required checks below unless the PR is explicitly scoped as a narrowly exempted docs-only or governance-only change and the reviewer accepts the exception.
@@ -22,6 +24,12 @@ Required checks:
 - `gitleaks dir .`
 - `cargo deny check licenses sources`
 
+Coverage interpretation:
+- the required `cargo llvm-cov` check enforces a **75% workspace line-coverage floor** today
+- that floor is the baseline merge gate, not the full testing policy for new work
+- contributors should also follow the documented review policy to target **85%+ coverage on new or materially changed code** and **90%+ on critical core logic** where the metric is meaningful
+- until touched/new-code coverage tooling lands, authors and reviewers must apply that stronger expectation through targeted tests, honest PR notes, and no-unexplained-regression discipline
+
 First iOS vertical-slice note:
 - the current product-true execution proof is intentionally narrow: one fixture-specific iOS scenario compiled from `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature` and executed through `casgrain run-ios-smoke`
 - changes that touch this slice must preserve both halves of the user-facing contract: deterministic compile output shape and the CLI execution/reporting path
@@ -33,6 +41,7 @@ First iOS vertical-slice note:
 - Add targeted regression tests for behavior changes.
 - Keep validation focused on the changed area first, then widen only if needed.
 - Treat structured traces, logs, and artifacts as first-class evidence.
+- Prefer deterministic tests and fixtures over timing-sensitive or environment-sensitive checks.
 
 ## When extra validation is needed
 
@@ -47,6 +56,7 @@ First iOS vertical-slice note:
   - security-sensitive code paths
   - the fixture iOS smoke harness or its shared scheme
   - the Android smoke fixture or emulator harness
+  - critical core logic whose review bar should exceed the workspace-wide baseline
 
 ## Mobile smoke workflow policy
 
@@ -63,3 +73,4 @@ When reporting completion, include:
 - which validation commands ran
 - whether any follow-up work was opened in GitHub Issues
 - any known risks or exceptions
+- whether coverage expectations above the baseline CI floor were satisfied directly, deferred explicitly, or not meaningful for the diff

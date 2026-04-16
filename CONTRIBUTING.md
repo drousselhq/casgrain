@@ -49,7 +49,7 @@ cargo build --workspace
 
 ### 4. Run local checks
 
-See `docs/validation.md` for the canonical validation gate.
+See `docs/validation.md` for the canonical merge gate and `docs/development/test-pyramid-and-runtime-contracts.md` for the repo's unit-testing strategy, layer ownership, and coverage expectations for changed code.
 
 ## Where to start in the codebase
 
