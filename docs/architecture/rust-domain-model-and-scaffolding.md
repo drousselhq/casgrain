@@ -232,7 +232,7 @@ Recommended workspace:
 - `crates/infra_iossim`
 - `crates/infra_android`
 - `crates/casgrain`
-- `fixtures/`
+- `tests/test-support/fixtures/`
 - `tests/golden/`
 - `tests/integration/`
 

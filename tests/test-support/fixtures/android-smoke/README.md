@@ -19,18 +19,18 @@ Supported vocabulary for the canonical fixture feature:
 Compile the canonical Android fixture feature into a deterministic plan from the repo root:
 
 ```bash
-cargo run --bin casgrain -- compile fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- compile tests/test-support/fixtures/android-smoke/features/tap_counter.feature
 ```
 
 Dispatch the Android smoke path from the repo root:
 
 ```bash
-cargo run --bin casgrain -- run-android-smoke fixtures/android-smoke/features/tap_counter.feature
+cargo run --bin casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature
 ```
 
 Runtime prerequisites for the default harness:
 - an Android emulator is already booted and reachable via `adb`
-- a debug APK for `fixtures/android-smoke/app/` exists under `fixtures/android-smoke/app/build/outputs/apk/debug/` (the runner prefers `app-debug.apk` when present and otherwise auto-discovers a single `*.apk` there), or `CASGRAIN_ANDROID_SMOKE_APK` points at the built APK
+- a debug APK for `tests/test-support/fixtures/android-smoke/app/` exists under `tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug/` (the runner prefers `app-debug.apk` when present and otherwise auto-discovers a single `*.apk` there), or `CASGRAIN_ANDROID_SMOKE_APK` points at the built APK
 - optionally set `CASGRAIN_ANDROID_ADB` if `adb` is not on `PATH`
 - optionally set `CASGRAIN_ANDROID_SMOKE_APP_ID` to override the default package id `hq.droussel.casgrain.smoke`
 - optionally set `CASGRAIN_ANDROID_SMOKE_ACTIVITY` to override the launcher activity component or suffix (defaults to `.MainActivity` for the in-repo fixture app)

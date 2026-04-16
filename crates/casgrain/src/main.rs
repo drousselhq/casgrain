@@ -233,8 +233,10 @@ mod tests {
     #[test]
     fn compile_command_preserves_the_first_ios_slice_plan_shape() {
         let feature = tempfile_feature(
-            include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature"),
-            "fixtures/ios-smoke/features/tap_counter.feature",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
         );
 
         let output = run(vec!["compile".into(), feature]).expect("compile should succeed");
@@ -245,7 +247,7 @@ mod tests {
         assert!(json["source"]["source_name"]
             .as_str()
             .expect("source name should be a string")
-            .ends_with("/fixtures/ios-smoke/features/tap_counter.feature"));
+            .ends_with("/tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"));
         assert_eq!(json["target"]["platform"], "ios");
         assert_eq!(json["target"]["device_class"], "simulator");
         assert_eq!(
@@ -289,8 +291,10 @@ mod tests {
     #[test]
     fn run_ios_smoke_reports_successful_tap_counter_flow() {
         let feature = tempfile_feature(
-            include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature"),
-            "fixtures/ios-smoke/features/tap_counter.feature",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
         );
         let repo_root = temp_path("casgrain-cli-repo");
         let artifact_dir = temp_path("casgrain-cli-artifacts");
@@ -317,7 +321,9 @@ mod tests {
         assert!(output.contains("Casgrain iOS smoke run: Increment the counter once"));
         assert!(output.contains("Plan ID: increment-the-counter-once"));
         assert!(output.contains("Source: "));
-        assert!(output.contains("/fixtures/ios-smoke/features/tap_counter.feature"));
+        assert!(
+            output.contains("/tests/test-support/fixtures/ios-smoke/features/tap_counter.feature")
+        );
         assert!(output.contains("Device: iPhone 16 18.0 (Ios)"));
         assert!(output.contains("Run status: Passed"));
         assert!(output.contains("tap-counter-1 (screenshot) ->"));
@@ -326,8 +332,10 @@ mod tests {
     #[test]
     fn run_ios_smoke_trace_json_is_machine_readable() {
         let feature = tempfile_feature(
-            include_str!("../../../fixtures/ios-smoke/features/tap_counter.feature"),
-            "fixtures/ios-smoke/features/tap_counter.feature",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
         );
         let repo_root = temp_path("casgrain-cli-repo");
         let artifact_dir = temp_path("casgrain-cli-artifacts");
@@ -371,7 +379,7 @@ mod tests {
     Then count label text is "Count: 1"
     When the user takes a screenshot
 "#,
-            "fixtures/android-smoke/features/tap_counter.feature",
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
         );
         let repo_root = temp_path("casgrain-cli-repo");
         let artifact_dir = temp_path("casgrain-cli-artifacts");
@@ -411,7 +419,7 @@ mod tests {
     Then count label text is "Count: 1"
     When the user takes a screenshot
 "#,
-            "fixtures/android-smoke/features/tap_counter.feature",
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
         );
         let repo_root = temp_path("casgrain-cli-repo");
         let artifact_dir = temp_path("casgrain-cli-artifacts");
@@ -459,7 +467,7 @@ mod tests {
     Then count label text is "Count: 1"
     When the user takes a screenshot
 "#,
-            "fixtures/android-smoke/features/tap_counter.feature",
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
         );
         let artifact_dir = temp_path("casgrain-cli-artifacts");
         let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

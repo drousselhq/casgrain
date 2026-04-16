@@ -12,7 +12,7 @@ use domain::{
 const ANDROID_SMOKE_RUNNER_ENV: &str = "CASGRAIN_ANDROID_SMOKE_RUNNER";
 const ANDROID_SMOKE_ARTIFACT_DIR_ENV: &str = "CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR";
 const REPO_ROOT_ENV: &str = "CASGRAIN_REPO_ROOT";
-const DEFAULT_SMOKE_SCRIPT: &str = "scripts/android_smoke_run_plan.py";
+const DEFAULT_SMOKE_SCRIPT: &str = "tests/test-support/scripts/android_smoke_run_plan.py";
 
 pub fn run_smoke_fixture_plan(plan: &ExecutablePlan) -> Result<ExecutionTrace, RuntimeFailure> {
     validate_supported_smoke_plan(plan)?;
@@ -89,7 +89,7 @@ fn resolve_repo_root() -> Result<PathBuf, RuntimeFailure> {
     Err(RuntimeFailure {
         code: FailureCode::EngineError,
         message: String::from(
-            "failed to locate repository root; set CASGRAIN_REPO_ROOT to a checkout containing scripts/android_smoke_run_plan.py",
+            "failed to locate repository root; set CASGRAIN_REPO_ROOT to a checkout containing tests/test-support/scripts/android_smoke_run_plan.py",
         ),
     })
 }
@@ -612,7 +612,8 @@ mod tests {
             version: PlanFormatVersion { major: 1, minor: 0 },
             source: PlanSource {
                 kind: SourceKind::Gherkin,
-                source_name: "fixtures/android-smoke/features/tap_counter.feature".into(),
+                source_name:
+                    "tests/test-support/fixtures/android-smoke/features/tap_counter.feature".into(),
                 compiler_version: "0.1.0".into(),
             },
             target: TargetProfile {
