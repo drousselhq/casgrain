@@ -57,6 +57,7 @@ See `docs/validation.md` for the canonical validation gate.
 - `crates/compiler` — spec lowering
 - `crates/runner` — deterministic execution
 - `docs/architecture/` — architecture and governance
+- `docs/development/rust-coding-guide.md` — Rust coding expectations for this repo
 - `docs/prd/` — product intent and constraints
 - `docs/specs/` — canonical product behavior specs
 
@@ -67,6 +68,7 @@ Please prefer:
 - tests with behavior changes
 - architecture-aligned changes over quick hacks
 - explicit docs updates when changing project direction
+- the Rust defaults and repo conventions documented in `docs/development/rust-coding-guide.md`
 
 Please avoid:
 - introducing LLM dependence into the runtime execution path
@@ -87,6 +89,7 @@ Before opening a PR, review:
 - `docs/development/automation-agent-operations.md` when the work involves autonomous maintenance or repo-operations roles
 - `docs/development/bug-reproduction-evidence-contract.md` when the work involves bug intake, reproduction, or evidence collection
 - `docs/development/merge-and-validation-policy.md`
+- `docs/development/rust-coding-guide.md` for default Rust coding expectations
 - `docs/development/test-pyramid-and-runtime-contracts.md`
 - `docs/validation.md`
 - `docs/development/security-automation-plan.md`
