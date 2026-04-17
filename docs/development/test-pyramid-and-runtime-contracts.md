@@ -137,17 +137,17 @@ Status:
 - partially implemented
 - the first iOS fixture-app smoke path now exists under `tests/test-support/fixtures/ios-smoke/`
 - the macOS `ios-simulator-smoke` workflow now runs the generated-plan `casgrain run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
-- Android parity remains deferred until the iOS contracts and first generated-plan vertical slice stabilize
+- the Android emulator smoke path also exists now as a bounded Layer 4 evidence lane, with success traces and runner-managed failure diagnostics archived machine-readably for the canonical Android fixture
 
 Current strategy:
 - keep one tiny iOS fixture app as the first honest integration target
 - prove launch, one visible tap, one visible assertion, and one screenshot artifact before broadening scope
 - keep simulator/emulator coverage as a narrow Layer 4 proof on top of cheaper workspace validation
-- sequence platforms iOS-first, then add Android parity only after the iOS slice is stable and reproducible
+- keep iOS as the first required merge-gate slice while using Android smoke as a parallel evidence/debugging contract for the Android fixture path
 
 Current target scope:
 - one iOS fixture-app smoke path
-- one Android parity path after iOS contracts stabilize
+- one Android fixture-app parity path with explicit artifact-contract validation
 - reproducible simulator/emulator setup in CI or documented pre-merge validation
 
 ## Stronger expectations for critical core logic
