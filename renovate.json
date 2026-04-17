@@ -1,0 +1,57 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "dependencyDashboard": true,
+  "timezone": "Etc/UTC",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "labels": [
+    "devops"
+  ],
+  "prConcurrentLimit": 3,
+  "branchConcurrentLimit": 3,
+  "rebaseWhen": "behind-base-branch",
+  "enabledManagers": [
+    "cargo",
+    "github-actions",
+    "gradle"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions",
+      "addLabels": [
+        "security-review-needed"
+      ]
+    },
+    {
+      "matchManagers": [
+        "cargo"
+      ],
+      "groupName": "rust workspace dependencies"
+    },
+    {
+      "matchManagers": [
+        "gradle"
+      ],
+      "groupName": "android smoke gradle dependencies"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": [
+      "devops",
+      "security-review-needed"
+    ]
+  }
+}
