@@ -1,0 +1,131 @@
+name: android-emulator-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Why run this check?
+        required: false
+        type: string
+  schedule:
+    - cron: '45 7 * * *'
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - crates/application/**
+      - crates/casgrain/**
+      - crates/compiler/**
+      - crates/domain/**
+      - crates/runner/**
+      - crates/android/**
+      - tests/test-support/fixtures/android-smoke/**
+      - tests/test-support/scripts/android_smoke_run_plan.py
+      - .github/workflows/android-emulator-smoke.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-emulator-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: android-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ARTIFACT_DIR: ${{ github.workspace }}/artifacts/android-smoke
+      CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/android-smoke
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Java
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: 1.85.0
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Enable KVM acceleration for Android emulator
+        run: |
+          set -euxo pipefail
+          if [ -e /dev/kvm ]; then
+            sudo chown root:"$(id -gn)" /dev/kvm
+            sudo chmod 0660 /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo "/dev/kvm is not available on this runner" >&2
+            exit 1
+          fi
+
+      - name: Build Android smoke fixture APK
+        run: |
+          set -euxo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          gradle -p tests/test-support/fixtures/android-smoke/app assembleDebug
+          APK_DIR=tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug
+          DEFAULT_APK="$APK_DIR/app-debug.apk"
+          if [ -f "$DEFAULT_APK" ]; then
+            APK_PATH="$DEFAULT_APK"
+          else
+            mapfile -t APK_CANDIDATES < <(find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' | sort)
+            case "${#APK_CANDIDATES[@]}" in
+              1) APK_PATH="${APK_CANDIDATES[0]}" ;;
+              0)
+                echo "No debug APK found under $APK_DIR" >&2
+                exit 1
+                ;;
+              *)
+                printf 'Multiple debug APK candidates found under %s:\n' "$APK_DIR" >&2
+                printf '  %s\n' "${APK_CANDIDATES[@]}" >&2
+                exit 1
+                ;;
+            esac
+          fi
+          test -f "$APK_PATH"
+          printf 'CASGRAIN_ANDROID_SMOKE_APK=%s\n' "$APK_PATH" >> "$GITHUB_ENV"
+
+      - name: Run generated-plan Android smoke path
+        uses: ReactiveCircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot-save -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash -euxo pipefail -c 'adb devices; cargo run -p casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature --trace-json > "$ARTIFACT_DIR/trace.json"'
+
+      - name: Assert generated-plan Android smoke artifacts
+        run: |
+          set -euxo pipefail
+          test -f "$ARTIFACT_DIR/trace.json"
+          test -f "$ARTIFACT_DIR/plan.json"
+          test -f "$ARTIFACT_DIR/android-tap-counter-1.png"
+          test -f "$ARTIFACT_DIR/emulator.json"
+          test -f "$ARTIFACT_DIR/ui-before-tap.xml"
+          test -f "$ARTIFACT_DIR/ui-after-tap.xml"
+          ls -R "$ARTIFACT_DIR"
+
+      - name: Upload Android smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: casgrain-android-smoke
+          path: ${{ github.workspace }}/artifacts/android-smoke
+          if-no-files-found: error

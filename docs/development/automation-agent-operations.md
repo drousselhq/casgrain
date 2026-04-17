@@ -29,6 +29,32 @@ All automation agents operating in this repository should:
 - stop when a proposed change would alter product behavior, developer experience, or architecture in a meaningful way
 - record discovered follow-up work in GitHub Issues instead of leaving it implicit in chat logs or PR comments
 
+## Workflow-state labels
+
+Casgrain uses GitHub labels as durable workflow state.
+
+Core execution labels:
+- `ready-for-dev` — released into autonomous execution; this is a release-state label, not a routing label
+- `devops` — routing label for repository infrastructure, CI, workflow, security-posture, release-automation, and settings-adjacent work
+- `in-dev` — actively being implemented
+- `needs-qa` — ready for independent QA validation
+- `qa-failed` — QA found a blocking problem
+- `qa-passed` — QA validated the scoped change
+- `po-approved` — product-owner proxy approved the PR for merge when the remaining gates are green
+- `blocked` — waiting on another issue, repo capability, or external dependency
+- `waiting-on-human` — waiting on explicit human action outside the repo automation workflow
+
+Stewardship labels:
+- `docs-needed`, `docs-approved`, `docs-blocked`
+- `security-review-needed`, `security-approved`, `security-blocked`
+
+Routing rule:
+- the general Dev Delivery Agent may only pick issues labeled `ready-for-dev` that do not have `devops`
+- the DevOps Agent may only pick issues labeled both `ready-for-dev` and `devops`
+- if an issue is unlabeled, it is backlog only and is not yet released into execution
+
+Use GitHub-native relationship metadata (`Blocked by`, `blocking`, Parent/sub-issue) to express true dependencies whenever GitHub can represent them directly. Labels and comments should reflect that state clearly, not replace it.
+
 ## Human and agent boundaries
 
 Humans remain responsible for:
@@ -220,7 +246,44 @@ Escalate instead of editing code or workflows when:
 - the repo needs branch protection or other settings that cannot be changed in-tree
 - the failure points to product-direction ambiguity rather than maintenance drift
 
-### 4. Flaky-test owner agent
+### 4. DevOps agent
+
+Purpose:
+- operate repository infrastructure and delivery plumbing that support Casgrain without changing product behavior
+- keep public-repo hardening, CI security posture, and release automation explicit and reviewable
+
+Typical triggers:
+- GitHub Actions workflow changes
+- branch protection or repository settings reviews
+- CodeQL, Dependabot, Renovate, or secret-scanning setup
+- SHA pinning, permission tightening, or checkout hardening
+- release automation, Docker publishing, or other delivery pipeline adjustments
+
+Expected outputs:
+- small PRs for workflow or docs changes
+- validation evidence for security or CI hardening changes
+- concrete follow-up issues for settings-side blockers or missing platform capabilities
+- clear notes about what is enforced in-repo versus what still depends on GitHub settings
+
+Must not:
+- change product behavior or developer experience without explicit human review
+- widen scope from infrastructure hardening into product architecture
+- assume a settings-side control exists when the repo cannot actually enforce it
+
+#### DevOps agent operating procedure
+
+When a request is about repo infrastructure, the DevOps agent should work in this order:
+1. inspect the current repo state, active workflows, branch protection, repo security settings, and recent CI runs
+2. determine whether the change is a workflow edit, a GitHub settings change, or a blocker that requires a follow-up issue
+3. implement the narrowest safe slice that restores or improves the delivery/security contract
+4. validate the result and record the remaining risk or dependency explicitly
+
+Escalate instead of proceeding when:
+- the change would alter product behavior, CLI ergonomics, or runtime architecture
+- the safest fix depends on GitHub settings or billing/plan changes that cannot be expressed in-repo
+- the rollout would leave the default branch or public contribution path in a worse state than before
+
+### 5. Flaky-test owner agent
 
 Purpose:
 - identify, isolate, and reduce nondeterminism in validation
@@ -281,14 +344,85 @@ The flaky-test owner should hand work back to the CI shepherd agent when the pri
 When multiple roles could respond to the same situation, prefer this order:
 1. backlog hygiene agent confirms the work is safe and not already in progress
 2. reproduction agent gathers evidence if the failure or bug is unclear
-3. CI shepherd agent tightens validation or workflow behavior when the failure is in the merge gate
-4. flaky-test owner agent handles confirmed nondeterminism separately from deterministic defects
+3. DevOps agent handles repo infrastructure, security posture, workflow, or settings work
+4. CI shepherd agent tightens validation or workflow behavior when the failure is in the merge gate
+5. flaky-test owner agent handles confirmed nondeterminism separately from deterministic defects
 
 This ordering keeps repo maintenance grounded in evidence rather than jumping directly to fixes.
 
+## Workflow diagrams
+
+### Issue and PR state machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Backlog: issue opened / not yet released
+
+    Backlog --> ReadyDev: PO releases issue\nadd ready-for-dev
+    Backlog --> ReadyDevOps: PO releases infra issue\nadd ready-for-dev + devops
+    Backlog --> Blocked: dependency or external blocker\nadd blocked
+    Backlog --> WaitingHuman: explicit human action needed\nadd waiting-on-human
+
+    Blocked --> ReadyDev: dependency cleared\nremove blocked, add ready-for-dev
+    Blocked --> ReadyDevOps: dependency cleared for devops lane\nremove blocked, add ready-for-dev + devops
+    Blocked --> WaitingHuman: blocker becomes human-owned
+    WaitingHuman --> Backlog: human action completed\nremove waiting-on-human
+    WaitingHuman --> ReadyDev: human action completed and released\nadd ready-for-dev
+    WaitingHuman --> ReadyDevOps: human action completed and released to devops\nadd ready-for-dev + devops
+
+    state "Ready for dev lane" as ReadyDev
+    state "Ready for DevOps lane" as ReadyDevOps
+    state "In progress" as InDev
+    state "PR in QA" as NeedsQA
+    state "QA failed" as QAFailed
+    state "QA passed" as QAPassed
+    state "PO approved" as POApproved
+    state "Merged" as Merged
+
+    ReadyDev --> InDev: Dev Delivery Agent\nclaims bounded slice\nadd in-dev
+    ReadyDevOps --> InDev: DevOps Agent\nclaims bounded slice\nadd in-dev
+
+    InDev --> NeedsQA: open/update PR\nadd needs-qa
+    NeedsQA --> QAFailed: QA Validation Agent\nadd qa-failed, remove needs-qa
+    NeedsQA --> QAPassed: QA Validation Agent\nadd qa-passed, remove needs-qa
+    QAFailed --> InDev: Dev or DevOps agent\naddresses feedback
+    QAPassed --> POApproved: PO Approval Agent\nadd po-approved
+    QAPassed --> InDev: scope or evidence gap found
+    POApproved --> Merged: Merge Steward\nrequired checks green\nsquash merge
+    Merged --> [*]
+```
+
+### Agent responsibilities and handoff points
+
+```mermaid
+flowchart TD
+    PO[PO Approval Agent\nreleases backlog and approves merge] -->|ready-for-dev| DEVSEL{devops label present?}
+    DEVSEL -->|no| DEV[Dev Delivery Agent\nproduct and general implementation lane]
+    DEVSEL -->|yes| DOPS[DevOps Agent\nCI, workflow, security, release automation lane]
+
+    DEV --> PR[Open or update PR\nadd needs-qa when ready]
+    DOPS --> PR
+
+    PR --> QA[QA Validation Agent\nindependent verification]
+    QA -->|qa-failed| DEV
+    QA -->|qa-failed on devops PR| DOPS
+    QA -->|qa-passed| PO2[PO Approval Agent\nmerge-readiness decision]
+    PO2 -->|po-approved| MERGE[Merge Steward\nmanual gate verification\nand squash merge]
+
+    PR -. docs concern .-> DOCS[Docs Steward\noptional reviewer/fixer]
+    PR -. security concern .-> SEC[Security Steward\noptional reviewer/fixer]
+
+    FAIL[Failed CI or suspicious validation] --> REPRO[Reproduction Agent\nevidence first when unclear]
+    FAIL --> DOPS
+    FAIL --> CI[CI Shepherd Agent\nmerge-gate/workflow diagnosis]
+    CI --> FLAKE{nondeterministic?}
+    FLAKE -->|yes| FLAKY[Flaky-test Owner\ncontain and remove flake]
+    FLAKE -->|no| REPRO
+```
+
 ## Governance status
 
-This document now defines the bounded operating procedures for the backlog hygiene, reproduction, CI shepherd, and flaky-test owner roles. Any further rollout work should be tracked as concrete GitHub Issues rather than assumed implicitly from these role definitions.
+This document now defines the bounded operating procedures for the backlog hygiene, reproduction, CI shepherd, DevOps, and flaky-test owner roles. Any further rollout work should be tracked as concrete GitHub Issues rather than assumed implicitly from these role definitions.
 
 Related completed follow-up work:
 - issue #43 — deterministic bug reproduction evidence contract in `docs/development/bug-reproduction-evidence-contract.md`

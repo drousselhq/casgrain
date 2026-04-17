@@ -80,6 +80,13 @@ Validation levels:
 Until level 2 exists, many PRs can still merge using level 1.
 Once level 2 exists, runtime-affecting PRs should increasingly rely on it.
 
+Current rollout policy:
+- iOS smoke is now required on PRs because the current product-true slice is iOS-first.
+- The required iOS check may self-skip for PRs that do not touch iOS or shared runtime paths, but it must always report a status so branch protection remains enforceable.
+- Android smoke runs automatically for Android/shared-runtime changes and on a nightly schedule, but remains advisory until its stability is strong enough for required-check promotion.
+- Shared runtime/compiler/CLI changes should trigger both platform smoke workflows; platform-specific fixture/harness changes should trigger only the affected platform plus the normal Linux gate.
+- Docs/governance-only changes can rely on the default Linux validation gate without paying for mobile smoke execution.
+
 ## Cost discipline
 
 Prefer:
@@ -96,3 +103,9 @@ If work uncovers:
 - a follow-up requirement
 
 track it in a GitHub issue rather than relying on chat memory alone.
+
+When releasing work into automation, use the workflow-state labels documented in `docs/development/automation-agent-operations.md`.
+In particular:
+- `ready-for-dev` means released into execution
+- `devops` routes repo-infrastructure work to the DevOps lane instead of the general Dev Delivery lane
+- `blocked` and `waiting-on-human` should be explicit when execution is not currently safe

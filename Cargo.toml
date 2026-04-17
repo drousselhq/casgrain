@@ -1,12 +1,12 @@
 [workspace]
 members = [
-  "crates/mar_domain",
-  "crates/mar_application",
-  "crates/mar_compiler",
-  "crates/mar_runner",
-  "crates/mar_ios",
-  "crates/mar_android",
-  "crates/mar_cli",
+  "crates/domain",
+  "crates/application",
+  "crates/compiler",
+  "crates/runner",
+  "crates/ios",
+  "crates/android",
+  "crates/casgrain",
 ]
 resolver = "2"
 
@@ -16,7 +16,7 @@ edition = "2021"
 rust-version = "1.85"
 license = "Apache-2.0"
 authors = ["Daniel Roussel and contributors"]
-repository = "https://github.com/drousselbot/casgrain"
+repository = "https://github.com/drousselhq/casgrain"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

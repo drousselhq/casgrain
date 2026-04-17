@@ -13,7 +13,9 @@ This is the live execution plan for Casgrain.
 - Keep the scope intentionally tiny: one fixture app, one scenario, one tap, one visible state change, one screenshot artifact.
 - Reuse the existing iOS smoke harness only as enabling infrastructure, not as the final proof.
 - Keep docs, validation, and governance aligned with the codebase.
-- Use the macOS iOS simulator workflow only for changes that may affect simulator interaction.
+- Maintain a cheap always-on security baseline for public PRs; prefer Linux-hosted checks for default enforcement and keep macOS simulator runs scoped to real simulator-impacting changes.
+- Keep `ios-simulator-smoke` as a required PR check, but let it self-skip on PRs that do not touch iOS or shared runtime surfaces.
+- Keep `android-emulator-smoke` auto-running for Android/shared-runtime changes and on a nightly schedule until it is stable enough to promote into the required merge gate.
 
 ## Near-term priorities
 1. Deliver the minimal full Gherkin-to-iOS-fixture vertical slice.
