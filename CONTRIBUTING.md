@@ -49,7 +49,7 @@ cargo build --workspace
 
 ### 4. Run local checks
 
-See `docs/validation.md` for the canonical validation gate.
+See `docs/validation.md` for the canonical merge gate and `docs/development/test-pyramid-and-runtime-contracts.md` for the repo's unit-testing strategy, layer ownership, and coverage expectations for changed code.
 
 ## Where to start in the codebase
 
@@ -127,8 +127,9 @@ PRs should be green on:
 - cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
 - gitleaks secret scanning (`gitleaks dir .` using the repo's `.gitleaks.toml` policy)
 - cargo-deny license/source policy (`cargo deny check licenses sources` with `cargo-deny` 0.18.3)
+- CodeQL (`analyze (actions)` and `analyze (rust)` in GitHub branch protection)
 
-Until repository settings can enforce required checks automatically, treat this list as a hard procedural merge gate: do not merge while the relevant checks are still running just because GitHub shows the merge button.
+Repository settings on `main` now enforce the required status-check gate. Do not merge while any required check is still running or failing, even if an admin path exists.
 
 ## Issues and backlog
 
