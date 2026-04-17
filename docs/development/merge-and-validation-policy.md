@@ -84,6 +84,7 @@ Current rollout policy:
 - iOS smoke is now required on PRs because the current product-true slice is iOS-first.
 - The required iOS check may self-skip for PRs that do not touch iOS or shared runtime paths, but it must always report a status so branch protection remains enforceable.
 - Android smoke runs automatically for Android/shared-runtime changes and on a nightly schedule, but remains advisory until its stability is strong enough for required-check promotion.
+- Even while Android smoke is advisory, its workflow artifacts should be treated as a real contract: the run must archive either the success bundle (`trace.json`, plan, screenshot, emulator metadata, UI dumps) or the runner-managed failure bundle (`failure.json` plus referenced diagnostics), and the workflow should surface that result machine-readably. Missing both bundles should be treated as an explicit contract failure.
 - Shared runtime/compiler/CLI changes should trigger both platform smoke workflows; platform-specific fixture/harness changes should trigger only the affected platform plus the normal Linux gate.
 - Docs/governance-only changes can rely on the default Linux validation gate without paying for mobile smoke execution.
 
