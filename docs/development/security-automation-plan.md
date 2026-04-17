@@ -6,6 +6,8 @@ Define a cheap, architecture-consistent security baseline for Casgrain before re
 
 This plan focuses on pull-request automation that is easy to maintain in a small Rust workspace while still giving contributors clear signals when they introduce risk.
 
+For the repo-wide OWASP-aligned audit checklist and CVE-triage operating baseline, see `docs/development/security-owasp-baseline.md`.
+
 ## Current baseline
 
 Casgrain already enforces these security checks in CI:
@@ -136,6 +138,33 @@ Next action to adopt later:
 
 Issue status:
 - #21 is satisfied by documenting the defer decision, the failed trial evidence, and the explicit revisit trigger
+
+## 5. Dependency update automation
+
+**Decision:** configure Renovate in-repo as the default low-maintenance dependency update lane, while keeping activation explicit via the GitHub app installation step.
+
+Why:
+- Casgrain already depends on versioned Rust crates, GitHub Actions, and Android fixture tooling that can drift quietly
+- weekly batched update PRs are cheaper to review than ad hoc manual version bumps
+- major upgrades should stay human-approved instead of landing as surprise automation churn
+
+Implementation baseline:
+- `renovate.json` is the canonical repo config for dependency updates
+- enabled managers are limited to `cargo`, `github-actions`, and `gradle`, which matches the dependency surfaces currently present in-tree (including the Android smoke fixture's Gradle files)
+- Renovate runs on a weekly UTC schedule with `prConcurrentLimit` / `branchConcurrentLimit` set to `3` so update churn stays within the repo's CI budget
+- major updates require Dependency Dashboard approval before Renovate opens a PR
+- vulnerability alert PRs are labeled `devops` and `security-review-needed` so security-sensitive upgrade work enters the existing workflow state machine honestly
+
+Operational note:
+- the config alone does not execute; a maintainer still needs to install/enable the Renovate GitHub app (or equivalent approved Renovate runner) for `drousselhq/casgrain`
+- that app-install step is settings-side and should be handled explicitly rather than implied by the config merge
+- until that maintainer-owned settings action happens, treat Renovate activation as external follow-up work rather than assuming the merged config is already live
+
+Review expectations for Renovate PRs:
+- treat Renovate PRs as DevOps-lane maintenance work
+- keep them small and manager-scoped when possible; if a generated PR widens scope unexpectedly, close it and open a narrower follow-up issue
+- do not auto-merge by policy default; required checks must still go green and higher-risk upgrades should receive human review
+- when a Renovate PR changes workflow actions or security-relevant tooling, keep `security-review-needed` until a steward or maintainer explicitly clears it
 
 ## PR workflow expectations
 
