@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCRIPT_PATH = REPO_ROOT / "scripts" / "cve_watch_report.py"
+SCRIPT_PATH = REPO_ROOT / "tests" / "test-support" / "scripts" / "cve_watch_report.py"
 SPEC = importlib.util.spec_from_file_location("cve_watch_report", SCRIPT_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
