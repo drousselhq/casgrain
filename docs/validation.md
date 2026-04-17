@@ -12,7 +12,8 @@ Repository reality today:
 - `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke` status checks
 - `ios-simulator-smoke` now runs on every PR, but self-skips unless the change touches iOS-smoke-impacting files; this keeps the required `ios-smoke` check present without paying the full simulator cost on unrelated work
 - `android-emulator-smoke` runs automatically on PRs only when Android/shared-runtime paths change, and both mobile smoke workflows also run on a nightly schedule to catch environment drift
-- CodeQL now participates in the enforced merge gate through the required `analyze (actions)` and `analyze (rust)` checks, covering GitHub Actions workflow logic and Rust code on PRs and `main` pushes
+- CodeQL participates in the required merge gate through `analyze (actions)` and `analyze (rust)` while also remaining the always-on static-analysis baseline for workflow logic and Rust code
+- the `coverage` job still enforces the same 75% workspace line-coverage floor, but it now also publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts so reviewers can inspect the result without re-running coverage locally
 - PR authors and mergers must still avoid bypassing the merge gate just because an admin path exists
 
 Required checks:
@@ -24,8 +25,35 @@ Required checks:
 - `gitleaks dir .`
 - `cargo deny check licenses sources`
 
+## Inspecting coverage locally
+
+Use the same low-churn flow as CI when you need more than a pass/fail answer:
+
+```bash
+mkdir -p target/llvm-cov
+cargo llvm-cov \
+  --workspace \
+  --all-features \
+  --fail-under-lines 75 \
+  --summary-only \
+  --json \
+  --output-path target/llvm-cov/coverage-summary.json
+cargo llvm-cov report --lcov --output-path target/llvm-cov/lcov.info
+python3 tests/test-support/scripts/coverage_report.py \
+  --input target/llvm-cov/coverage-summary.json \
+  --repo-root . \
+  --threshold 75 \
+  --summary-out target/llvm-cov/coverage-report.json \
+  --markdown-out target/llvm-cov/coverage-report.md
+```
+
+Artifacts produced by this flow:
+- `target/llvm-cov/coverage-summary.json` — raw cargo-llvm-cov summary data
+- `target/llvm-cov/coverage-report.json` — distilled totals plus scope/file rollups for future ratchet tooling
+- `target/llvm-cov/coverage-report.md` — human-readable summary suitable for PR notes or local review
+- `target/llvm-cov/lcov.info` — LCOV export for downstream tooling
+
 Coverage interpretation:
-- the required `cargo llvm-cov` check enforces a **75% workspace line-coverage floor** today
 - that floor is the baseline merge gate, not the full testing policy for new work
 - contributors should also follow the documented review policy to target **85%+ coverage on new or materially changed code** and **90%+ on critical core logic** where the metric is meaningful
 - until touched/new-code coverage tooling lands, authors and reviewers must apply that stronger expectation through targeted tests, honest PR notes, and no-unexplained-regression discipline
