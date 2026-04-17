@@ -274,6 +274,7 @@ Important files and directories:
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/automation-agent-operations.md` — repository maintenance agent roles and boundaries
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
+- `docs/development/rust-coding-guide.md` — practical Rust defaults and repo-specific coding expectations
 - `docs/development/test-pyramid-and-runtime-contracts.md` — test layers and runtime contract strategy
 - `docs/validation.md` — canonical validation gate and reporting expectations
 - `docs/development/security-automation-plan.md` — security scanning baseline and follow-up roadmap
@@ -298,6 +299,7 @@ Contributions are welcome.
 
 Start here:
 - `CONTRIBUTING.md`
+- `docs/development/rust-coding-guide.md`
 - `AGENTS.md`
 
 If you are contributing through Claude Code, Codex CLI, Copilot, or similar tools, read `AGENTS.md` first.
