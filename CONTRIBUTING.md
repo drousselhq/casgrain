@@ -94,6 +94,20 @@ Before opening a PR, review:
 - `docs/validation.md`
 - `docs/development/security-automation-plan.md`
 
+## Dependency update automation
+
+Casgrain uses Renovate as the default dependency update lane once the repository has the Renovate GitHub app (or an equivalent approved Renovate runner) enabled.
+
+Current policy:
+- the canonical config lives in `renovate.json`
+- enabled managers are limited to Cargo, GitHub Actions, and the Gradle files currently present in the Android smoke fixture
+- Renovate opens at most 3 concurrent update branches / PRs on a weekly UTC cadence
+- major updates require Dependency Dashboard approval before a PR is created
+- Renovate PRs should stay in the DevOps lane and keep the `devops` label
+- workflow-action or security-sensitive upgrade PRs should keep `security-review-needed` until explicitly cleared
+
+Because app installation is a GitHub settings step, merging the config alone does not activate Renovate. If update PRs do not appear after the config lands, check that the Renovate app is installed for `drousselhq/casgrain` before assuming the config is broken; until then, treat activation as maintainer-owned external follow-up rather than completed in-repo work.
+
 If your change adds fixtures, traces, sample configs, or other content that can resemble credentials, run `gitleaks dir .` locally before opening the PR.
 Casgrain keeps the repo policy in `.gitleaks.toml`; prefer a narrow path- or rule-scoped allowlist there instead of weakening the scanner globally.
 
