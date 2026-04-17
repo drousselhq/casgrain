@@ -183,7 +183,7 @@ cargo run --bin casgrain -- compile tests/test-support/fixtures/android-smoke/fe
 cargo run --bin casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature
 ```
 
-The default Android smoke path drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, and uploads the resulting trace and screenshot artifacts.
+The default Android smoke path drives a real `adb`/emulator-backed fixture session when its prerequisites are available. In CI, `.github/workflows/android-emulator-smoke.yml` builds the fixture APK, boots an Android emulator, runs the generated-plan smoke flow, validates the artifact contract, and uploads a bundle that includes `trace.json`/`plan.json` on success or a runner-managed `failure.json` plus the referenced diagnostics when the smoke runner reaches a structured failure path, along with a machine-readable `evidence-summary.json` for debugging. If neither bundle exists, the workflow now fails explicitly instead of silently uploading partial evidence.
 
 #### Try your own scenario
 
@@ -274,6 +274,7 @@ Important files and directories:
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/automation-agent-operations.md` — repository maintenance agent roles and boundaries
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
+- `docs/development/rust-coding-guide.md` — practical Rust defaults and repo-specific coding expectations
 - `docs/development/test-pyramid-and-runtime-contracts.md` — test layers and runtime contract strategy
 - `docs/validation.md` — canonical validation gate and reporting expectations
 - `docs/development/security-automation-plan.md` — security scanning baseline and follow-up roadmap
@@ -298,6 +299,7 @@ Contributions are welcome.
 
 Start here:
 - `CONTRIBUTING.md`
+- `docs/development/rust-coding-guide.md`
 - `AGENTS.md`
 
 If you are contributing through Claude Code, Codex CLI, Copilot, or similar tools, read `AGENTS.md` first.

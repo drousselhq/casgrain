@@ -38,20 +38,25 @@ Runtime prerequisites for the default harness:
 - optionally set `CASGRAIN_ANDROID_BOOT_TIMEOUT_SECS` to control how long the runner waits for the emulator to report boot-complete + package-manager readiness before install/launch
 - optionally set `CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS` to control how long the runner waits for the fixture app to actually reach the foreground after launch
 
-Artifacts emitted by the default harness:
+Artifacts required in the validated success bundle:
+- `trace.json`
 - `plan.json`
+- `evidence-summary.json`
 - `android-tap-counter-1.png`
 - `emulator.json`
 - `ui-before-tap.xml`
 - `ui-after-tap.xml`
 
-Failure diagnostics emitted when the real emulator path cannot find the expected selector/state:
+Artifacts required in the validated runner-managed failure bundle:
 - `failure.json`
+- `evidence-summary.json`
 - `foreground-window.txt`
 - `foreground-activity.txt`
 - `ui-last.xml`
 
 CI proof path:
-- `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, enables `/dev/kvm` access on the hosted Ubuntu runner so the x86_64 emulator can boot with hardware acceleration, runs `casgrain run-android-smoke`, and uploads the emitted artifacts as `casgrain-android-smoke`
+- `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, enables `/dev/kvm` access on the hosted Ubuntu runner so the x86_64 emulator can boot with hardware acceleration, runs `casgrain run-android-smoke`, validates the emitted artifact contract with `tests/test-support/scripts/validate_android_smoke_artifacts.py`, and uploads the resulting evidence bundle as `casgrain-android-smoke`
+
+The machine-readable `evidence-summary.json` records whether the run produced the success contract (`trace.json` plus the stable sibling artifacts) or the runner-managed failure contract (`failure.json` plus the referenced diagnostics). If the workflow fails before the runner can emit either bundle, the workflow now treats that as an explicit contract breach instead of pretending usable smoke evidence exists.
 
 The runner stays honest about prerequisites: if `adb` is unavailable, no emulator is ready, or the APK is missing, the command fails with a concrete message instead of pretending to execute the smoke slice.

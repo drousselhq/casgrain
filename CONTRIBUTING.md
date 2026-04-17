@@ -49,7 +49,7 @@ cargo build --workspace
 
 ### 4. Run local checks
 
-See `docs/validation.md` for the canonical validation gate.
+See `docs/validation.md` for the canonical merge gate and `docs/development/test-pyramid-and-runtime-contracts.md` for the repo's unit-testing strategy, layer ownership, and coverage expectations for changed code.
 
 ## Where to start in the codebase
 
@@ -57,6 +57,7 @@ See `docs/validation.md` for the canonical validation gate.
 - `crates/compiler` — spec lowering
 - `crates/runner` — deterministic execution
 - `docs/architecture/` — architecture and governance
+- `docs/development/rust-coding-guide.md` — Rust coding expectations for this repo
 - `docs/prd/` — product intent and constraints
 - `docs/specs/` — canonical product behavior specs
 
@@ -67,6 +68,7 @@ Please prefer:
 - tests with behavior changes
 - architecture-aligned changes over quick hacks
 - explicit docs updates when changing project direction
+- the Rust defaults and repo conventions documented in `docs/development/rust-coding-guide.md`
 
 Please avoid:
 - introducing LLM dependence into the runtime execution path
@@ -87,9 +89,24 @@ Before opening a PR, review:
 - `docs/development/automation-agent-operations.md` when the work involves autonomous maintenance or repo-operations roles
 - `docs/development/bug-reproduction-evidence-contract.md` when the work involves bug intake, reproduction, or evidence collection
 - `docs/development/merge-and-validation-policy.md`
+- `docs/development/rust-coding-guide.md` for default Rust coding expectations
 - `docs/development/test-pyramid-and-runtime-contracts.md`
 - `docs/validation.md`
 - `docs/development/security-automation-plan.md`
+
+## Dependency update automation
+
+Casgrain uses Renovate as the default dependency update lane once the repository has the Renovate GitHub app (or an equivalent approved Renovate runner) enabled.
+
+Current policy:
+- the canonical config lives in `renovate.json`
+- enabled managers are limited to Cargo, GitHub Actions, and the Gradle files currently present in the Android smoke fixture
+- Renovate opens at most 3 concurrent update branches / PRs on a weekly UTC cadence
+- major updates require Dependency Dashboard approval before a PR is created
+- Renovate PRs should stay in the DevOps lane and keep the `devops` label
+- workflow-action or security-sensitive upgrade PRs should keep `security-review-needed` until explicitly cleared
+
+Because app installation is a GitHub settings step, merging the config alone does not activate Renovate. If update PRs do not appear after the config lands, check that the Renovate app is installed for `drousselhq/casgrain` before assuming the config is broken; until then, treat activation as maintainer-owned external follow-up rather than completed in-repo work.
 
 If your change adds fixtures, traces, sample configs, or other content that can resemble credentials, run `gitleaks dir .` locally before opening the PR.
 Casgrain keeps the repo policy in `.gitleaks.toml`; prefer a narrow path- or rule-scoped allowlist there instead of weakening the scanner globally.
@@ -110,8 +127,9 @@ PRs should be green on:
 - cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
 - gitleaks secret scanning (`gitleaks dir .` using the repo's `.gitleaks.toml` policy)
 - cargo-deny license/source policy (`cargo deny check licenses sources` with `cargo-deny` 0.18.3)
+- CodeQL (`analyze (actions)` and `analyze (rust)` in GitHub branch protection)
 
-Until repository settings can enforce required checks automatically, treat this list as a hard procedural merge gate: do not merge while the relevant checks are still running just because GitHub shows the merge button.
+Repository settings on `main` now enforce the required status-check gate. Do not merge while any required check is still running or failing, even if an admin path exists.
 
 ## Issues and backlog
 
