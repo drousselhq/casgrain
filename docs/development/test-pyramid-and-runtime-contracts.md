@@ -246,6 +246,7 @@ The workspace gate remains the same canonical merge bar in `docs/validation.md`:
 - `cargo fmt --all --check`
 - `cargo test --workspace`
 - `cargo clippy --workspace --all-targets -- -D warnings`
+- `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`
 - `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
 - `cargo audit`
 - `gitleaks dir .`
