@@ -1,0 +1,128 @@
+{
+  "plan_id": "increment-the-counter-once",
+  "name": "Increment the counter once",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "source": {
+    "kind": "gherkin",
+    "source_name": "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+    "compiler_version": "0.1.0"
+  },
+  "target": {
+    "platform": "android",
+    "device_class": "emulator"
+  },
+  "capabilities_required": {
+    "capabilities": [
+      "screenshot"
+    ]
+  },
+  "defaults": {
+    "step_timeout_ms": 5000,
+    "poll_interval_ms": 250,
+    "artifact_mode": "failure_only"
+  },
+  "steps": [
+    {
+      "step_id": "increment-the-counter-once-001",
+      "intent": "setup",
+      "description": "the app is launched",
+      "action": {
+        "kind": "launch_app",
+        "app_id": "app.under.test"
+      },
+      "guards": [],
+      "postconditions": [
+        {
+          "kind": "app_in_foreground",
+          "app_id": "app.under.test"
+        }
+      ],
+      "timeout_ms": 5000,
+      "retry": {
+        "max_attempts": 1
+      },
+      "on_failure": "abort_run",
+      "artifacts": {
+        "capture_on_failure": true,
+        "capture_after_step": false
+      }
+    },
+    {
+      "step_id": "increment-the-counter-once-002",
+      "intent": "interact",
+      "description": "the user taps tap button",
+      "action": {
+        "kind": "tap",
+        "target": {
+          "kind": "accessibility_id",
+          "value": "tap-button"
+        }
+      },
+      "guards": [],
+      "postconditions": [],
+      "timeout_ms": 5000,
+      "retry": {
+        "max_attempts": 1
+      },
+      "on_failure": "abort_run",
+      "artifacts": {
+        "capture_on_failure": true,
+        "capture_after_step": false
+      }
+    },
+    {
+      "step_id": "increment-the-counter-once-003",
+      "intent": "assert",
+      "description": "count label text is \"Count: 1\"",
+      "action": {
+        "kind": "noop"
+      },
+      "guards": [],
+      "postconditions": [
+        {
+          "kind": "text_equals",
+          "target": {
+            "kind": "accessibility_id",
+            "value": "count-label"
+          },
+          "value": "Count: 1"
+        }
+      ],
+      "timeout_ms": 5000,
+      "retry": {
+        "max_attempts": 1
+      },
+      "on_failure": "abort_run",
+      "artifacts": {
+        "capture_on_failure": true,
+        "capture_after_step": false
+      }
+    },
+    {
+      "step_id": "increment-the-counter-once-004",
+      "intent": "interact",
+      "description": "the user takes a screenshot",
+      "action": {
+        "kind": "take_screenshot",
+        "name": "android-tap-counter"
+      },
+      "guards": [],
+      "postconditions": [],
+      "timeout_ms": 5000,
+      "retry": {
+        "max_attempts": 1
+      },
+      "on_failure": "abort_run",
+      "artifacts": {
+        "capture_on_failure": true,
+        "capture_after_step": false
+      }
+    }
+  ],
+  "metadata": {
+    "feature_name": "Android smoke tap counter"
+  }
+}
