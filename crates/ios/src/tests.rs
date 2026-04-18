@@ -155,6 +155,100 @@ fn smoke_fixture_plan_validation_rejects_non_canonical_shape() {
 }
 
 #[test]
+fn run_smoke_fixture_plan_discovers_repo_root_and_default_runner_script() {
+    let repo_root = temp_path("casgrain-mar-ios-default-repo");
+    let nested_dir = repo_root.join("nested/workdir");
+    let artifact_dir = repo_root
+        .join("artifacts")
+        .join("ios-smoke-generated")
+        .join("increment-the-counter-once");
+    let runner_path = repo_root.join("tests/test-support/scripts/ios_smoke_run_plan.py");
+    fs::create_dir_all(runner_path.parent().expect("runner parent should exist"))
+        .expect("runner parent should be created");
+    fs::create_dir_all(&nested_dir).expect("nested workdir should be created");
+    fs::write(repo_root.join("Cargo.toml"), "[workspace]\nmembers = []\n")
+        .expect("workspace manifest should be written");
+    let _guard = env_lock().lock().expect("env lock should not be poisoned");
+
+    fs::write(
+        &runner_path,
+        r#"#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--repo-root", required=True)
+parser.add_argument("--plan", required=True)
+parser.add_argument("--artifact-dir", required=True)
+args = parser.parse_args()
+
+plan = json.loads(Path(args.plan).read_text())
+artifact_dir = Path(args.artifact_dir)
+artifact_dir.mkdir(parents=True, exist_ok=True)
+(artifact_dir / "tap-counter-default.png").write_bytes(b"png")
+
+print(json.dumps({
+    "run_id": f"ios-smoke-{plan['plan_id']}",
+    "plan_id": plan["plan_id"],
+    "device": {
+        "platform": "ios",
+        "name": "iPhone 16",
+        "os_version": "18.0"
+    },
+    "started_at": "2026-01-01T00:00:00Z",
+    "finished_at": "2026-01-01T00:00:01Z",
+    "status": "passed",
+    "steps": [
+        {
+            "step_id": step["step_id"],
+            "status": "passed",
+            "attempts": 1,
+            "failure": None,
+            "artifacts": []
+        }
+        for step in plan["steps"]
+    ],
+    "artifacts": [
+        {
+            "artifact_id": "tap-counter-default",
+            "artifact_type": "screenshot",
+            "path": str(artifact_dir / "tap-counter-default.png"),
+            "sha256": None,
+            "step_id": plan["steps"][-1]["step_id"]
+        }
+    ],
+    "diagnostics": []
+}))
+"#,
+    )
+    .expect("default runner script should be written");
+    let mut permissions = fs::metadata(&runner_path)
+        .expect("runner metadata should exist")
+        .permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(&runner_path, permissions).expect("runner should be executable");
+
+    let original_dir = std::env::current_dir().expect("current dir should resolve");
+    unsafe {
+        std::env::remove_var(REPO_ROOT_ENV);
+        std::env::remove_var(IOS_SMOKE_RUNNER_ENV);
+        std::env::remove_var(IOS_SMOKE_ARTIFACT_DIR_ENV);
+    }
+
+    std::env::set_current_dir(&nested_dir).expect("nested workdir should become current dir");
+    let trace = run_smoke_fixture_plan(&smoke_fixture_plan());
+    std::env::set_current_dir(&original_dir).expect("original current dir should be restored");
+
+    let trace = trace.expect("default repo-root and runner discovery should succeed");
+    assert_eq!(trace.plan_id, "increment-the-counter-once");
+    assert_eq!(trace.status, domain::RunStatus::Passed);
+    assert_eq!(trace.artifacts[0].artifact_type, "screenshot");
+    assert!(artifact_dir.join("plan.json").is_file());
+    assert!(artifact_dir.join("tap-counter-default.png").is_file());
+}
+
+#[test]
 fn run_smoke_fixture_plan_uses_external_runner_override() {
     let repo_root = temp_path("casgrain-mar-ios-repo");
     let artifact_dir = temp_path("casgrain-mar-ios-artifacts");
