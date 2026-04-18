@@ -13,9 +13,9 @@ Primary goals:
 
 ## 2. Source of truth
 
-- Repo docs are canonical.
-- GitHub Issues are the backlog.
-- `docs/plans/current-plan.md` is the active plan.
+- Repo docs are canonical for shipped behavior and contributor expectations.
+- `docs/specs/casgrain-product-spec.md` is the canonical product behavior spec.
+- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and prioritization source of truth.
 - Pull Requests are the review and merge unit.
 
 ## 3. Standard workflow
@@ -23,11 +23,10 @@ Primary goals:
 For non-trivial work:
 1. Shape the request
 2. Write or update the spec when behavior changes
-3. Update the current plan
-4. Execute one bounded slice
-5. Validate
-6. Review
-7. Reconcile project state
+3. Execute one bounded slice
+4. Validate
+5. Review
+6. Reconcile issues, Project state, and docs
 
 ## 4. Autonomy rules
 
@@ -56,7 +55,6 @@ Required:
 - project charter / PRD
 - behavior spec (`docs/specs/casgrain-product-spec.md`)
 - architecture notes / ADRs
-- `docs/plans/current-plan.md`
 - `docs/validation.md`
 
 Recommended:
@@ -81,15 +79,15 @@ Stop and ask when:
 
 - Keep diffs small and focused.
 - Prefer evidence over speculation.
-- Reconcile plan, issues, and docs after each slice.
+- Reconcile issues, Project state, and docs after each slice.
 - Preserve a clean history of decisions in issues, PRs, or ADRs.
 - Avoid leaving stale documentation on main.
 
-## 9. Current plan handling
+## 9. Automation integration
 
-- Keep the current plan file small and actively maintained.
-- Archive old plans only when the project becomes complex enough that the live plan is no longer readable.
-- Move history into archived plan files only when needed.
+- Casgrain may be operated by the external `agent-team-orchestrator` repository.
+- This repository keeps only the minimum local integration contract needed for contributors and automation.
+- Agent prompts, cron topology, lane responsibilities, and workflow internals belong in `agent-team-orchestrator`, not here.
 
 ## 10. If you are unsure
 
