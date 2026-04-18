@@ -530,6 +530,8 @@ fn slugify(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs, path::PathBuf};
+
     use domain::{
         ActionKind, AssertionKind, DiagnosticSeverity, Selector, StepIntent, StringMatchKind,
         TargetPlatform, WaitKind,
@@ -726,5 +728,21 @@ Feature: login tap counter
                 value,
             }] if text.value == "count: 1" && value == "count: 1"
         ));
+    }
+
+    #[test]
+    fn demo_login_feature_matches_the_golden_plan_json() {
+        let source = include_str!("../../../docs/gherkin/demo-login.feature");
+        let output = compile_gherkin(source, "docs/gherkin/demo-login.feature", "0.1.0")
+            .expect("demo login feature should compile");
+        let actual = serde_json::to_string_pretty(&output.plan)
+            .expect("compiled plan should serialize to pretty json");
+        let expected_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/test-support/golden/compiler/demo_login.plan.json");
+        let expected = fs::read_to_string(&expected_path).unwrap_or_else(|error| {
+            panic!("failed to read golden file {expected_path:?}: {error}")
+        });
+
+        assert_eq!(actual, expected);
     }
 }
