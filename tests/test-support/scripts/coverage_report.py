@@ -87,10 +87,24 @@ def number_field(
     return value
 
 
+def non_negative_int_field(
+    container: dict[str, Any],
+    field_name: str,
+    *,
+    error_context: str,
+) -> int:
+    value = container.get(field_name, ...)
+    if value is ... or isinstance(value, bool) or not isinstance(value, int):
+        raise CoverageReportError(f"{error_context} field '{field_name}' must be a non-negative integer")
+    if value < 0:
+        raise CoverageReportError(f"{error_context} field '{field_name}' must be a non-negative integer")
+    return value
+
+
 def metric_field(container: dict[str, Any], field_name: str, *, error_context: str) -> Metric:
     metric = object_field(container, field_name, error_context=error_context)
-    count = int(number_field(metric, "count", error_context=f"{error_context}.{field_name}"))
-    covered = int(number_field(metric, "covered", error_context=f"{error_context}.{field_name}"))
+    count = non_negative_int_field(metric, "count", error_context=f"{error_context}.{field_name}")
+    covered = non_negative_int_field(metric, "covered", error_context=f"{error_context}.{field_name}")
     percent = float(number_field(metric, "percent", error_context=f"{error_context}.{field_name}"))
     return {"count": count, "covered": covered, "percent": percent}
 

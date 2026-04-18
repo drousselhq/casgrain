@@ -164,6 +164,48 @@ class CoverageReportTests(unittest.TestCase):
                     }
                 ]
             },
+            {
+                "data": [
+                    {
+                        "totals": {
+                            "lines": {"count": 10.5, "covered": 9, "percent": 85.7142857143},
+                            "functions": {"count": 1, "covered": 1, "percent": 100.0},
+                            "regions": {"count": 1, "covered": 1, "percent": 100.0},
+                        },
+                        "files": [
+                            {
+                                "filename": str(REPO_ROOT / "crates" / "domain" / "src" / "lib.rs"),
+                                "summary": {
+                                    "lines": {"count": 10, "covered": 9, "percent": 90.0},
+                                    "functions": {"count": 1, "covered": 1, "percent": 100.0},
+                                    "regions": {"count": 1, "covered": 1, "percent": 100.0},
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
+            {
+                "data": [
+                    {
+                        "totals": {
+                            "lines": {"count": 1, "covered": -1, "percent": -100.0},
+                            "functions": {"count": 1, "covered": 1, "percent": 100.0},
+                            "regions": {"count": 1, "covered": 1, "percent": 100.0},
+                        },
+                        "files": [
+                            {
+                                "filename": str(REPO_ROOT / "crates" / "domain" / "src" / "lib.rs"),
+                                "summary": {
+                                    "lines": {"count": 1, "covered": 1, "percent": 100.0},
+                                    "functions": {"count": 1, "covered": 1, "percent": 100.0},
+                                    "regions": {"count": 1, "covered": 1, "percent": 100.0},
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
         ]
 
         for payload in malformed_payloads:
