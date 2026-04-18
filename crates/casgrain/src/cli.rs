@@ -336,12 +336,57 @@ mod tests {
 
         assert!(output.contains("Casgrain mock run: Missing home screen"));
         assert!(output.contains("Run status: Failed"));
+        assert!(output.contains("missing-home-screen-002"));
+        assert!(output.contains("the home screen is visible"));
         assert!(output.contains("[FAIL]"));
         assert!(output.contains("attempts: 1"));
         assert!(output.contains("failure: UnresolvedSelector"));
+        assert!(output.contains("selector was not found"));
         assert!(output.contains("Artifacts:"));
+        assert!(output.contains("missing-home-screen-002-failure"));
         assert!(output.contains("failure_context"));
-        assert!(output.contains("-failure.json"));
+        assert!(output.contains("missing-home-screen-002-failure.json"));
+    }
+
+    #[test]
+    fn run_mock_failure_trace_json_preserves_semantic_failure_fields() {
+        let feature = tempfile_feature(
+            r#"Feature: Login
+  Scenario: Missing home screen
+    Given the app is launched
+    Then the home screen is visible
+"#,
+            "missing-home.feature",
+        );
+
+        let output = run(vec!["run-mock".into(), feature, "--trace-json".into()])
+            .expect("run-mock should return failure trace json");
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+        let failing_step = json["steps"]
+            .as_array()
+            .expect("steps should be an array")
+            .iter()
+            .find(|step| step["status"] == "failed")
+            .expect("trace should contain a failed step");
+
+        assert_eq!(json["status"], "failed");
+        assert_eq!(failing_step["attempts"], 1);
+        assert_eq!(failing_step["failure"]["code"], "unresolved_selector");
+        assert!(
+            failing_step["failure"]["message"]
+                .as_str()
+                .expect("failure message should be a string")
+                .contains("selector was not found")
+        );
+        assert_eq!(
+            failing_step["artifacts"][0]["artifact_type"],
+            "failure_context"
+        );
+        assert_eq!(
+            failing_step["artifacts"][0]["step_id"],
+            failing_step["step_id"]
+        );
+        assert_eq!(json["artifacts"][0]["step_id"], failing_step["step_id"]);
     }
 
     #[test]
@@ -425,6 +470,139 @@ mod tests {
                 .expect("artifact path should be a string")
                 .ends_with("tap-counter-1.png")
         );
+    }
+
+    #[test]
+    fn run_ios_smoke_failure_summary_stays_explicit_about_failed_step_contracts() {
+        let feature = tempfile_feature(
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_ios_smoke_runner_with_failed_trace(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let output = run(vec!["run-ios-smoke".into(), feature])
+            .expect("run-ios-smoke should render failure summary from injected trace");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR");
+        }
+
+        assert!(output.contains("Casgrain iOS smoke run: Increment the counter once"));
+        assert!(output.contains("Run status: Failed"));
+        assert!(output.contains("increment-the-counter-once-003"));
+        assert!(output.contains("count label text is \"Count: 1\""));
+        assert!(output.contains("attempts: 2"));
+        assert!(output.contains("failure: AssertionFailed"));
+        assert!(output.contains("expected text \"Count: 1\""));
+        assert!(output.contains("ios-failure-context (failure_context) ->"));
+        assert!(output.contains("ios-count-label-failure.json"));
+    }
+
+    #[test]
+    fn run_ios_smoke_failure_trace_json_preserves_semantic_failure_fields() {
+        let feature = tempfile_feature(
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_ios_smoke_runner_with_failed_trace(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let output = run(vec!["run-ios-smoke".into(), feature, "--trace-json".into()])
+            .expect("run-ios-smoke should return failure trace json");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR");
+        }
+
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+        let failing_step = json["steps"]
+            .as_array()
+            .expect("steps should be an array")
+            .iter()
+            .find(|step| step["status"] == "failed")
+            .expect("trace should contain a failed step");
+
+        assert_eq!(json["status"], "failed");
+        assert_eq!(failing_step["failure"]["code"], "assertion_failed");
+        assert!(
+            failing_step["failure"]["message"]
+                .as_str()
+                .expect("failure message should be a string")
+                .contains("Count: 1")
+        );
+        assert_eq!(
+            failing_step["artifacts"][0]["artifact_type"],
+            "failure_context"
+        );
+        assert_eq!(
+            failing_step["artifacts"][0]["step_id"],
+            failing_step["step_id"]
+        );
+        assert_eq!(json["artifacts"][0]["step_id"], failing_step["step_id"]);
+    }
+
+    #[test]
+    fn run_ios_smoke_invalid_runner_json_fails_with_explicit_lane_context() {
+        let feature = tempfile_feature(
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_ios_smoke_runner_with_invalid_json(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let error = run(vec!["run-ios-smoke".into(), feature])
+            .expect_err("run-ios-smoke should fail when the external runner returns invalid json");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_IOS_SMOKE_ARTIFACT_DIR");
+        }
+
+        assert!(error.contains("failed to run real iOS smoke harness:"));
+        assert!(error.contains("iOS smoke runner returned invalid trace JSON:"));
+        assert!(artifact_dir.join("plan.json").is_file());
     }
 
     #[test]
@@ -515,6 +693,155 @@ mod tests {
                 .expect("artifact path should be a string")
                 .ends_with("android-tap-counter-1.png")
         );
+    }
+
+    #[test]
+    fn run_android_smoke_failure_summary_stays_explicit_about_failed_step_contracts() {
+        let feature = tempfile_feature(
+            r#"Feature: Android smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_android_smoke_runner_with_failed_trace(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let output = run(vec!["run-android-smoke".into(), feature])
+            .expect("run-android-smoke should render failure summary from injected trace");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+        }
+
+        assert!(output.contains("Casgrain Android smoke run: Increment the counter once"));
+        assert!(output.contains("Run status: Failed"));
+        assert!(output.contains("increment-the-counter-once-003"));
+        assert!(output.contains("count label text is \"Count: 1\""));
+        assert!(output.contains("attempts: 2"));
+        assert!(output.contains("failure: AssertionFailed"));
+        assert!(output.contains("expected text \"Count: 1\""));
+        assert!(output.contains("android-failure-context (failure_context) ->"));
+        assert!(output.contains("android-count-label-failure.json"));
+    }
+
+    #[test]
+    fn run_android_smoke_failure_trace_json_preserves_semantic_failure_fields() {
+        let feature = tempfile_feature(
+            r#"Feature: Android smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_android_smoke_runner_with_failed_trace(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let output = run(vec![
+            "run-android-smoke".into(),
+            feature,
+            "--trace-json".into(),
+        ])
+        .expect("run-android-smoke should return failure trace json");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+        }
+
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+        let failing_step = json["steps"]
+            .as_array()
+            .expect("steps should be an array")
+            .iter()
+            .find(|step| step["status"] == "failed")
+            .expect("trace should contain a failed step");
+
+        assert_eq!(json["status"], "failed");
+        assert_eq!(failing_step["failure"]["code"], "assertion_failed");
+        assert!(
+            failing_step["failure"]["message"]
+                .as_str()
+                .expect("failure message should be a string")
+                .contains("Count: 1")
+        );
+        assert_eq!(
+            failing_step["artifacts"][0]["artifact_type"],
+            "failure_context"
+        );
+        assert_eq!(
+            failing_step["artifacts"][0]["step_id"],
+            failing_step["step_id"]
+        );
+        assert_eq!(json["artifacts"][0]["step_id"], failing_step["step_id"]);
+    }
+
+    #[test]
+    fn run_android_smoke_non_zero_runner_failure_fails_with_explicit_lane_context() {
+        let feature = tempfile_feature(
+            r#"Feature: Android smoke tap counter
+  Scenario: Increment the counter once
+    Given the app is launched
+    When the user taps tap button
+    Then count label text is "Count: 1"
+    When the user takes a screenshot
+"#,
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+        );
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_fake_android_smoke_runner_that_exits_non_zero(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_RUNNER", &runner);
+            std::env::set_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR", &artifact_dir);
+        }
+
+        let error = run(vec!["run-android-smoke".into(), feature])
+            .expect_err("run-android-smoke should fail when the external runner exits non-zero");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_RUNNER");
+            std::env::remove_var("CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR");
+        }
+
+        assert!(error.contains("failed to run Android smoke harness:"));
+        assert!(error.contains("Android smoke runner failed: emulator never became ready"));
+        assert!(artifact_dir.join("plan.json").is_file());
     }
 
     #[test]
@@ -680,6 +1007,219 @@ print(json.dumps({
 "#,
         )
         .expect("fake runner should be written");
+        let mut permissions = fs::metadata(&runner)
+            .expect("runner metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&runner, permissions).expect("runner should be executable");
+        runner
+    }
+
+    fn install_fake_ios_smoke_runner_with_failed_trace(repo_root: &std::path::Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let runner = repo_root.join("runner-failed.py");
+        fs::write(
+            &runner,
+            r#"#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--repo-root", required=True)
+parser.add_argument("--plan", required=True)
+parser.add_argument("--artifact-dir", required=True)
+args = parser.parse_args()
+
+plan = json.loads(Path(args.plan).read_text())
+artifact_dir = Path(args.artifact_dir)
+artifact_dir.mkdir(parents=True, exist_ok=True)
+artifact_path = artifact_dir / "ios-count-label-failure.json"
+artifact_path.write_text('{"kind":"failure_context"}')
+steps = []
+for index, step in enumerate(plan["steps"]):
+    if index < 2:
+        steps.append({
+            "step_id": step["step_id"],
+            "status": "passed",
+            "attempts": 1,
+            "failure": None,
+            "artifacts": []
+        })
+    elif index == 2:
+        artifact = {
+            "artifact_id": "ios-failure-context",
+            "artifact_type": "failure_context",
+            "path": str(artifact_path),
+            "sha256": None,
+            "step_id": step["step_id"]
+        }
+        steps.append({
+            "step_id": step["step_id"],
+            "status": "failed",
+            "attempts": 2,
+            "failure": {
+                "code": "assertion_failed",
+                "message": "expected text \"Count: 1\", got Some(\"Count: 0\")",
+                "step_id": step["step_id"]
+            },
+            "artifacts": [artifact]
+        })
+        break
+
+print(json.dumps({
+    "run_id": f"ios-smoke-{plan['plan_id']}",
+    "plan_id": plan["plan_id"],
+    "device": {
+        "platform": "ios",
+        "name": "iPhone 16",
+        "os_version": "18.0"
+    },
+    "started_at": "2026-01-01T00:00:00Z",
+    "finished_at": "2026-01-01T00:00:01Z",
+    "status": "failed",
+    "steps": steps,
+    "artifacts": [
+        {
+            "artifact_id": "ios-failure-context",
+            "artifact_type": "failure_context",
+            "path": str(artifact_path),
+            "sha256": None,
+            "step_id": steps[-1]["step_id"]
+        }
+    ],
+    "diagnostics": []
+}))
+"#,
+        )
+        .expect("fake failing runner should be written");
+        let mut permissions = fs::metadata(&runner)
+            .expect("runner metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&runner, permissions).expect("runner should be executable");
+        runner
+    }
+
+    fn install_fake_ios_smoke_runner_with_invalid_json(repo_root: &std::path::Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let runner = repo_root.join("runner-invalid-json.py");
+        fs::write(
+            &runner,
+            r#"#!/usr/bin/env python3
+print("not valid json")
+"#,
+        )
+        .expect("fake invalid-json runner should be written");
+        let mut permissions = fs::metadata(&runner)
+            .expect("runner metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&runner, permissions).expect("runner should be executable");
+        runner
+    }
+
+    fn install_fake_android_smoke_runner_with_failed_trace(repo_root: &std::path::Path) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let runner = repo_root.join("android-runner-failed.py");
+        fs::write(
+            &runner,
+            r#"#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--repo-root", required=True)
+parser.add_argument("--plan", required=True)
+parser.add_argument("--artifact-dir", required=True)
+args = parser.parse_args()
+
+plan = json.loads(Path(args.plan).read_text())
+artifact_dir = Path(args.artifact_dir)
+artifact_dir.mkdir(parents=True, exist_ok=True)
+artifact_path = artifact_dir / "android-count-label-failure.json"
+artifact_path.write_text('{"kind":"failure_context"}')
+steps = []
+for index, step in enumerate(plan["steps"]):
+    if index < 2:
+        steps.append({
+            "step_id": step["step_id"],
+            "status": "passed",
+            "attempts": 1,
+            "failure": None,
+            "artifacts": []
+        })
+    elif index == 2:
+        artifact = {
+            "artifact_id": "android-failure-context",
+            "artifact_type": "failure_context",
+            "path": str(artifact_path),
+            "sha256": None,
+            "step_id": step["step_id"]
+        }
+        steps.append({
+            "step_id": step["step_id"],
+            "status": "failed",
+            "attempts": 2,
+            "failure": {
+                "code": "assertion_failed",
+                "message": "expected text \"Count: 1\", got Some(\"Count: 0\")",
+                "step_id": step["step_id"]
+            },
+            "artifacts": [artifact]
+        })
+        break
+
+print(json.dumps({
+    "run_id": f"android-smoke-{plan['plan_id']}",
+    "plan_id": plan["plan_id"],
+    "device": {
+        "platform": "android",
+        "name": "Pixel 8",
+        "os_version": "15"
+    },
+    "started_at": "2026-01-01T00:00:00Z",
+    "finished_at": "2026-01-01T00:00:01Z",
+    "status": "failed",
+    "steps": steps,
+    "artifacts": [
+        {
+            "artifact_id": "android-failure-context",
+            "artifact_type": "failure_context",
+            "path": str(artifact_path),
+            "sha256": None,
+            "step_id": steps[-1]["step_id"]
+        }
+    ],
+    "diagnostics": []
+}))
+"#,
+        )
+        .expect("fake failing runner should be written");
+        let mut permissions = fs::metadata(&runner)
+            .expect("runner metadata should exist")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&runner, permissions).expect("runner should be executable");
+        runner
+    }
+
+    fn install_fake_android_smoke_runner_that_exits_non_zero(
+        repo_root: &std::path::Path,
+    ) -> PathBuf {
+        fs::create_dir_all(repo_root.join("scripts")).expect("repo root should be created");
+        let runner = repo_root.join("android-runner-exit-non-zero.py");
+        fs::write(
+            &runner,
+            r#"#!/usr/bin/env python3
+import sys
+
+sys.stderr.write("emulator never became ready\n")
+raise SystemExit(3)
+"#,
+        )
+        .expect("fake non-zero runner should be written");
         let mut permissions = fs::metadata(&runner)
             .expect("runner metadata should exist")
             .permissions();
