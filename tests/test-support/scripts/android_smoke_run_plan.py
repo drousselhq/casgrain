@@ -30,6 +30,10 @@ FOREGROUND_WINDOW_ARTIFACT = "foreground-window.txt"
 FOREGROUND_ACTIVITY_ARTIFACT = "foreground-activity.txt"
 LAST_UI_DUMP_ARTIFACT = "ui-last.xml"
 FAILURE_ARTIFACT = "failure.json"
+FAILURE_CLASS_BOOT_READINESS = "boot-readiness-failure"
+FAILURE_CLASS_APP_FOREGROUND = "app-foreground-failure"
+FAILURE_CLASS_SELECTOR_TIMEOUT = "selector-timeout"
+FAILURE_CLASS_TEXT_TIMEOUT = "text-timeout"
 
 
 def parse_args() -> argparse.Namespace:
@@ -247,7 +251,7 @@ def boot_signals_ready(sys_boot_completed: str, dev_bootcomplete: str, package_m
     )
 
 
-def wait_for_boot_completion(adb: str) -> None:
+def wait_for_boot_completion(adb: str, *, artifact_dir: Path | None = None) -> None:
     timeout = resolve_boot_timeout()
     deadline = time.monotonic() + timeout
     last_boot = ""
@@ -266,19 +270,35 @@ def wait_for_boot_completion(adb: str) -> None:
         if sleep_for:
             time.sleep(sleep_for)
 
-    raise SystemExit(
+    reason = (
         "Android emulator did not finish booting before the smoke run started; "
         f"observed sys.boot_completed={last_boot!r}, dev.bootcomplete={last_dev_boot!r}, "
         f"package-manager probe={last_pm_status!r}"
     )
+    if artifact_dir is not None:
+        write_failure_diagnostics(
+            artifact_dir,
+            reason,
+            failure_class=FAILURE_CLASS_BOOT_READINESS,
+        )
+    raise SystemExit(reason)
 
 
-def ensure_device_ready(adb: str) -> None:
+def ensure_device_ready(adb: str, *, artifact_dir: Path | None = None) -> None:
     timeout = resolve_device_timeout()
-    run_adb(adb, "wait-for-device", timeout=timeout)
-    state = run_adb(adb, "get-state", timeout=max(1.0, timeout / 2)).stdout.strip()
-    expect(state == "device", f"adb device is not ready: expected 'device', got {state!r}")
-    wait_for_boot_completion(adb)
+    try:
+        run_adb(adb, "wait-for-device", timeout=timeout)
+        state = run_adb(adb, "get-state", timeout=max(1.0, timeout / 2)).stdout.strip()
+        expect(state == "device", f"adb device is not ready: expected 'device', got {state!r}")
+    except SystemExit as error:
+        if artifact_dir is not None:
+            write_failure_diagnostics(
+                artifact_dir,
+                str(error),
+                failure_class=FAILURE_CLASS_BOOT_READINESS,
+            )
+        raise
+    wait_for_boot_completion(adb, artifact_dir=artifact_dir)
 
 
 def install_fixture_app(adb: str, apk_path: Path) -> None:
@@ -352,6 +372,7 @@ def wait_for_app_foreground(
         write_failure_diagnostics(
             artifact_dir,
             f"fixture app {app_id!r} did not reach the foreground after launch",
+            failure_class=FAILURE_CLASS_APP_FOREGROUND,
             window_snapshot=window_snapshot or None,
             activity_snapshot=activity_snapshot or None,
         )
@@ -377,6 +398,7 @@ def write_failure_diagnostics(
     artifact_dir: Path,
     reason: str,
     *,
+    failure_class: str,
     window_snapshot: str | None = None,
     activity_snapshot: str | None = None,
     ui_xml: str | None = None,
@@ -390,6 +412,7 @@ def write_failure_diagnostics(
 
     payload = {
         "reason": reason,
+        "failure_class": failure_class,
         "captured_at": utc_now(),
         "artifacts": {
             "foreground_window": FOREGROUND_WINDOW_ARTIFACT if window_snapshot is not None else None,
@@ -493,6 +516,7 @@ def wait_for_selector(
         write_failure_diagnostics(
             artifact_dir,
             f"timed out waiting for selector {selector!r} in emulator UI hierarchy",
+            failure_class=FAILURE_CLASS_SELECTOR_TIMEOUT,
             window_snapshot=latest_foreground.get("window"),
             activity_snapshot=latest_foreground.get("activity"),
             ui_xml=last_xml or None,
@@ -525,6 +549,7 @@ def wait_for_text(
         write_failure_diagnostics(
             artifact_dir,
             f"timed out waiting for selector {selector!r} to have text {expected_text!r}",
+            failure_class=FAILURE_CLASS_TEXT_TIMEOUT,
             window_snapshot=latest_foreground.get("window"),
             activity_snapshot=latest_foreground.get("activity"),
             ui_xml=last_xml or None,
@@ -569,7 +594,7 @@ def main() -> int:
     after_tap_dump_path = artifact_dir / "ui-after-tap.xml"
 
     started_at = utc_now()
-    ensure_device_ready(adb)
+    ensure_device_ready(adb, artifact_dir=artifact_dir)
     install_fixture_app(adb, apk_path)
     reset_fixture_app(adb, app_id)
     launch_fixture_app(adb, app_id)
