@@ -289,6 +289,67 @@ mod tests {
     }
 
     #[test]
+    fn run_mock_trace_json_is_machine_readable() {
+        let feature = tempfile_feature(
+            r#"Feature: Login
+  Scenario: Successful login
+    Given the app is launched
+    When the user enters "daniel@example.com" into email field
+    When the user taps login button
+    Then Home is visible
+"#,
+            "login.feature",
+        );
+
+        let output = run(vec!["run-mock".into(), feature, "--trace-json".into()])
+            .expect("run-mock json output should succeed");
+        let json: Value = serde_json::from_str(&output).expect("output should be valid json");
+
+        assert!(json["run_id"]
+            .as_str()
+            .expect("run id should be a string")
+            .starts_with("mock-"));
+        assert_eq!(json["status"], "passed");
+        assert_eq!(
+            json["steps"]
+                .as_array()
+                .expect("steps should be an array")
+                .len(),
+            4
+        );
+        assert_eq!(json["steps"][0]["attempts"], 1);
+        assert_eq!(json["steps"][3]["status"], "passed");
+        assert!(json["artifacts"]
+            .as_array()
+            .expect("artifacts should be an array")
+            .is_empty());
+    }
+
+    #[test]
+    fn run_mock_failure_summary_stays_explicit_about_failed_step_contracts() {
+        let feature = tempfile_feature(
+            r#"Feature: Login
+  Scenario: Missing home screen
+    Given the app is launched
+    Then the home screen is visible
+"#,
+            "missing-home.feature",
+        );
+
+        let output = run(vec!["run-mock".into(), feature])
+            .expect("run-mock should still return a rendered failure summary");
+
+        assert!(output.contains("Casgrain mock run: Missing home screen"));
+        assert!(output.contains("Run status: Failed"));
+        assert!(output.contains("[FAIL]"));
+        assert!(output.contains("attempts: 1"));
+        assert!(output.contains("failure: UnresolvedSelector"));
+        assert!(output.contains("Artifacts:"));
+        assert!(output.contains("failure_context"));
+        assert!(output.contains("-failure.json"));
+    }
+
+    #[test]
     fn run_ios_smoke_reports_successful_tap_counter_flow() {
         let feature = tempfile_feature(
             include_str!(
