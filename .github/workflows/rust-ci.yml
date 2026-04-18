@@ -6,6 +6,7 @@ on:
   pull_request:
 
 permissions:
+  actions: read
   contents: read
 
 env:
@@ -92,9 +93,66 @@ jobs:
             --summary-out target/llvm-cov/coverage-report.json \
             --markdown-out target/llvm-cov/coverage-report.md
 
+      - name: Download main coverage baseline
+        id: main_coverage_baseline
+        if: github.event_name == 'pull_request' && hashFiles('target/llvm-cov/coverage-report.json') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p target/llvm-cov/main-baseline
+          run_id="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow rust-ci.yml \
+            --branch main \
+            --event push \
+            --limit 20 \
+            --json databaseId,conclusion \
+            --jq '[.[] | select(.conclusion == "success")][0].databaseId')"
+          if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+            echo "baseline_available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" -n casgrain-coverage -D target/llvm-cov/main-baseline; then
+            if [ -f target/llvm-cov/main-baseline/coverage-report.json ]; then
+              echo "baseline_available=true" >> "$GITHUB_OUTPUT"
+              echo "baseline_run_id=$run_id" >> "$GITHUB_OUTPUT"
+            else
+              echo "baseline_available=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "baseline_available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Evaluate coverage non-regression
+        id: coverage_non_regression
+        if: github.event_name == 'pull_request' && hashFiles('target/llvm-cov/coverage-report.json') != ''
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.main_coverage_baseline.outputs.baseline_available }}" = "true" ]; then
+            python3 tests/test-support/scripts/coverage_regression_check.py \
+              --current target/llvm-cov/coverage-report.json \
+              --baseline target/llvm-cov/main-baseline/coverage-report.json \
+              --baseline-label main \
+              --baseline-run-id "${{ steps.main_coverage_baseline.outputs.baseline_run_id }}" \
+              --summary-out target/llvm-cov/coverage-ratchet.json \
+              --markdown-out target/llvm-cov/coverage-ratchet.md
+          else
+            python3 tests/test-support/scripts/coverage_regression_check.py \
+              --current target/llvm-cov/coverage-report.json \
+              --baseline-label main \
+              --summary-out target/llvm-cov/coverage-ratchet.json \
+              --markdown-out target/llvm-cov/coverage-ratchet.md
+          fi
+
       - name: Publish coverage step summary
         if: always() && hashFiles('target/llvm-cov/coverage-report.md') != ''
-        run: cat target/llvm-cov/coverage-report.md >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          cat target/llvm-cov/coverage-report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -f target/llvm-cov/coverage-ratchet.md ]; then
+            printf '\n' >> "$GITHUB_STEP_SUMMARY"
+            cat target/llvm-cov/coverage-ratchet.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload coverage artifacts
         if: always() && hashFiles('target/llvm-cov/coverage-summary.json') != ''
@@ -105,8 +163,10 @@ jobs:
             target/llvm-cov/coverage-summary.json
             target/llvm-cov/coverage-report.json
             target/llvm-cov/coverage-report.md
+            target/llvm-cov/coverage-ratchet.json
+            target/llvm-cov/coverage-ratchet.md
             target/llvm-cov/lcov.info
 
-      - name: Enforce line coverage threshold
-        if: steps.coverage_gate.outcome != 'success'
+      - name: Enforce coverage gates
+        if: steps.coverage_gate.outcome != 'success' || steps.coverage_non_regression.outcome == 'failure'
         run: exit 1

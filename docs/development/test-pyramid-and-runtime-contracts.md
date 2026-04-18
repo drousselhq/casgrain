@@ -213,8 +213,9 @@ Coverage is part of review discipline, but it is not the only quality signal.
 Current repo reality:
 - CI currently enforces a **75% workspace line-coverage floor** with `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
 - the `coverage` job now also publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts so reviewers can inspect the result without re-running coverage locally
+- pull requests now also get a narrow automated ratchet: overall line coverage must stay at or above the latest successful `main` coverage artifact when that baseline is available
 - the workspace-wide floor is a baseline merge gate, not a statement that 75% is the desired long-term target for all important logic
-- touched-code or new-code coverage is not yet enforced automatically in CI; until tooling lands, reviewers and authors must apply the policy below manually and honestly
+- touched-code or new-code coverage is not yet enforced automatically in CI; the stronger changed-code and critical-logic expectations still require reviewer judgment and targeted tests
 
 Policy expectations:
 - target **85%+ coverage** on new or materially changed code
@@ -257,10 +258,10 @@ When you need to inspect coverage instead of only enforcing the floor, use the s
 
 ## Immediate next testing investments
 
-1. Add minimal non-regression / ratchet enforcement on top of the new coverage artifacts without introducing noisy per-file mandates.
-2. Add compiler golden tests from representative product-spec slices to expected plan JSON.
-3. Expand runner and CLI contract coverage for retry, timeout, failure semantics, machine-readable output, and trace/artifact details.
-4. Keep Layer 4 focused on the narrow product-true iOS slice while Android parity matures separately.
+1. Add compiler golden tests from representative product-spec slices to expected plan JSON.
+2. Expand runner and CLI contract coverage for retry, timeout, failure semantics, machine-readable output, and trace/artifact details.
+3. Keep Layer 4 focused on the narrow product-true iOS slice while Android parity matures separately.
+4. Revisit whether a touched-code or scope-aware coverage ratchet can be added later without creating noisy per-file mandates.
 
 ## Exit criteria for issue #1
 
