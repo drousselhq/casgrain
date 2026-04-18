@@ -15,8 +15,11 @@ See also:
 
 ## Baseline toolchain and quality bar
 
-Casgrain currently pins Rust `1.85.0` in `rust-toolchain.toml` and the workspace `rust-version` to `1.85`.
-When the toolchain changes, update both files together so contributor docs, local development, and CI stay aligned.
+Casgrain currently pins Rust `1.85.0` in `rust-toolchain.toml`, keeps the workspace `rust-version` at `1.85`, and now targets the Rust 2024 edition across the workspace.
+When the toolchain changes, update those compatibility signals together so contributor docs, local development, and CI stay aligned.
+
+The workspace intentionally still uses Cargo resolver `2` for now.
+During the Rust 2024 migration, resolver `2` and resolver `3` produced the same resolved dependency graph and both passed `cargo check --workspace --all-targets` on the pinned toolchain, so Casgrain keeps resolver `2` to avoid bundling an unrelated dependency-resolution policy change into the edition rollout.
 
 Use the pinned toolchain for local work and treat these commands as the canonical baseline:
 

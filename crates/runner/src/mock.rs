@@ -159,14 +159,18 @@ mod tests {
     fn login_fixture_contains_expected_controls() {
         let engine = MockDeviceEngine::login_fixture();
         let snapshot = engine.snapshot().expect("snapshot should succeed");
-        assert!(snapshot
-            .elements
-            .iter()
-            .any(|element| element.accessibility_id.as_deref() == Some("login_button")));
-        assert!(snapshot
-            .elements
-            .iter()
-            .any(|element| element.accessibility_id.as_deref() == Some("email_field")));
+        assert!(
+            snapshot
+                .elements
+                .iter()
+                .any(|element| element.accessibility_id.as_deref() == Some("login_button"))
+        );
+        assert!(
+            snapshot
+                .elements
+                .iter()
+                .any(|element| element.accessibility_id.as_deref() == Some("email_field"))
+        );
     }
 
     #[test]

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use application::{validate_plan, CompileOutput, PlanCompiler};
+use application::{CompileOutput, PlanCompiler, validate_plan};
 use domain::{
     ActionKind, ArtifactPolicy, AssertionKind, CapabilitySet, CompilationDiagnostic,
     DiagnosticSeverity, ExecutablePlan, ExecutionDefaults, FailurePolicy, PlanFormatVersion,
@@ -697,14 +697,18 @@ Feature: iOS smoke tap counter
         .expect_err("fixture vocabulary should reject nearby unsupported phrases");
 
         assert_eq!(errors.len(), 2);
-        assert!(errors
-            .iter()
-            .all(|diagnostic| diagnostic.severity == DiagnosticSeverity::Error));
+        assert!(
+            errors
+                .iter()
+                .all(|diagnostic| diagnostic.severity == DiagnosticSeverity::Error)
+        );
         assert!(errors[0].message.contains("When the user taps tap button"));
         assert!(errors[0].location.as_deref() == Some("line 5"));
-        assert!(errors[1]
-            .message
-            .contains("Then count label text is \"Count: 1\""));
+        assert!(
+            errors[1]
+                .message
+                .contains("Then count label text is \"Count: 1\"")
+        );
         assert!(errors[1].location.as_deref() == Some("line 6"));
     }
 

@@ -322,10 +322,12 @@ fn validate_supported_smoke_plan(plan: &ExecutablePlan) -> Result<(), RuntimeFai
     }
 
     match assert_step.postconditions.as_slice() {
-        [AssertionKind::TextEquals {
-            target: Selector::AccessibilityId(value),
-            value: expected_text,
-        }] if value == "count-label" && expected_text == "Count: 1" => {}
+        [
+            AssertionKind::TextEquals {
+                target: Selector::AccessibilityId(value),
+                value: expected_text,
+            },
+        ] if value == "count-label" && expected_text == "Count: 1" => {}
         _ => {
             return Err(unsupported_fixture_plan(
                 "assert step must verify accessibility id count-label equals Count: 1",
@@ -577,8 +579,9 @@ mod tests {
     };
 
     use super::{
-        run_smoke_fixture_plan, validate_supported_smoke_plan, IosSimulatorAdapter,
-        IosSimulatorDescriptor, IOS_SMOKE_ARTIFACT_DIR_ENV, IOS_SMOKE_RUNNER_ENV, REPO_ROOT_ENV,
+        IOS_SMOKE_ARTIFACT_DIR_ENV, IOS_SMOKE_RUNNER_ENV, IosSimulatorAdapter,
+        IosSimulatorDescriptor, REPO_ROOT_ENV, run_smoke_fixture_plan,
+        validate_supported_smoke_plan,
     };
 
     #[test]
@@ -624,14 +627,10 @@ mod tests {
 
         let snapshot = adapter.snapshot().expect("snapshot should succeed");
         assert_eq!(snapshot.descriptor.platform, TargetPlatform::Ios);
-        assert!(snapshot
-            .device_snapshot
-            .elements
-            .iter()
-            .any(
-                |element| element.accessibility_id.as_deref() == Some("email_field")
-                    && element.text.as_deref() == Some("tester@example.com")
-            ));
+        assert!(snapshot.device_snapshot.elements.iter().any(|element| {
+            element.accessibility_id.as_deref() == Some("email_field")
+                && element.text.as_deref() == Some("tester@example.com")
+        }));
     }
 
     #[test]
@@ -651,13 +650,15 @@ mod tests {
 
         let snapshot = DeviceEngine::snapshot(&adapter).expect("snapshot should succeed");
         assert_eq!(snapshot.foreground_app.as_deref(), Some("app.under.test"));
-        assert!(snapshot
-            .elements
-            .iter()
-            .any(
-                |element| element.accessibility_id.as_deref() == Some("count-label")
-                    && element.text.as_deref() == Some("Count: 1")
-            ));
+        assert!(
+            snapshot
+                .elements
+                .iter()
+                .any(
+                    |element| element.accessibility_id.as_deref() == Some("count-label")
+                        && element.text.as_deref() == Some("Count: 1")
+                )
+        );
     }
 
     #[test]
@@ -702,10 +703,12 @@ mod tests {
 
         let snapshot = DeviceEngine::snapshot(&adapter).expect("snapshot should succeed");
         assert_eq!(snapshot.foreground_app.as_deref(), Some("app.under.test"));
-        assert!(snapshot
-            .elements
-            .iter()
-            .any(|element| element.accessibility_id.as_deref() == Some("home_title")));
+        assert!(
+            snapshot
+                .elements
+                .iter()
+                .any(|element| element.accessibility_id.as_deref() == Some("home_title"))
+        );
     }
 
     #[test]
