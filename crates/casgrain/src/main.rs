@@ -5,7 +5,7 @@ use application::{CompileOutput, PlanCompiler};
 use compiler::GherkinCompiler;
 use domain::{CompilationDiagnostic, ExecutionTrace};
 use ios::run_smoke_fixture_plan;
-use runner::{mock::MockDeviceEngine, DeterministicRunner};
+use runner::{DeterministicRunner, mock::MockDeviceEngine};
 
 const CLI_NAME: &str = "casgrain";
 
@@ -244,10 +244,12 @@ mod tests {
 
         assert_eq!(json["plan_id"], "increment-the-counter-once");
         assert_eq!(json["source"]["kind"], "gherkin");
-        assert!(json["source"]["source_name"]
-            .as_str()
-            .expect("source name should be a string")
-            .ends_with("/tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"));
+        assert!(
+            json["source"]["source_name"]
+                .as_str()
+                .expect("source name should be a string")
+                .ends_with("/tests/test-support/fixtures/ios-smoke/features/tap_counter.feature")
+        );
         assert_eq!(json["target"]["platform"], "ios");
         assert_eq!(json["target"]["device_class"], "simulator");
         assert_eq!(
@@ -305,10 +307,12 @@ mod tests {
             .expect("run-mock json output should succeed");
         let json: Value = serde_json::from_str(&output).expect("output should be valid json");
 
-        assert!(json["run_id"]
-            .as_str()
-            .expect("run id should be a string")
-            .starts_with("mock-"));
+        assert!(
+            json["run_id"]
+                .as_str()
+                .expect("run id should be a string")
+                .starts_with("mock-")
+        );
         assert_eq!(json["status"], "passed");
         assert_eq!(
             json["steps"]
@@ -319,10 +323,12 @@ mod tests {
         );
         assert_eq!(json["steps"][0]["attempts"], 1);
         assert_eq!(json["steps"][3]["status"], "passed");
-        assert!(json["artifacts"]
-            .as_array()
-            .expect("artifacts should be an array")
-            .is_empty());
+        assert!(
+            json["artifacts"]
+                .as_array()
+                .expect("artifacts should be an array")
+                .is_empty()
+        );
     }
 
     #[test]
@@ -424,10 +430,12 @@ mod tests {
         assert_eq!(json["run_id"], "ios-smoke-increment-the-counter-once");
         assert_eq!(json["device"]["platform"], "ios");
         assert_eq!(json["status"], "passed");
-        assert!(json["artifacts"][0]["path"]
-            .as_str()
-            .expect("artifact path should be a string")
-            .ends_with("tap-counter-1.png"));
+        assert!(
+            json["artifacts"][0]["path"]
+                .as_str()
+                .expect("artifact path should be a string")
+                .ends_with("tap-counter-1.png")
+        );
     }
 
     #[test]
@@ -512,10 +520,12 @@ mod tests {
         assert_eq!(json["run_id"], "android-smoke-increment-the-counter-once");
         assert_eq!(json["device"]["platform"], "android");
         assert_eq!(json["status"], "passed");
-        assert!(json["artifacts"][0]["path"]
-            .as_str()
-            .expect("artifact path should be a string")
-            .ends_with("android-tap-counter-1.png"));
+        assert!(
+            json["artifacts"][0]["path"]
+                .as_str()
+                .expect("artifact path should be a string")
+                .ends_with("android-tap-counter-1.png")
+        );
     }
 
     #[test]
