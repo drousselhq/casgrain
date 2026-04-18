@@ -35,6 +35,8 @@ NO_MATCHING_SELECTOR_XML = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   </node>
 </hierarchy>
 """
+MALFORMED_UI_XML = "<hierarchy><node"
+EMPTY_UI_XML = ""
 
 
 def monotonic_side_effect(*values: float):
@@ -254,6 +256,58 @@ class WaitForAppForegroundTests(unittest.TestCase):
         self.assertEqual(failure["artifacts"]["foreground_window"], android_smoke_run_plan.FOREGROUND_WINDOW_ARTIFACT)
         self.assertEqual(foreground_window, LAUNCHER_WINDOW)
 
+    def test_malformed_ui_dump_writes_structured_failure_artifacts_during_anr_recovery(self) -> None:
+        snapshot = {"window": ANR_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan, "dump_ui_xml", return_value=MALFORMED_UI_XML
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_app_foreground(
+                    "adb", APP_ID, artifact_dir=artifact_dir, timeout_s=1.0
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("failed to parse uiautomator XML dump", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["foreground_window"], android_smoke_run_plan.FOREGROUND_WINDOW_ARTIFACT)
+        self.assertEqual(failure["artifacts"]["foreground_activity"], android_smoke_run_plan.FOREGROUND_ACTIVITY_ARTIFACT)
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, MALFORMED_UI_XML)
+
+    def test_empty_ui_dump_writes_structured_failure_artifacts_during_anr_recovery(self) -> None:
+        snapshot = {"window": ANR_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan, "dump_ui_xml", return_value=EMPTY_UI_XML
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_app_foreground(
+                    "adb", APP_ID, artifact_dir=artifact_dir, timeout_s=1.0
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("uiautomator dump returned empty XML", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, EMPTY_UI_XML)
+
 
 class WaitForSelectorTests(unittest.TestCase):
     def test_timeout_writes_selector_failure_artifacts(self) -> None:
@@ -282,6 +336,83 @@ class WaitForSelectorTests(unittest.TestCase):
         self.assertEqual(failure["failure_class"], "selector-timeout")
         self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
         self.assertEqual(ui_last, NO_MATCHING_SELECTOR_XML)
+
+    def test_empty_ui_dump_writes_structured_failure_artifacts(self) -> None:
+        snapshot = {"window": APP_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan, "dump_ui_xml", return_value=EMPTY_UI_XML
+        ), patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_selector(
+                    "adb", "tap-button", app_id=APP_ID, artifact_dir=artifact_dir, timeout_s=1.0
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("uiautomator dump returned empty XML", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, EMPTY_UI_XML)
+
+    def test_malformed_ui_dump_writes_structured_failure_artifacts(self) -> None:
+        snapshot = {"window": APP_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan, "dump_ui_xml", return_value=MALFORMED_UI_XML
+        ), patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_selector(
+                    "adb", "tap-button", app_id=APP_ID, artifact_dir=artifact_dir, timeout_s=1.0
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("failed to parse uiautomator XML dump", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, MALFORMED_UI_XML)
+
+    def test_ui_dump_command_failure_still_writes_structured_failure_artifacts(self) -> None:
+        snapshot = {"window": APP_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan,
+            "dump_ui_xml",
+            side_effect=SystemExit("adb exec-out cat /sdcard/window_dump.xml failed: remote object missing"),
+        ), patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_selector(
+                    "adb", "tap-button", app_id=APP_ID, artifact_dir=artifact_dir, timeout_s=1.0
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("adb exec-out cat /sdcard/window_dump.xml failed", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, "")
 
 
 class WaitForTextTests(unittest.TestCase):
@@ -314,6 +445,66 @@ class WaitForTextTests(unittest.TestCase):
         self.assertIn("to have text 'Count: 1'", str(error.exception))
         self.assertEqual(failure["failure_class"], "text-timeout")
         self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+
+    def test_empty_ui_dump_writes_structured_failure_artifacts(self) -> None:
+        snapshot = {"window": APP_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan, "dump_ui_xml", return_value=EMPTY_UI_XML
+        ), patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_text(
+                    "adb",
+                    "count-label",
+                    "Count: 1",
+                    app_id=APP_ID,
+                    artifact_dir=artifact_dir,
+                    timeout_s=1.0,
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("uiautomator dump returned empty XML", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, EMPTY_UI_XML)
+
+    def test_malformed_ui_dump_writes_structured_failure_artifacts(self) -> None:
+        snapshot = {"window": APP_WINDOW, "activity": APP_ACTIVITY}
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            android_smoke_run_plan, "dump_ui_xml", return_value=MALFORMED_UI_XML
+        ), patch.object(
+            android_smoke_run_plan, "dump_foreground_state", return_value=snapshot
+        ), patch.object(
+            android_smoke_run_plan.time,
+            "monotonic",
+            side_effect=monotonic_side_effect(0.0),
+        ):
+            artifact_dir = Path(tmpdir)
+            with self.assertRaises(SystemExit) as error:
+                android_smoke_run_plan.wait_for_text(
+                    "adb",
+                    "count-label",
+                    "Count: 1",
+                    app_id=APP_ID,
+                    artifact_dir=artifact_dir,
+                    timeout_s=1.0,
+                )
+            failure = json.loads((artifact_dir / android_smoke_run_plan.FAILURE_ARTIFACT).read_text())
+            ui_last = (artifact_dir / android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT).read_text()
+
+        self.assertIn("failed to parse uiautomator XML dump", str(error.exception))
+        self.assertEqual(failure["failure_class"], "ui-dump-failure")
+        self.assertEqual(failure["artifacts"]["last_ui_dump"], android_smoke_run_plan.LAST_UI_DUMP_ARTIFACT)
+        self.assertEqual(ui_last, MALFORMED_UI_XML)
 
 
 if __name__ == "__main__":
