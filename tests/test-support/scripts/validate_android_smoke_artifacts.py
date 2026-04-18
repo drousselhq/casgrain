@@ -20,6 +20,17 @@ FAILURE_OPTIONAL = (
     "ui-last.xml",
 )
 SUMMARY_NAME = "evidence-summary.json"
+ARTIFACT_CONTRACT_BREACH = "artifact-contract-breach"
+BOOT_READINESS_FAILURE = "boot-readiness-failure"
+APP_FOREGROUND_FAILURE = "app-foreground-failure"
+SELECTOR_TIMEOUT = "selector-timeout"
+TEXT_TIMEOUT = "text-timeout"
+RUNNER_FAILURE_CLASSES = {
+    BOOT_READINESS_FAILURE,
+    APP_FOREGROUND_FAILURE,
+    SELECTOR_TIMEOUT,
+    TEXT_TIMEOUT,
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -94,6 +105,7 @@ def validate_success_contract(artifact_dir: Path) -> dict[str, Any]:
 
     return {
         "status": "passed",
+        "failure_class": None,
         "trace_run_id": trace.get("run_id"),
         "trace_plan_id": trace.get("plan_id"),
         "artifact_ids": sorted(artifact_ids),
@@ -105,9 +117,19 @@ def validate_failure_contract(artifact_dir: Path) -> dict[str, Any]:
     failure = load_json(artifact_dir / "failure.json", "failure diagnostics")
     reason = failure.get("reason")
     expect(isinstance(reason, str) and reason.strip(), "failure.json must include a non-empty reason")
+    failure_class = failure.get("failure_class")
+    expect(
+        isinstance(failure_class, str) and failure_class.strip(),
+        "failure.json must include a non-empty failure_class",
+    )
+    expect(
+        failure_class in RUNNER_FAILURE_CLASSES,
+        f"unknown failure_class {failure_class!r}; expected one of {sorted(RUNNER_FAILURE_CLASSES)}",
+    )
 
     referenced = failure.get("artifacts")
     expect(isinstance(referenced, dict), "failure.json must include an artifacts object")
+    requires_preserved_diagnostics = failure_class != BOOT_READINESS_FAILURE
 
     validated_refs: dict[str, str | None] = {}
     for key in ("foreground_window", "foreground_activity", "last_ui_dump"):
@@ -117,46 +139,84 @@ def validate_failure_contract(artifact_dir: Path) -> dict[str, Any]:
             expect((artifact_dir / value).is_file(), f"failure.json references missing artifact {value}")
         validated_refs[key] = value
 
-    expect(
-        any(value is not None for value in validated_refs.values()),
-        "failure.json must reference at least one preserved diagnostic artifact",
-    )
+    if requires_preserved_diagnostics:
+        expect(
+            any(value is not None for value in validated_refs.values()),
+            "failure.json must reference at least one preserved diagnostic artifact",
+        )
 
     expect(not (artifact_dir / "trace.json").exists(), "failure artifact sets must not also contain trace.json")
 
     optional_present = [name for name in FAILURE_OPTIONAL if (artifact_dir / name).is_file()]
-    expect(optional_present, "failure artifact contract must preserve at least one concrete diagnostic artifact")
+    if requires_preserved_diagnostics:
+        expect(optional_present, "failure artifact contract must preserve at least one concrete diagnostic artifact")
 
     return {
         "status": "failed",
         "reason": reason,
+        "failure_class": failure_class,
         "referenced_artifacts": validated_refs,
         "present_diagnostics": optional_present,
     }
 
 
-def main() -> int:
-    args = parse_args()
-    artifact_dir = Path(args.artifact_dir).resolve()
-    expect(artifact_dir.is_dir(), f"artifact directory does not exist: {artifact_dir}")
-
+def resolve_contract(artifact_dir: Path) -> dict[str, Any]:
     has_trace = (artifact_dir / "trace.json").is_file()
     has_failure = (artifact_dir / "failure.json").is_file()
     expect(has_trace or has_failure, "artifact directory must contain either trace.json or failure.json")
     expect(not (has_trace and has_failure), "artifact directory must not contain both trace.json and failure.json")
+    return validate_success_contract(artifact_dir) if has_trace else validate_failure_contract(artifact_dir)
 
-    contract = validate_success_contract(artifact_dir) if has_trace else validate_failure_contract(artifact_dir)
+
+def contract_breach(reason: str) -> dict[str, Any]:
+    return {
+        "status": "failed",
+        "failure_class": ARTIFACT_CONTRACT_BREACH,
+        "reason": reason,
+    }
+
+
+def resolve_summary_dir(artifact_dir: Path) -> tuple[Path, str | None]:
+    if artifact_dir.exists() and not artifact_dir.is_dir():
+        return artifact_dir.parent / f"{artifact_dir.name}-artifacts", str(artifact_dir)
+    return artifact_dir, None
+
+
+def main() -> int:
+    args = parse_args()
+    requested_artifact_dir = Path(args.artifact_dir).resolve()
+    artifact_dir, requested_file_path = resolve_summary_dir(requested_artifact_dir)
+
+    exit_code = 0
+    try:
+        expect(requested_artifact_dir.is_dir(), f"artifact directory does not exist: {requested_artifact_dir}")
+        contract = resolve_contract(requested_artifact_dir)
+    except SystemExit as error:
+        exit_code = 1
+        contract = contract_breach(str(error))
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+
     summary = {
         "generated_at": utc_now(),
         "artifact_dir": str(artifact_dir),
         "contract": contract,
         "files": summarize_directory(artifact_dir),
     }
+    if requested_file_path is not None:
+        summary["requested_artifact_dir"] = requested_file_path
 
     summary_path = artifact_dir / SUMMARY_NAME
     summary_path.write_text(json.dumps(summary, indent=2) + "\n")
-    print(json.dumps({"summary": str(summary_path), "status": contract["status"]}))
-    return 0
+    print(
+        json.dumps(
+            {
+                "summary": str(summary_path),
+                "status": contract["status"],
+                "failure_class": contract.get("failure_class"),
+            }
+        )
+    )
+    return exit_code
 
 
 if __name__ == "__main__":
