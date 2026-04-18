@@ -94,7 +94,7 @@ First iOS vertical-slice note:
 - `ios-simulator-smoke` is a required PR check because the first product-true vertical slice is currently iOS.
 - The iOS workflow always reports a status on PRs so branch protection can enforce it safely, but it only runs the expensive simulator path when the PR touches iOS or shared execution surfaces.
 - `android-emulator-smoke` is advisory for now: it auto-runs for Android/shared-runtime changes and on the nightly drift-catching schedule, but it is not yet a required branch-protection gate.
-- The Android workflow must still validate and archive an explicit artifact contract: `trace.json` plus stable sibling artifacts on success, or `failure.json` plus referenced diagnostics for runner-managed failure paths, with `evidence-summary.json` capturing the result in a machine-readable form. If the workflow cannot produce either bundle, it should fail explicitly as a contract breach.
+- The Android workflow must still validate and archive an explicit artifact contract: `trace.json` plus stable sibling artifacts on success, or `failure.json` plus referenced diagnostics for runner-managed failure paths, with `failure_class`/`evidence-summary.json` capturing the machine-readable outcome. If the workflow cannot produce either bundle, it should fail explicitly as an `artifact-contract-breach`.
 - Changes limited to docs, governance, labels, or other non-runtime surfaces should not pay the full mobile smoke cost.
 - Shared execution surfaces (`casgrain`, `compiler`, `runner`, `domain`, `application`, root Cargo manifests) should trigger both mobile smoke workflows because they can regress either platform.
 
