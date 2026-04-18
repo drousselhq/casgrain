@@ -65,5 +65,48 @@ jobs:
         with:
           tool: cargo-llvm-cov@0.6.15
 
+      - name: Run coverage gate and export JSON summary
+        id: coverage_gate
+        continue-on-error: true
+        run: |
+          mkdir -p target/llvm-cov
+          cargo llvm-cov \
+            --workspace \
+            --all-features \
+            --fail-under-lines "$MIN_LINE_COVERAGE" \
+            --summary-only \
+            --json \
+            --output-path target/llvm-cov/coverage-summary.json
+
+      - name: Export LCOV report
+        if: always() && hashFiles('target/llvm-cov/coverage-summary.json') != ''
+        run: cargo llvm-cov report --lcov --output-path target/llvm-cov/lcov.info
+
+      - name: Render coverage summary
+        if: always() && hashFiles('target/llvm-cov/coverage-summary.json') != ''
+        run: |
+          python3 tests/test-support/scripts/coverage_report.py \
+            --input target/llvm-cov/coverage-summary.json \
+            --repo-root . \
+            --threshold "$MIN_LINE_COVERAGE" \
+            --summary-out target/llvm-cov/coverage-report.json \
+            --markdown-out target/llvm-cov/coverage-report.md
+
+      - name: Publish coverage step summary
+        if: always() && hashFiles('target/llvm-cov/coverage-report.md') != ''
+        run: cat target/llvm-cov/coverage-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifacts
+        if: always() && hashFiles('target/llvm-cov/coverage-summary.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: casgrain-coverage
+          path: |
+            target/llvm-cov/coverage-summary.json
+            target/llvm-cov/coverage-report.json
+            target/llvm-cov/coverage-report.md
+            target/llvm-cov/lcov.info
+
       - name: Enforce line coverage threshold
-        run: cargo llvm-cov --workspace --all-features --fail-under-lines $MIN_LINE_COVERAGE --summary-only
+        if: steps.coverage_gate.outcome != 'success'
+        run: exit 1

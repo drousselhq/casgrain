@@ -52,6 +52,26 @@ cargo build --workspace
 See `docs/validation.md` for the canonical merge gate and `docs/development/test-pyramid-and-runtime-contracts.md` for the repo's unit-testing strategy, layer ownership, and coverage expectations for changed code.
 If you are changing Rust code, also review `docs/development/rust-coding-guide.md` before opening a PR.
 
+When you need an inspectable coverage result instead of only a pass/fail threshold, use the same flow CI uses:
+
+```bash
+mkdir -p target/llvm-cov
+cargo llvm-cov \
+  --workspace \
+  --all-features \
+  --fail-under-lines 75 \
+  --summary-only \
+  --json \
+  --output-path target/llvm-cov/coverage-summary.json
+cargo llvm-cov report --lcov --output-path target/llvm-cov/lcov.info
+python3 tests/test-support/scripts/coverage_report.py \
+  --input target/llvm-cov/coverage-summary.json \
+  --repo-root . \
+  --threshold 75 \
+  --summary-out target/llvm-cov/coverage-report.json \
+  --markdown-out target/llvm-cov/coverage-report.md
+```
+
 ## Where to start in the codebase
 
 - `crates/domain` — start here for the canonical execution model

@@ -212,6 +212,7 @@ Coverage is part of review discipline, but it is not the only quality signal.
 
 Current repo reality:
 - CI currently enforces a **75% workspace line-coverage floor** with `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
+- the `coverage` job now also publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts so reviewers can inspect the result without re-running coverage locally
 - the workspace-wide floor is a baseline merge gate, not a statement that 75% is the desired long-term target for all important logic
 - touched-code or new-code coverage is not yet enforced automatically in CI; until tooling lands, reviewers and authors must apply the policy below manually and honestly
 
@@ -252,9 +253,11 @@ The workspace gate remains the same canonical merge bar in `docs/validation.md`:
 - `gitleaks dir .`
 - `cargo deny check licenses sources`
 
+When you need to inspect coverage instead of only enforcing the floor, use the same CI-aligned export flow documented in `docs/validation.md` to produce `target/llvm-cov/coverage-summary.json`, `target/llvm-cov/coverage-report.json`, `target/llvm-cov/coverage-report.md`, and `target/llvm-cov/lcov.info` locally.
+
 ## Immediate next testing investments
 
-1. Add low-churn coverage reporting/tooling so touched-code policy can be reviewed with less guesswork.
+1. Add minimal non-regression / ratchet enforcement on top of the new coverage artifacts without introducing noisy per-file mandates.
 2. Add compiler golden tests from representative product-spec slices to expected plan JSON.
 3. Expand runner and CLI contract coverage for retry, timeout, failure semantics, machine-readable output, and trace/artifact details.
 4. Keep Layer 4 focused on the narrow product-true iOS slice while Android parity matures separately.
