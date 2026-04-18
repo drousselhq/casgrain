@@ -538,10 +538,12 @@ mod tests {
         let trace = DeterministicRunner::new("run-login").execute(&mut engine, &plan);
         assert_eq!(trace.status, RunStatus::Passed);
         assert_eq!(trace.steps.len(), 3);
-        assert!(trace
-            .steps
-            .iter()
-            .all(|step| step.status == StepStatus::Passed));
+        assert!(
+            trace
+                .steps
+                .iter()
+                .all(|step| step.status == StepStatus::Passed)
+        );
     }
 
     #[test]

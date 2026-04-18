@@ -198,10 +198,12 @@ fn validate_supported_smoke_plan(plan: &ExecutablePlan) -> Result<(), RuntimeFai
     }
 
     match assert_step.postconditions.as_slice() {
-        [AssertionKind::TextEquals {
-            target: Selector::AccessibilityId(value),
-            value: expected_text,
-        }] if value == "count-label" && expected_text == "Count: 1" => {}
+        [
+            AssertionKind::TextEquals {
+                target: Selector::AccessibilityId(value),
+                value: expected_text,
+            },
+        ] if value == "count-label" && expected_text == "Count: 1" => {}
         _ => {
             return Err(unsupported_fixture_plan(
                 "assert step must verify accessibility id count-label equals Count: 1",
@@ -466,9 +468,11 @@ mod tests {
         assert_eq!(error.code, FailureCode::EngineError);
         assert!(error.message.contains("did not reach the foreground"));
         assert!(error.message.contains("mCurrentFocus"));
-        assert!(error
-            .message
-            .contains("com.google.android.apps.nexuslauncher"));
+        assert!(
+            error
+                .message
+                .contains("com.google.android.apps.nexuslauncher")
+        );
     }
 
     #[test]
@@ -512,12 +516,16 @@ mod tests {
 
         assert_eq!(error.code, FailureCode::EngineError);
         assert!(error.message.contains("did not reach the foreground"));
-        assert!(error
-            .message
-            .contains("com.google.android.apps.nexuslauncher/.NexusLauncherActivity"));
-        assert!(error
-            .message
-            .contains("hq.droussel.casgrain.smoke/.MainActivity"));
+        assert!(
+            error
+                .message
+                .contains("com.google.android.apps.nexuslauncher/.NexusLauncherActivity")
+        );
+        assert!(
+            error
+                .message
+                .contains("hq.droussel.casgrain.smoke/.MainActivity")
+        );
     }
 
     #[test]
