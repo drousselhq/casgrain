@@ -11,3 +11,6 @@ repository.workspace = true
 domain = { path = "../domain" }
 serde_json.workspace = true
 
+[lints]
+workspace = true
+

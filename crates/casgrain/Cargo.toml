@@ -19,3 +19,6 @@ domain = { path = "../domain" }
 ios = { path = "../ios" }
 runner = { path = "../runner" }
 serde_json.workspace = true
+
+[lints]
+workspace = true

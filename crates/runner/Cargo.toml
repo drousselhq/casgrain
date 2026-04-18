@@ -10,3 +10,6 @@ repository.workspace = true
 [dependencies]
 domain = { path = "../domain" }
 thiserror.workspace = true
+
+[lints]
+workspace = true

@@ -50,6 +50,7 @@ cargo build --workspace
 ### 4. Run local checks
 
 See `docs/validation.md` for the canonical merge gate and `docs/development/test-pyramid-and-runtime-contracts.md` for the repo's unit-testing strategy, layer ownership, and coverage expectations for changed code.
+If you are changing Rust code, also review `docs/development/rust-coding-guide.md` before opening a PR.
 
 ## Where to start in the codebase
 
@@ -86,6 +87,7 @@ A good PR should include:
 
 Before opening a PR, review:
 - `.github/pull_request_template.md`
+- `docs/development/rust-coding-guide.md` when the change touches Rust code, crate boundaries, or lint/formatting expectations
 - `docs/development/automation-agent-operations.md` when the work involves autonomous maintenance or repo-operations roles
 - `docs/development/bug-reproduction-evidence-contract.md` when the work involves bug intake, reproduction, or evidence collection
 - `docs/development/merge-and-validation-policy.md`
@@ -122,6 +124,7 @@ If you are not already a maintainer, please open an issue first before investing
 PRs should be green on:
 - rustfmt
 - clippy with `-D warnings`
+- `cargo doc --workspace --no-deps` with `RUSTDOCFLAGS="-D warnings"`
 - tests
 - coverage threshold
 - cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
