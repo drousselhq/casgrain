@@ -13,7 +13,7 @@ Repository reality today:
 - `ios-simulator-smoke` now runs on every PR, but self-skips unless the change touches iOS-smoke-impacting files; this keeps the required `ios-smoke` check present without paying the full simulator cost on unrelated work
 - `android-emulator-smoke` runs automatically on PRs only when Android/shared-runtime paths change, and both mobile smoke workflows also run on a nightly schedule to catch environment drift
 - CodeQL participates in the required merge gate through `analyze (actions)` and `analyze (rust)` while also remaining the always-on static-analysis baseline for workflow logic and Rust code
-- the `coverage` job still enforces the same 75% workspace line-coverage floor, but it now also publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts so reviewers can inspect the result without re-running coverage locally
+- the `coverage` job still enforces the same 75% workspace line-coverage floor, publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts, and on pull requests it also checks that overall line coverage does not regress below the latest successful `main` coverage artifact when that baseline is available
 - PR authors and mergers must still avoid bypassing the merge gate just because an admin path exists
 
 Required checks:
@@ -54,10 +54,12 @@ Artifacts produced by this flow:
 - `target/llvm-cov/coverage-report.md` — human-readable summary suitable for PR notes or local review
 - `target/llvm-cov/lcov.info` — LCOV export for downstream tooling
 
+On pull requests, CI also compares `coverage-report.json` against the latest successful `main` coverage artifact with `tests/test-support/scripts/coverage_regression_check.py`. That check is intentionally narrow: it blocks only overall line-coverage regression when the `main` baseline artifact is available, while the stronger changed-code and critical-logic expectations still rely on reviewer judgment.
+
 Coverage interpretation:
 - that floor is the baseline merge gate, not the full testing policy for new work
 - contributors should also follow the documented review policy to target **85%+ coverage on new or materially changed code** and **90%+ on critical core logic** where the metric is meaningful
-- until touched/new-code coverage tooling lands, authors and reviewers must apply that stronger expectation through targeted tests, honest PR notes, and no-unexplained-regression discipline
+- until touched/new-code coverage tooling lands, authors and reviewers must still apply the stronger 85%+/90%+ expectations through targeted tests, honest PR notes, and no-unexplained-regression discipline beyond the automated overall-line non-regression check
 
 First iOS vertical-slice note:
 - the current product-true execution proof is intentionally narrow: one fixture-specific iOS scenario compiled from `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature` and executed through `casgrain run-ios-smoke`

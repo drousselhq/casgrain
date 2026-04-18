@@ -72,6 +72,8 @@ python3 tests/test-support/scripts/coverage_report.py \
   --markdown-out target/llvm-cov/coverage-report.md
 ```
 
+On pull requests, CI also runs `tests/test-support/scripts/coverage_regression_check.py` to ensure overall line coverage does not regress below the latest successful `main` coverage artifact when that baseline is available. That automation is intentionally narrow: the 85%+ changed-code and 90%+ critical-logic expectations still depend on targeted tests and reviewer judgment.
+
 ## Where to start in the codebase
 
 - `crates/domain` — start here for the canonical execution model
@@ -146,7 +148,7 @@ PRs should be green on:
 - clippy with `-D warnings`
 - `cargo doc --workspace --no-deps` with `RUSTDOCFLAGS="-D warnings"`
 - tests
-- coverage threshold
+- coverage threshold and overall line-coverage non-regression vs the latest successful `main` artifact when that baseline is available
 - cargo-audit (`cargo-audit` 0.22.1 on the pinned 1.85.0 toolchain)
 - gitleaks secret scanning (`gitleaks dir .` using the repo's `.gitleaks.toml` policy)
 - cargo-deny license/source policy (`cargo deny check licenses sources` with `cargo-deny` 0.18.3)
