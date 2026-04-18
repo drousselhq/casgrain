@@ -272,7 +272,7 @@ Important files and directories:
 - `.github/pull_request_template.md` — PR checklist and merge notes
 - `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
-- `docs/development/automation-agent-operations.md` — repository maintenance agent roles and boundaries
+- `docs/development/automation-agent-operations.md` — minimal repository-local note about external `agent-team-orchestrator` integration
 - `docs/development/merge-and-validation-policy.md` — merge classes and validation expectations
 - `docs/development/rust-coding-guide.md` — practical Rust defaults and repo-specific coding expectations
 - `docs/development/test-pyramid-and-runtime-contracts.md` — test layers and runtime contract strategy
@@ -281,7 +281,6 @@ Important files and directories:
 - `deny.toml` — cargo-deny license and dependency-source policy
 - `docs/prd/` — product requirements
 - `docs/branding/` — naming exploration and product naming context
-- `docs/plans/current-plan.md` — live execution plan
 - `docs/specs/casgrain-product-spec.md` — canonical product behavior spec
 - `tests/test-support/fixtures/ios-smoke/` — smallest honest iOS simulator-backed smoke slice
 - `crates/` — Rust implementation

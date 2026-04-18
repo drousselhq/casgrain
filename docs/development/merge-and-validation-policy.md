@@ -66,7 +66,7 @@ See `docs/validation.md` for the canonical validation gate and reporting expecta
 
 See also:
 - `docs/development/security-automation-plan.md` for the current security baseline and staged follow-up checks.
-- `docs/plans/current-plan.md` for the live project direction.
+- the Casgrain GitHub Project v2 board for current prioritization.
 
 ## E2E policy
 
@@ -105,7 +105,7 @@ If work uncovers:
 
 track it in a GitHub issue rather than relying on chat memory alone.
 
-When releasing work into automation, use the workflow-state labels documented in `docs/development/automation-agent-operations.md`.
+When releasing work into automation, use the Casgrain GitHub Project v2 board for prioritization and the workflow-state labels documented in `docs/development/automation-agent-operations.md` for durable execution state.
 In particular:
 - `ready-for-dev` means released into execution
 - `devops` routes repo-infrastructure work to the DevOps lane instead of the general Dev Delivery lane

@@ -1,7 +1,7 @@
 # Initial Roadmap
 
 > Historical roadmap for the early foundation phase.
-> The live plan now lives in `docs/plans/current-plan.md`.
+> Current prioritization now lives in GitHub Issues and the Casgrain GitHub Project v2 board.
 
 ## Phase 0 — Foundation
 - establish architecture, scope, and Gherkin authoring sources
