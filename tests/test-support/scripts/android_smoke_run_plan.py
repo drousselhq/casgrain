@@ -16,11 +16,13 @@ ACTIVITY_ENV = "CASGRAIN_ANDROID_SMOKE_ACTIVITY"
 APK_ENV = "CASGRAIN_ANDROID_SMOKE_APK"
 ADB_ENV = "CASGRAIN_ANDROID_ADB"
 DEVICE_TIMEOUT_ENV = "CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS"
+BOOT_TIMEOUT_ENV = "CASGRAIN_ANDROID_BOOT_TIMEOUT_SECS"
 LAUNCH_TIMEOUT_ENV = "CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS"
 DEFAULT_APP_ID = "hq.droussel.casgrain.smoke"
 DEFAULT_APK = "tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug/app-debug.apk"
 DEFAULT_APK_GLOB = "tests/test-support/fixtures/android-smoke/app/build/outputs/apk/debug/*.apk"
 DEFAULT_DEVICE_TIMEOUT_SECS = 20.0
+DEFAULT_BOOT_TIMEOUT_SECS = 90.0
 DEFAULT_LAUNCH_TIMEOUT_SECS = 20.0
 DEFAULT_MAIN_ACTIVITY = ".MainActivity"
 UI_DUMP_REMOTE_PATH = "/sdcard/window_dump.xml"
@@ -175,6 +177,11 @@ def resolve_device_timeout() -> float:
     return resolve_positive_timeout(raw, DEVICE_TIMEOUT_ENV)
 
 
+def resolve_boot_timeout() -> float:
+    raw = os.environ.get(BOOT_TIMEOUT_ENV, str(DEFAULT_BOOT_TIMEOUT_SECS))
+    return resolve_positive_timeout(raw, BOOT_TIMEOUT_ENV)
+
+
 def resolve_launch_timeout() -> float:
     raw = os.environ.get(LAUNCH_TIMEOUT_ENV, str(DEFAULT_LAUNCH_TIMEOUT_SECS))
     return resolve_positive_timeout(raw, LAUNCH_TIMEOUT_ENV)
@@ -213,11 +220,65 @@ def run_adb(adb: str, *args: str, text: bool = True, timeout: float | None = Non
         raise SystemExit(f"adb {' '.join(args)} failed: {details}") from error
 
 
+def probe_adb(adb: str, *args: str, timeout: float) -> tuple[bool, str]:
+    try:
+        completed = subprocess.run(
+            [adb, *args],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=timeout,
+        )
+    except FileNotFoundError as error:
+        raise SystemExit(f"failed to launch adb binary '{adb}': {error}") from error
+    except subprocess.TimeoutExpired:
+        return False, f"<timed out after {timeout:g}s>"
+
+    output = (completed.stdout or completed.stderr or "").strip()
+    return completed.returncode == 0, output
+
+
+def boot_signals_ready(sys_boot_completed: str, dev_bootcomplete: str, package_manager_probe: str) -> bool:
+    return (
+        sys_boot_completed == "1"
+        and (not dev_bootcomplete or dev_bootcomplete == "1")
+        and package_manager_probe.startswith("package:")
+    )
+
+
+def wait_for_boot_completion(adb: str) -> None:
+    timeout = resolve_boot_timeout()
+    deadline = time.monotonic() + timeout
+    last_boot = ""
+    last_dev_boot = ""
+    last_pm_status = ""
+
+    while time.monotonic() < deadline:
+        remaining_total = deadline - time.monotonic()
+        probe_timeout = max(0.2, min(2.0, remaining_total / 3))
+        boot_ok, last_boot = probe_adb(adb, "shell", "getprop", "sys.boot_completed", timeout=probe_timeout)
+        dev_ok, last_dev_boot = probe_adb(adb, "shell", "getprop", "dev.bootcomplete", timeout=probe_timeout)
+        pm_ok, last_pm_status = probe_adb(adb, "shell", "pm", "path", "android", timeout=probe_timeout)
+        if boot_ok and dev_ok and pm_ok and boot_signals_ready(last_boot, last_dev_boot, last_pm_status):
+            return
+        sleep_for = min(1.0, max(0.0, deadline - time.monotonic()))
+        if sleep_for:
+            time.sleep(sleep_for)
+
+    raise SystemExit(
+        "Android emulator did not finish booting before the smoke run started; "
+        f"observed sys.boot_completed={last_boot!r}, dev.bootcomplete={last_dev_boot!r}, "
+        f"package-manager probe={last_pm_status!r}"
+    )
+
+
 def ensure_device_ready(adb: str) -> None:
     timeout = resolve_device_timeout()
     run_adb(adb, "wait-for-device", timeout=timeout)
     state = run_adb(adb, "get-state", timeout=max(1.0, timeout / 2)).stdout.strip()
     expect(state == "device", f"adb device is not ready: expected 'device', got {state!r}")
+    wait_for_boot_completion(adb)
 
 
 def install_fixture_app(adb: str, apk_path: Path) -> None:

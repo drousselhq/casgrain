@@ -35,6 +35,7 @@ Runtime prerequisites for the default harness:
 - optionally set `CASGRAIN_ANDROID_SMOKE_APP_ID` to override the default package id `hq.droussel.casgrain.smoke`
 - optionally set `CASGRAIN_ANDROID_SMOKE_ACTIVITY` to override the launcher activity component or suffix (defaults to `.MainActivity` for the in-repo fixture app)
 - optionally set `CASGRAIN_ANDROID_DEVICE_TIMEOUT_SECS` to control how long the runner waits for `adb wait-for-device` before failing fast
+- optionally set `CASGRAIN_ANDROID_BOOT_TIMEOUT_SECS` to control how long the runner waits for the emulator to report boot-complete + package-manager readiness before install/launch
 - optionally set `CASGRAIN_ANDROID_LAUNCH_TIMEOUT_SECS` to control how long the runner waits for the fixture app to actually reach the foreground after launch
 
 Artifacts required in the validated success bundle:
