@@ -316,6 +316,40 @@ mod tests {
         }
     }
 
+    struct ScriptedEngine {
+        snapshot: DeviceSnapshot,
+        failures_before_success: u8,
+    }
+
+    impl DeviceEngine for ScriptedEngine {
+        fn descriptor(&self) -> DeviceDescriptor {
+            DeviceDescriptor {
+                platform: TargetPlatform::Ios,
+                name: "iPhone 16".into(),
+                os_version: "18.0".into(),
+            }
+        }
+
+        fn perform_action(
+            &mut self,
+            _action: &ActionKind,
+        ) -> Result<Vec<ArtifactRef>, RuntimeFailure> {
+            if self.failures_before_success > 0 {
+                self.failures_before_success -= 1;
+                return Err(RuntimeFailure {
+                    code: FailureCode::EngineError,
+                    message: "scripted engine failure".into(),
+                });
+            }
+
+            Ok(Vec::new())
+        }
+
+        fn snapshot(&self) -> Result<DeviceSnapshot, RuntimeFailure> {
+            Ok(self.snapshot.clone())
+        }
+    }
+
     fn sample_plan(assertion: AssertionKind) -> ExecutablePlan {
         ExecutablePlan {
             plan_id: "plan-1".into(),
@@ -557,6 +591,105 @@ mod tests {
         assert_eq!(
             trace.steps[0].artifacts[0].step_id.as_deref(),
             Some("take-screenshot")
+        );
+    }
+
+    #[test]
+    fn runner_retries_a_step_until_it_succeeds() {
+        let mut engine = ScriptedEngine {
+            snapshot: DeviceSnapshot {
+                foreground_app: Some("app.under.test".into()),
+                ..DeviceSnapshot::default()
+            },
+            failures_before_success: 2,
+        };
+        let mut plan = sample_plan(AssertionKind::AppInForeground {
+            app_id: "app.under.test".into(),
+        });
+        plan.steps[0].retry.max_attempts = 3;
+
+        let trace = DeterministicRunner::new("run-retry").execute(&mut engine, &plan);
+
+        assert_eq!(trace.status, RunStatus::Passed);
+        assert_eq!(trace.steps.len(), 1);
+        assert_eq!(trace.steps[0].status, StepStatus::Passed);
+        assert_eq!(trace.steps[0].attempts, 3);
+        assert!(trace.steps[0].failure.is_none());
+        assert!(trace.artifacts.is_empty());
+    }
+
+    #[test]
+    fn runner_continue_policy_records_failure_and_executes_later_steps() {
+        let mut engine = ScriptedEngine {
+            snapshot: DeviceSnapshot {
+                foreground_app: Some("app.under.test".into()),
+                ..DeviceSnapshot::default()
+            },
+            failures_before_success: 1,
+        };
+        let mut plan = sample_plan(AssertionKind::AppInForeground {
+            app_id: "app.under.test".into(),
+        });
+        plan.steps[0].description = "first step fails but the run continues".into();
+        plan.steps[0].postconditions = vec![];
+        plan.steps[0].on_failure = FailurePolicy::Continue;
+        plan.steps.push(PlanStep {
+            step_id: "step-2".into(),
+            intent: StepIntent::Assert,
+            description: "foreground app remains visible".into(),
+            action: ActionKind::Noop,
+            guards: vec![],
+            postconditions: vec![AssertionKind::AppInForeground {
+                app_id: "app.under.test".into(),
+            }],
+            timeout_ms: 1_000,
+            retry: RetryPolicy::default(),
+            on_failure: FailurePolicy::AbortRun,
+            artifacts: ArtifactPolicy::default(),
+        });
+
+        let trace = DeterministicRunner::new("run-continue").execute(&mut engine, &plan);
+
+        assert_eq!(trace.status, RunStatus::Failed);
+        assert_eq!(trace.steps.len(), 2);
+        assert_eq!(trace.steps[0].status, StepStatus::Failed);
+        assert_eq!(trace.steps[0].attempts, 1);
+        assert_eq!(trace.steps[1].status, StepStatus::Passed);
+        assert_eq!(trace.steps[1].attempts, 1);
+        assert_eq!(trace.artifacts.len(), 1);
+        assert_eq!(trace.artifacts[0].artifact_type, "failure_context");
+        assert_eq!(trace.artifacts[0].step_id.as_deref(), Some("step-1"));
+        assert_eq!(trace.steps[0].artifacts.len(), 1);
+        assert_eq!(trace.steps[0].artifacts[0].artifact_type, "failure_context");
+        assert!(trace.finished_at.is_some());
+    }
+
+    #[test]
+    fn runner_emits_after_step_snapshot_artifacts_when_requested() {
+        let mut engine = FakeEngine {
+            snapshot: DeviceSnapshot {
+                foreground_app: Some("app.under.test".into()),
+                ..DeviceSnapshot::default()
+            },
+        };
+        let mut plan = sample_plan(AssertionKind::AppInForeground {
+            app_id: "app.under.test".into(),
+        });
+        plan.steps[0].artifacts.capture_after_step = true;
+
+        let trace = DeterministicRunner::new("run-after-step").execute(&mut engine, &plan);
+
+        assert_eq!(trace.status, RunStatus::Passed);
+        assert_eq!(trace.artifacts.len(), 1);
+        assert_eq!(trace.artifacts[0].artifact_id, "step-1-after");
+        assert_eq!(trace.artifacts[0].artifact_type, "step_snapshot");
+        assert_eq!(trace.artifacts[0].path, "artifacts/step-1-after.json");
+        assert_eq!(trace.artifacts[0].step_id.as_deref(), Some("step-1"));
+        assert_eq!(trace.steps[0].artifacts.len(), 1);
+        assert_eq!(trace.steps[0].artifacts[0].artifact_type, "step_snapshot");
+        assert_eq!(
+            trace.steps[0].artifacts[0].step_id.as_deref(),
+            Some("step-1")
         );
     }
 }
