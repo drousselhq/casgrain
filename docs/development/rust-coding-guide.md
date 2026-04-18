@@ -32,9 +32,12 @@ For the full merge gate, follow `docs/validation.md`.
 
 - `cargo fmt` is the formatting source of truth.
 - Clippy is the standard lint tool.
+- Workspace Clippy policy currently denies `dbg!`, `todo!`, and `unimplemented!` across every crate to keep accidental debugging or placeholder code out of CI.
 - Prefer fixing the code over adding lint suppressions.
 - Prefer default Rust/Clippy behavior unless the repository has a documented reason to do otherwise.
 - Keep config minimal; do not add noisy style-only rules just to increase policy surface area.
+
+The repo also treats `cargo doc --workspace --no-deps` with `RUSTDOCFLAGS="-D warnings"` as part of the default validation gate so contributor-facing Rust docs do not silently rot.
 
 ## Architectural shape in this repo
 
