@@ -49,6 +49,11 @@ Trade-offs:
 Failure surfacing:
 - required GitHub Actions check on PRs
 - contributors should run `cargo audit` locally before opening a PR when changing dependencies
+- the weekly `cve-watch` workflow keeps a separate managed findings issue for Rust dependency advisories so newly published RustSec CVEs do not rely only on PR-time execution
+
+Scheduled watch expansion:
+- the same `cve-watch` workflow now also queries GitHub-native Dependabot alerts for the repo's watched non-Cargo dependency surfaces (`github-actions` plus the Android smoke fixture's Gradle-managed dependencies)
+- that expansion intentionally stays scoped to dependency-graph-backed alerts rather than broad runner-image or downloaded-tool CVE scraping, which remains manual until a later bounded slice proves worth the noise
 
 ## 2. Committed secrets
 
