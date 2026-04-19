@@ -97,7 +97,14 @@ class HostEnvironmentNormalizationTests(unittest.TestCase):
 
         with patch.dict(
             android_smoke_run_plan.os.environ,
-            {"ImageOS": "ubuntu24", "ImageVersion": "20260413.86.1"},
+            {
+                "ImageOS": "ubuntu24",
+                "ImageVersion": "20260413.86.1",
+                "GITHUB_REPOSITORY": "drousselhq/casgrain",
+                "GITHUB_WORKFLOW": "android-emulator-smoke",
+                "GITHUB_RUN_ID": "24624943594",
+                "GITHUB_RUN_ATTEMPT": "1",
+            },
             clear=False,
         ), patch.object(
             android_smoke_run_plan,
@@ -122,9 +129,15 @@ class HostEnvironmentNormalizationTests(unittest.TestCase):
                 "NAME": "Ubuntu",
                 "VERSION": "24.04.4 LTS (Noble Numbat)",
             }.get(field, fallback),
+        ), patch.object(
+            android_smoke_run_plan,
+            "utc_now",
+            return_value="2026-04-19T09:00:00Z",
         ):
             host_environment = android_smoke_run_plan.build_android_host_environment(emulator_info)
 
+        self.assertEqual(host_environment["generated_at"], "2026-04-19T09:00:00Z")
+        self.assertEqual(host_environment["workflow_run"]["run_url"], "https://github.com/drousselhq/casgrain/actions/runs/24624943594")
         self.assertEqual(host_environment["runner"]["label"], "ubuntu-24.04")
         self.assertEqual(host_environment["runner"]["image_name"], "ubuntu-24.04")
         self.assertEqual(host_environment["runner"]["os_version"], "24.04.4")

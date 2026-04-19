@@ -30,6 +30,14 @@
           "profile": "pixel_7",
           "device_name": "sdk_gphone64_x86_64",
           "os_version": "14"
+        },
+        "generated_at": "2026-04-19T09:00:00Z",
+        "workflow_run": {
+          "repository": "drousselhq/casgrain",
+          "workflow": "android-emulator-smoke",
+          "run_id": "24624943594",
+          "run_attempt": "1",
+          "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24624943594"
         }
       }
     },

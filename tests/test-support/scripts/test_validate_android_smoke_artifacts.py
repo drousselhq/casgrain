@@ -206,6 +206,14 @@ class SuccessContractHostEnvironmentTests(unittest.TestCase):
         (artifact_dir / "host-environment.json").write_text(
             json.dumps(
                 {
+                    "generated_at": "2026-04-19T09:00:00Z",
+                    "workflow_run": {
+                        "repository": "drousselhq/casgrain",
+                        "workflow": "android-emulator-smoke",
+                        "run_id": "24624943594",
+                        "run_attempt": "1",
+                        "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24624943594",
+                    },
                     "runner": {
                         "label": "ubuntu-latest",
                         "image_name": "ubuntu-24.04",
@@ -265,6 +273,32 @@ class SuccessContractHostEnvironmentTests(unittest.TestCase):
                 validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
 
         self.assertIn("host-environment.json", str(error.exception))
+
+    def test_validate_success_contract_rejects_missing_host_environment_generated_at(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            self.make_success_artifact_dir(artifact_dir)
+            host_environment = json.loads((artifact_dir / "host-environment.json").read_text())
+            host_environment.pop("generated_at")
+            (artifact_dir / "host-environment.json").write_text(json.dumps(host_environment))
+
+            with self.assertRaises(SystemExit) as error:
+                validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
+
+        self.assertIn("generated_at", str(error.exception))
+
+    def test_validate_success_contract_rejects_missing_host_environment_workflow_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            self.make_success_artifact_dir(artifact_dir)
+            host_environment = json.loads((artifact_dir / "host-environment.json").read_text())
+            host_environment["workflow_run"].pop("run_url")
+            (artifact_dir / "host-environment.json").write_text(json.dumps(host_environment))
+
+            with self.assertRaises(SystemExit) as error:
+                validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
+
+        self.assertIn("workflow_run.run_url", str(error.exception))
 
 
 if __name__ == "__main__":

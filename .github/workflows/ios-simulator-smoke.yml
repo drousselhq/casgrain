@@ -136,21 +136,17 @@ jobs:
           import json
           import os
           from pathlib import Path
+          import importlib.util
+
+          module_path = Path("tests/test-support/scripts/ios_smoke_run_plan.py")
+          spec = importlib.util.spec_from_file_location("ios_smoke_run_plan", module_path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
           host_environment = json.loads(
               Path(os.environ["ARTIFACT_DIR"]).joinpath("host-environment.json").read_text(encoding="utf-8")
           )
-          for group_name, required_fields in {
-              "runner": ("label", "image_name", "image_version", "os_version", "os_build"),
-              "xcode": ("app_path", "version", "simulator_sdk_version"),
-              "simulator": ("runtime_identifier", "runtime_name", "device_name"),
-          }.items():
-              group = host_environment.get(group_name)
-              if not isinstance(group, dict):
-                  raise SystemExit(f"host-environment.json must include object {group_name!r}")
-              for field_name in required_fields:
-                  value = group.get(field_name)
-                  if not isinstance(value, (str, int, float)) or not str(value).strip():
-                      raise SystemExit(f"host-environment.json must include non-empty {group_name}.{field_name}")
+          module.validate_ios_host_environment(host_environment)
           print("IOS_HOST_ENVIRONMENT_OK")
           PY
           ls -R "$ARTIFACT_DIR"

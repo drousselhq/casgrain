@@ -79,6 +79,14 @@ def required_scalar_field(container: dict[str, Any], field_name: str, *, error_c
     return str(value)
 
 
+def validate_host_environment_contract(host_environment: dict[str, Any], *, error_context: str) -> dict[str, Any]:
+    required_scalar_field(host_environment, "generated_at", error_context=error_context)
+    workflow_run = required_object_field(host_environment, "workflow_run", error_context=error_context)
+    for field_name in ("repository", "workflow", "run_id", "run_attempt", "run_url"):
+        required_scalar_field(workflow_run, field_name, error_context=f"{error_context} workflow_run")
+    return host_environment
+
+
 def optional_scalar_field(container: dict[str, Any], field_name: str, *, default: str = "") -> str:
     value = container.get(field_name, default)
     if value in (None, ""):
@@ -250,7 +258,7 @@ def read_host_environment_from_downloaded_artifact(run_id: int, repo: str, artif
         payload = load_json_file(host_summary)
         if not isinstance(payload, dict):
             raise RunnerHostWatchError("host-environment.json root must be an object")
-        return payload
+        return validate_host_environment_contract(payload, error_context="host-environment.json")
 
 
 def collect_live_platform(repo: str, workflow: str, artifact: str, branch: str) -> dict[str, Any]:
@@ -290,7 +298,13 @@ def normalize_fixture_platform(platform_name: str, data: Any) -> dict[str, Any]:
         if normalized_run["id"] is None or normalized_run["url"] is None:
             raise RunnerHostWatchError(f"fixture platform {platform_name} run must include numeric id and non-empty url")
         host_environment = required_object_field(data, "host_environment", error_context=f"fixture platform {platform_name}")
-        return {"run": normalized_run, "host_environment": host_environment}
+        return {
+            "run": normalized_run,
+            "host_environment": validate_host_environment_contract(
+                host_environment,
+                error_context=f"fixture platform {platform_name} host_environment",
+            ),
+        }
     reason = required_scalar_field(data, "host_environment_error", error_context=f"fixture platform {platform_name}")
     return {"run": normalized_run, "host_environment_error": reason}
 
@@ -322,7 +336,16 @@ def build_platform_summary(platform_name: str, baseline_platform: dict[str, Any]
         )
         summary["status"] = "manual-review-required"
         summary["missing_evidence"].append({"reason": reason})
-        return summary, 1
+        for watched in baseline_platform["watched_facts"]:
+            summary["missing_facts"].append(
+                {
+                    "path": watched["path"],
+                    "label": watched["label"],
+                    "expected": watched["baseline"],
+                    "reason": reason,
+                }
+            )
+        return summary, len(baseline_platform["watched_facts"])
 
     if not isinstance(run_id, int) or not isinstance(run_url, str) or not run_url:
         raise RunnerHostWatchError(f"observed platform {platform_name} run must include id/url")

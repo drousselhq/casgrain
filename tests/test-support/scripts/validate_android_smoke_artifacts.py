@@ -108,6 +108,16 @@ def validate_success_contract(artifact_dir: Path) -> dict[str, Any]:
     expect(not missing_ids, f"trace.json is missing expected artifact ids: {', '.join(missing_ids)}")
 
     host_environment = load_json(artifact_dir / "host-environment.json", "host environment")
+    generated_at = host_environment.get("generated_at")
+    expect(isinstance(generated_at, str) and generated_at.strip(), "host-environment.json must include non-empty generated_at")
+    workflow_run = host_environment.get("workflow_run")
+    expect(isinstance(workflow_run, dict), "host-environment.json must include object 'workflow_run'")
+    for field_name in ("repository", "workflow", "run_id", "run_attempt", "run_url"):
+        value = workflow_run.get(field_name)
+        expect(
+            isinstance(value, (str, int, float)) and str(value).strip(),
+            f"host-environment.json must include non-empty workflow_run.{field_name}",
+        )
     for group_name, required_fields in {
         "runner": ("label", "image_name", "image_version", "os_version"),
         "java": ("configured_major", "resolved_version"),

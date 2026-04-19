@@ -204,6 +204,32 @@ def build_ios_host_environment(simulator_info: dict[str, str]) -> dict[str, obje
     }
 
 
+def validate_ios_host_environment(host_environment: dict[str, object]) -> None:
+    generated_at = host_environment.get("generated_at")
+    expect(isinstance(generated_at, str) and generated_at.strip(), "host-environment.json must include non-empty generated_at")
+    workflow_run = host_environment.get("workflow_run")
+    expect(isinstance(workflow_run, dict), "host-environment.json must include object 'workflow_run'")
+    for field_name in ("repository", "workflow", "run_id", "run_attempt", "run_url"):
+        value = workflow_run.get(field_name)
+        expect(
+            isinstance(value, (str, int, float)) and str(value).strip(),
+            f"host-environment.json must include non-empty workflow_run.{field_name}",
+        )
+    for group_name, required_fields in {
+        "runner": ("label", "image_name", "image_version", "os_version", "os_build"),
+        "xcode": ("app_path", "version", "simulator_sdk_version"),
+        "simulator": ("runtime_identifier", "runtime_name", "device_name"),
+    }.items():
+        group = host_environment.get(group_name)
+        expect(isinstance(group, dict), f"host-environment.json must include object {group_name!r}")
+        for field_name in required_fields:
+            value = group.get(field_name)
+            expect(
+                isinstance(value, (str, int, float)) and str(value).strip(),
+                f"host-environment.json must include non-empty {group_name}.{field_name}",
+            )
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
@@ -228,6 +254,7 @@ def main() -> int:
     subprocess.run([str(shell_script)], cwd=repo_root, env=env, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     simulator_info = load_json(simulator_info_path, "simulator descriptor")
     host_environment = build_ios_host_environment(simulator_info)
+    validate_ios_host_environment(host_environment)
     host_environment_path.write_text(json.dumps(host_environment, indent=2) + "\n")
     finished_at = utc_now()
 

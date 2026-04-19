@@ -47,7 +47,14 @@ class HostEnvironmentNormalizationTests(unittest.TestCase):
 
         with patch.dict(
             ios_smoke_run_plan.os.environ,
-            {"ImageOS": "macos15", "ImageVersion": "20260414.0270.1"},
+            {
+                "ImageOS": "macos15",
+                "ImageVersion": "20260414.0270.1",
+                "GITHUB_REPOSITORY": "drousselhq/casgrain",
+                "GITHUB_WORKFLOW": "ios-simulator-smoke",
+                "GITHUB_RUN_ID": "24624581772",
+                "GITHUB_RUN_ATTEMPT": "1",
+            },
             clear=False,
         ), patch.object(
             ios_smoke_run_plan,
@@ -57,13 +64,46 @@ class HostEnvironmentNormalizationTests(unittest.TestCase):
             ios_smoke_run_plan,
             "command_output",
             side_effect=lambda *args: outputs[args],
+        ), patch.object(
+            ios_smoke_run_plan,
+            "utc_now",
+            return_value="2026-04-19T09:00:00Z",
         ):
             host_environment = ios_smoke_run_plan.build_ios_host_environment(simulator_info)
 
+        self.assertEqual(host_environment["generated_at"], "2026-04-19T09:00:00Z")
+        self.assertEqual(host_environment["workflow_run"]["run_url"], "https://github.com/drousselhq/casgrain/actions/runs/24624581772")
         self.assertEqual(host_environment["runner"]["label"], "macos-15-xlarge")
         self.assertEqual(host_environment["runner"]["image_name"], "macos-15-arm64")
         self.assertEqual(host_environment["runner"]["image_version"], "20260414.0270.1")
         self.assertEqual(host_environment["runner"]["os_version"], "15.7.4")
+        ios_smoke_run_plan.validate_ios_host_environment(host_environment)
+
+    def test_validate_ios_host_environment_rejects_missing_metadata(self) -> None:
+        with self.assertRaises(SystemExit) as error:
+            ios_smoke_run_plan.validate_ios_host_environment(
+                {
+                    "runner": {
+                        "label": "macos-15",
+                        "image_name": "macos-15-arm64",
+                        "image_version": "20260414.0270.1",
+                        "os_version": "15.7.4",
+                        "os_build": "24G517",
+                    },
+                    "xcode": {
+                        "app_path": "/Applications/Xcode_16.4.app",
+                        "version": "16.4",
+                        "simulator_sdk_version": "18.5",
+                    },
+                    "simulator": {
+                        "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+                        "runtime_name": "iOS 26.2",
+                        "device_name": "iPhone 16",
+                    },
+                }
+            )
+
+        self.assertIn("generated_at", str(error.exception))
 
 
 if __name__ == "__main__":

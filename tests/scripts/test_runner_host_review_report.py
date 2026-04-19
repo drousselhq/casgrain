@@ -63,6 +63,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
     def test_build_summary_handles_missing_successful_run_without_aborting(self) -> None:
         baseline, _ = load_case("baseline-match")
+        android_watched_count = len(baseline["platforms"]["android"]["watched_facts"])
         observed_platforms = {
             "android": {
                 "run": {"id": None, "url": None},
@@ -71,6 +72,14 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             "ios": {
                 "run": {"id": 24600433713, "url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713"},
                 "host_environment": {
+                    "generated_at": "2026-04-19T08:00:00Z",
+                    "workflow_run": {
+                        "repository": "drousselhq/casgrain",
+                        "workflow": "ios-simulator-smoke",
+                        "run_id": "24600433713",
+                        "run_attempt": "1",
+                        "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713",
+                    },
                     "runner": {
                         "label": "macos-15",
                         "image_name": "macos-15-arm64",
@@ -100,12 +109,14 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         )
 
         self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], android_watched_count)
         self.assertEqual(summary["verdict"], "manual-review-required")
         self.assertEqual(summary["platforms"]["android"]["run_id"], None)
         self.assertEqual(
             summary["platforms"]["android"]["missing_evidence"][0]["reason"],
             "no successful android-emulator-smoke.yml run found on main",
         )
+        self.assertEqual(len(summary["platforms"]["android"]["missing_facts"]), android_watched_count)
 
     def test_build_summary_reports_no_review_needed_when_observed_facts_match_baseline(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
@@ -170,6 +181,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
     def test_build_summary_fails_closed_when_required_host_summary_is_missing(self) -> None:
         baseline, fixture_input = load_case("missing-evidence")
+        ios_watched_count = len(baseline["platforms"]["ios"]["watched_facts"])
 
         summary = MODULE.build_summary(
             repo=str(fixture_input["repo"]),
@@ -179,14 +191,37 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         )
 
         self.assertTrue(summary["alert"])
-        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["advisory_count"], ios_watched_count)
         self.assertEqual(summary["verdict"], "manual-review-required")
         self.assertEqual(summary["platforms"]["ios"]["status"], "manual-review-required")
         self.assertEqual(summary["platforms"]["ios"]["missing_evidence"][0]["reason"], "host-environment.json missing")
+        self.assertEqual(len(summary["platforms"]["ios"]["missing_facts"]), ios_watched_count)
 
         markdown = MODULE.render_markdown(summary)
         self.assertIn("host-environment.json missing", markdown)
         self.assertIn("manual-review-required", markdown)
+
+    def test_normalize_fixture_platform_requires_host_environment_metadata(self) -> None:
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.normalize_fixture_platform(
+                "android",
+                {
+                    "run": {
+                        "id": 24624943594,
+                        "url": "https://github.com/drousselhq/casgrain/actions/runs/24624943594",
+                    },
+                    "host_environment": {
+                        "runner": {
+                            "label": "ubuntu-latest",
+                            "image_name": "ubuntu-24.04",
+                            "image_version": "20260413.86.1",
+                            "os_version": "24.04.4",
+                        }
+                    },
+                },
+            )
+
+        self.assertIn("generated_at", str(error.exception))
 
 
 if __name__ == "__main__":
