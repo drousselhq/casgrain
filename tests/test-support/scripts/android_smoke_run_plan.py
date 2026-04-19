@@ -642,6 +642,90 @@ def read_device_property(adb: str, prop: str, fallback: str) -> str:
     return value or fallback
 
 
+def read_os_release_value(field_name: str, fallback: str) -> str:
+    os_release = Path("/etc/os-release")
+    if not os_release.is_file():
+        return fallback
+    for line in os_release.read_text(encoding="utf-8").splitlines():
+        if line.startswith(f"{field_name}="):
+            return line.split("=", 1)[1].strip().strip('"') or fallback
+    return fallback
+
+
+def command_output(*args: str) -> str:
+    completed = subprocess.run(
+        list(args),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return (completed.stdout + completed.stderr).strip()
+
+
+def parse_java_runtime_version(output: str) -> str:
+    match = re.search(r"java\.runtime\.version\s*=\s*(\S+)", output)
+    if match:
+        return match.group(1).removesuffix("-LTS")
+    match = re.search(r"Runtime Version .*? (\S+)", output)
+    if match:
+        return match.group(1).removesuffix("-LTS")
+    return "unknown"
+
+
+def parse_gradle_version(output: str) -> str:
+    match = re.search(r"^Gradle\s+(\S+)", output, flags=re.MULTILINE)
+    return match.group(1) if match else "unknown"
+
+
+def github_run_metadata() -> dict[str, str]:
+    return {
+        "repository": os.environ.get("GITHUB_REPOSITORY", "local"),
+        "workflow": os.environ.get("GITHUB_WORKFLOW", "android-emulator-smoke"),
+        "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
+        "run_url": os.environ.get(
+            "GITHUB_SERVER_URL", "https://github.com"
+        )
+        + "/"
+        + os.environ.get("GITHUB_REPOSITORY", "local")
+        + "/actions/runs/"
+        + os.environ.get("GITHUB_RUN_ID", "local"),
+    }
+
+
+def build_android_host_environment(emulator_info: dict[str, str]) -> dict[str, object]:
+    java_output = command_output("java", "-XshowSettings:properties", "-version")
+    gradle_output = command_output("gradle", "--version")
+    return {
+        "generated_at": utc_now(),
+        "workflow_run": github_run_metadata(),
+        "runner": {
+            "label": "ubuntu-latest",
+            "image_name": os.environ.get("ImageOS", "unknown"),
+            "image_version": os.environ.get("ImageVersion", "unknown"),
+            "os_name": read_os_release_value("NAME", "Ubuntu"),
+            "os_version": read_os_release_value("VERSION_ID", "unknown"),
+        },
+        "java": {
+            "distribution": "temurin",
+            "configured_major": "17",
+            "resolved_version": parse_java_runtime_version(java_output),
+        },
+        "gradle": {
+            "configured_version": "8.7",
+            "resolved_version": parse_gradle_version(gradle_output),
+        },
+        "emulator": {
+            "api_level": "34",
+            "arch": "x86_64",
+            "target": "google_apis",
+            "profile": "pixel_7",
+            "device_name": emulator_info["device_name"],
+            "os_version": emulator_info["os_version"],
+        },
+    }
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
@@ -657,6 +741,7 @@ def main() -> int:
     apk_path = resolve_apk_path(repo_root)
     screenshot_path = artifact_dir / "android-tap-counter-1.png"
     emulator_info_path = artifact_dir / "emulator.json"
+    host_environment_path = artifact_dir / "host-environment.json"
     before_tap_dump_path = artifact_dir / "ui-before-tap.xml"
     after_tap_dump_path = artifact_dir / "ui-after-tap.xml"
 
@@ -711,6 +796,8 @@ def main() -> int:
         "os_version": os_version,
     }
     emulator_info_path.write_text(json.dumps(emulator_info, indent=2) + "\n")
+    host_environment = build_android_host_environment(emulator_info)
+    host_environment_path.write_text(json.dumps(host_environment, indent=2) + "\n")
 
     steps = [
         {
@@ -751,6 +838,13 @@ def main() -> int:
                 "artifact_type": "emulator_descriptor",
                 "path": str(emulator_info_path),
                 "sha256": sha256_for(emulator_info_path),
+                "step_id": None,
+            },
+            {
+                "artifact_id": "android-host-environment",
+                "artifact_type": "host_environment",
+                "path": str(host_environment_path),
+                "sha256": sha256_for(host_environment_path),
                 "step_id": None,
             },
             {

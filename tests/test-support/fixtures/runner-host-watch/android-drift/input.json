@@ -1,0 +1,63 @@
+{
+  "repo": "drousselhq/casgrain",
+  "platforms": {
+    "android": {
+      "run": {
+        "id": 24624943594,
+        "url": "https://github.com/drousselhq/casgrain/actions/runs/24624943594"
+      },
+      "host_environment": {
+        "runner": {
+          "label": "ubuntu-latest",
+          "image_name": "ubuntu-24.04",
+          "image_version": "20260420.01.1",
+          "os_name": "Ubuntu",
+          "os_version": "24.04.4"
+        },
+        "java": {
+          "distribution": "temurin",
+          "configured_major": "17",
+          "resolved_version": "17.0.18+8"
+        },
+        "gradle": {
+          "configured_version": "8.7",
+          "resolved_version": "8.7"
+        },
+        "emulator": {
+          "api_level": "34",
+          "arch": "x86_64",
+          "target": "google_apis",
+          "profile": "pixel_7",
+          "device_name": "sdk_gphone64_x86_64",
+          "os_version": "14"
+        }
+      }
+    },
+    "ios": {
+      "run": {
+        "id": 24624581772,
+        "url": "https://github.com/drousselhq/casgrain/actions/runs/24624581772"
+      },
+      "host_environment": {
+        "runner": {
+          "label": "macos-15",
+          "image_name": "macos-15-arm64",
+          "image_version": "20260414.0270.1",
+          "os_name": "macOS",
+          "os_version": "15.7.4",
+          "os_build": "24G517"
+        },
+        "xcode": {
+          "app_path": "/Applications/Xcode_16.4.app",
+          "version": "16.4",
+          "simulator_sdk_version": "18.5"
+        },
+        "simulator": {
+          "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+          "runtime_name": "iOS 26.2",
+          "device_name": "iPhone 16"
+        }
+      }
+    }
+  }
+}

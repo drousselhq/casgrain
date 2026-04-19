@@ -91,6 +91,64 @@ def sha256_for(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+def command_output(*args: str) -> str:
+    completed = subprocess.run(
+        list(args),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return (completed.stdout + completed.stderr).strip()
+
+
+def github_run_metadata() -> dict[str, str]:
+    return {
+        "repository": os.environ.get("GITHUB_REPOSITORY", "local"),
+        "workflow": os.environ.get("GITHUB_WORKFLOW", "ios-simulator-smoke"),
+        "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
+        "run_url": os.environ.get(
+            "GITHUB_SERVER_URL", "https://github.com"
+        )
+        + "/"
+        + os.environ.get("GITHUB_REPOSITORY", "local")
+        + "/actions/runs/"
+        + os.environ.get("GITHUB_RUN_ID", "local"),
+    }
+
+
+def build_ios_host_environment(simulator_info: dict[str, str]) -> dict[str, object]:
+    developer_dir = Path(command_output("xcode-select", "-p").splitlines()[0].strip())
+    xcode_app = developer_dir.parents[1] if developer_dir.name == "Developer" else developer_dir
+    xcode_version_output = command_output("xcodebuild", "-version").splitlines()
+    xcode_version = xcode_version_output[0].split()[-1] if xcode_version_output else "unknown"
+    simulator_sdk_version = command_output("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version").splitlines()[0].strip()
+    os_version = command_output("sw_vers", "-productVersion").splitlines()[0].strip()
+    os_build = command_output("sw_vers", "-buildVersion").splitlines()[0].strip()
+    return {
+        "generated_at": utc_now(),
+        "workflow_run": github_run_metadata(),
+        "runner": {
+            "label": "macos-15",
+            "image_name": os.environ.get("ImageOS", "unknown"),
+            "image_version": os.environ.get("ImageVersion", "unknown"),
+            "os_name": "macOS",
+            "os_version": os_version,
+            "os_build": os_build,
+        },
+        "xcode": {
+            "app_path": str(xcode_app),
+            "version": xcode_version,
+            "simulator_sdk_version": simulator_sdk_version,
+        },
+        "simulator": {
+            "runtime_identifier": str(simulator_info.get("runtime", "unknown")),
+            "runtime_name": str(simulator_info.get("runtime_name", "unknown")),
+            "device_name": str(simulator_info.get("device_name", "unknown")),
+        },
+    }
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
@@ -103,6 +161,7 @@ def main() -> int:
 
     screenshot_path = artifact_dir / "tap-counter-1.png"
     simulator_info_path = artifact_dir / "simulator.json"
+    host_environment_path = artifact_dir / "host-environment.json"
     shell_script = repo_root / "tests" / "test-support" / "scripts" / "ios_smoke.sh"
     expect(shell_script.is_file(), f"missing iOS smoke harness script at {shell_script}")
 
@@ -113,6 +172,8 @@ def main() -> int:
 
     subprocess.run([str(shell_script)], cwd=repo_root, env=env, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     simulator_info = load_json(simulator_info_path, "simulator descriptor")
+    host_environment = build_ios_host_environment(simulator_info)
+    host_environment_path.write_text(json.dumps(host_environment, indent=2) + "\n")
     finished_at = utc_now()
 
     steps = [
@@ -140,6 +201,13 @@ def main() -> int:
             "artifact_type": "xcodebuild_log",
             "path": str(artifact_dir / "xcodebuild.log"),
             "sha256": sha256_for(artifact_dir / "xcodebuild.log"),
+            "step_id": None,
+        },
+        {
+            "artifact_id": "ios-host-environment",
+            "artifact_type": "host_environment",
+            "path": str(host_environment_path),
+            "sha256": sha256_for(host_environment_path),
             "step_id": None,
         },
         {

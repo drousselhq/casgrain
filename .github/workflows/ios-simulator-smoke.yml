@@ -113,7 +113,29 @@ jobs:
           test -f "$ARTIFACT_DIR/plan.json"
           test -f "$ARTIFACT_DIR/xcodebuild.log"
           test -f "$ARTIFACT_DIR/simulator.json"
+          test -f "$ARTIFACT_DIR/host-environment.json"
           test -d "$ARTIFACT_DIR/CasgrainSmoke.xcresult"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          host_environment = json.loads(
+              Path(os.environ["ARTIFACT_DIR"]).joinpath("host-environment.json").read_text(encoding="utf-8")
+          )
+          for group_name, required_fields in {
+              "runner": ("label", "image_name", "image_version", "os_version", "os_build"),
+              "xcode": ("app_path", "version", "simulator_sdk_version"),
+              "simulator": ("runtime_identifier", "runtime_name", "device_name"),
+          }.items():
+              group = host_environment.get(group_name)
+              if not isinstance(group, dict):
+                  raise SystemExit(f"host-environment.json must include object {group_name!r}")
+              for field_name in required_fields:
+                  value = group.get(field_name)
+                  if not isinstance(value, (str, int, float)) or not str(value).strip():
+                      raise SystemExit(f"host-environment.json must include non-empty {group_name}.{field_name}")
+          print("IOS_HOST_ENVIRONMENT_OK")
+          PY
           ls -R "$ARTIFACT_DIR"
 
       - name: Skip iOS smoke for unaffected changes

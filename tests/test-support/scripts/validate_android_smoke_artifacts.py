@@ -10,6 +10,7 @@ SUCCESS_REQUIRED = (
     "trace.json",
     "plan.json",
     "emulator.json",
+    "host-environment.json",
     "ui-before-tap.xml",
     "ui-after-tap.xml",
     "android-tap-counter-1.png",
@@ -99,11 +100,28 @@ def validate_success_contract(artifact_dir: Path) -> dict[str, Any]:
     expected_ids = {
         "android-tap-counter-1",
         "android-smoke-emulator",
+        "android-host-environment",
         "android-ui-before-tap",
         "android-ui-after-tap",
     }
     missing_ids = sorted(expected_ids - artifact_ids)
     expect(not missing_ids, f"trace.json is missing expected artifact ids: {', '.join(missing_ids)}")
+
+    host_environment = load_json(artifact_dir / "host-environment.json", "host environment")
+    for group_name, required_fields in {
+        "runner": ("label", "image_name", "image_version", "os_version"),
+        "java": ("configured_major", "resolved_version"),
+        "gradle": ("configured_version", "resolved_version"),
+        "emulator": ("api_level", "device_name", "os_version"),
+    }.items():
+        group = host_environment.get(group_name)
+        expect(isinstance(group, dict), f"host-environment.json must include object {group_name!r}")
+        for field_name in required_fields:
+            value = group.get(field_name)
+            expect(
+                isinstance(value, (str, int, float)) and str(value).strip(),
+                f"host-environment.json must include non-empty {group_name}.{field_name}",
+            )
 
     return {
         "status": "passed",
@@ -112,6 +130,7 @@ def validate_success_contract(artifact_dir: Path) -> dict[str, Any]:
         "trace_plan_id": trace.get("plan_id"),
         "artifact_ids": sorted(artifact_ids),
         "diagnostics": trace.get("diagnostics", []),
+        "host_environment": host_environment,
     }
 
 

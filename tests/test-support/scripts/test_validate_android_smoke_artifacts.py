@@ -189,5 +189,83 @@ class MainContractBreachTests(unittest.TestCase):
         self.assertEqual(summary["artifact_dir"], str(fallback_dir.resolve()))
 
 
+class SuccessContractHostEnvironmentTests(unittest.TestCase):
+    def make_success_artifact_dir(self, artifact_dir: Path) -> None:
+        (artifact_dir / "android-tap-counter-1.png").write_bytes(b"png")
+        (artifact_dir / "ui-before-tap.xml").write_text("<hierarchy />")
+        (artifact_dir / "ui-after-tap.xml").write_text("<hierarchy />")
+        (artifact_dir / "plan.json").write_text(json.dumps({"plan_id": "increment-the-counter-once"}))
+        (artifact_dir / "emulator.json").write_text(
+            json.dumps(
+                {
+                    "device_name": "sdk_gphone64_x86_64",
+                    "os_version": "14",
+                }
+            )
+        )
+        (artifact_dir / "host-environment.json").write_text(
+            json.dumps(
+                {
+                    "runner": {
+                        "label": "ubuntu-latest",
+                        "image_name": "ubuntu-24.04",
+                        "image_version": "20260413.86.1",
+                        "os_version": "24.04.4",
+                    },
+                    "java": {
+                        "configured_major": "17",
+                        "resolved_version": "17.0.18+8",
+                    },
+                    "gradle": {
+                        "configured_version": "8.7",
+                        "resolved_version": "8.7",
+                    },
+                    "emulator": {
+                        "api_level": "34",
+                        "device_name": "sdk_gphone64_x86_64",
+                        "os_version": "14",
+                    },
+                }
+            )
+        )
+        (artifact_dir / "trace.json").write_text(
+            json.dumps(
+                {
+                    "status": "passed",
+                    "run_id": "android-smoke-increment-the-counter-once",
+                    "plan_id": "increment-the-counter-once",
+                    "diagnostics": [],
+                    "artifacts": [
+                        {"artifact_id": "android-tap-counter-1"},
+                        {"artifact_id": "android-smoke-emulator"},
+                        {"artifact_id": "android-ui-before-tap"},
+                        {"artifact_id": "android-ui-after-tap"},
+                        {"artifact_id": "android-host-environment"},
+                    ],
+                }
+            )
+        )
+
+    def test_validate_success_contract_requires_host_environment_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            self.make_success_artifact_dir(artifact_dir)
+            contract = validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
+
+        self.assertEqual(contract["status"], "passed")
+        self.assertEqual(contract["host_environment"]["runner"]["image_name"], "ubuntu-24.04")
+
+    def test_validate_success_contract_rejects_missing_host_environment_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            self.make_success_artifact_dir(artifact_dir)
+            (artifact_dir / "host-environment.json").unlink()
+
+            with self.assertRaises(SystemExit) as error:
+                validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
+
+        self.assertIn("host-environment.json", str(error.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
