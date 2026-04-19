@@ -160,14 +160,17 @@ Current automated cadence:
 2. the same workflow also queries open GitHub-native Dependabot alerts for the repo's watched non-Cargo ecosystems:
    - GitHub Actions dependencies referenced by `.github/workflows/`
    - Gradle-managed dependencies used by the Android smoke fixture
-3. both slices render triage-friendly markdown, sync a managed GitHub findings issue only when active advisories exist, and close that managed issue again on later clean runs
+3. the workflow now also evaluates `.github/security-tooling-watch.json`, the checked-in inventory of workflow-installed security tooling outside Cargo.lock / Dependabot coverage:
+   - `cargo-audit` and `cargo-deny` use GitHub `securityVulnerabilities` GraphQL data keyed by the pinned crates.io package and compare the pinned version against the advisory `vulnerableVersionRange`
+   - `gitleaks` stays explicit `manual-review-required` until the repo adopts a trustworthy machine-readable advisory source for its downloaded release-tarball path
+4. all three slices render triage-friendly markdown, sync a managed GitHub findings issue only when active actionable advisories exist, and close that managed issue again on later clean runs
 
 Remaining manual review:
-1. review authoritative sources for surfaces that are still outside the automated dependency graph, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
+1. review authoritative sources for surfaces that are still outside the automated dependency graph and explicit security-tooling inventory, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
 2. compare findings only against Casgrain's actual remaining manual surface area:
-   - downloaded CLI/tooling outside Cargo and Dependabot coverage
    - Android/iOS host-image or runner-environment CVEs
    - repo-security tooling or settings-side gaps that require maintainer/platform action rather than an in-repo diff
+   - any downloaded tooling not yet represented in `.github/security-tooling-watch.json` with a trustworthy source rule
 3. classify each finding as one of:
    - **action now** — directly affects a package/tool/action currently used by the repo and needs an issue or PR immediately
    - **track** — plausibly relevant but needs version/surface verification before action
@@ -176,12 +179,12 @@ Remaining manual review:
 5. if the safe fix depends on settings, billing, unavailable runners, or maintainer-only activation, use `blocked` and/or `waiting-on-human` explicitly instead of inventing a fake in-repo resolution
 
 Tracked gap:
-- issue #75 now tracks the remaining non-dependency/manual surfaces so the repo can later decide whether downloaded tooling and runner-environment CVEs deserve another bounded automation slice
+- follow-up issue #124 now tracks the remaining runner-image / host-toolchain CVE surfaces and any later manual-only expansion beyond the checked-in security-tooling inventory
 
 ## Known gaps and tracked follow-up
 
 - #73 — activate the Renovate lane by enabling the app/runner outside the repo
-- #75 — automate CVE watch, alerting, and triage cadence
+- #124 — review the remaining runner-image / host-toolchain CVE surfaces that still sit outside the current low-noise watch
 - #82 — pin remaining mutable GitHub Actions references to immutable commit SHAs
 
 ## Triage rules for security findings
