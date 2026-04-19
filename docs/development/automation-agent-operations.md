@@ -6,8 +6,10 @@ This repository intentionally keeps only the minimum local contract needed for c
 
 ## Local source-of-truth split
 
-- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and prioritization source of truth.
-- `docs/specs/casgrain-product-spec.md` is the canonical behavior/spec source of truth.
+- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and PRD source of truth.
+- `docs/specs/casgrain-product-spec.md` is the canonical product-level behavior source of truth.
+- `docs/specs/issues/` holds issue-level repo spec artifacts created by Analyst before Dev/DevOps starts.
+- `docs/development/backlog-and-spec-workflow.md` defines the backlog -> Analyst spec-only PR -> implementation chain.
 - `docs/validation.md` is the canonical validation gate.
 - `docs/development/merge-and-validation-policy.md` defines local merge discipline.
 
@@ -15,6 +17,8 @@ This repository intentionally keeps only the minimum local contract needed for c
 
 These labels are still the durable execution-state surface consumed by automation:
 
+- `needs-analyst`
+- `spec-in-review`
 - `ready-for-dev`
 - `devops`
 - `in-dev`
@@ -33,6 +37,7 @@ These labels are still the durable execution-state surface consumed by automatio
 - `docs-needed`
 - `docs-approved`
 - `docs-blocked`
+- `analyst-spec` (PR classification label for analyst-created spec-entry PRs)
 
 Use GitHub-native issue relationships (`Blocked by`, parent/sub-issue links) when possible instead of encoding dependencies only in comments.
 

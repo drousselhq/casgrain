@@ -14,19 +14,21 @@ Primary goals:
 ## 2. Source of truth
 
 - Repo docs are canonical for shipped behavior and contributor expectations.
+- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and PRD source of truth.
 - `docs/specs/casgrain-product-spec.md` is the canonical product behavior spec.
-- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and prioritization source of truth.
+- `docs/specs/issues/` holds bounded issue-level repo spec artifacts authored by Analyst before Dev starts.
 - Pull Requests are the review and merge unit.
 
 ## 3. Standard workflow
 
 For non-trivial work:
-1. Shape the request
-2. Write or update the spec when behavior changes
-3. Execute one bounded slice
-4. Validate
-5. Review
-6. Reconcile issues, Project state, and docs
+1. Shape the request in the backlog PRD
+2. Analyst writes or updates the repo spec artifact
+3. Merge the spec-only PR
+4. Execute one bounded implementation slice
+5. Validate
+6. Review
+7. Reconcile issues, Project state, and docs
 
 ## 4. Autonomy rules
 
@@ -52,8 +54,9 @@ Require human review before proceeding:
 
 Required:
 - `AGENTS.md`
-- project charter / PRD
-- behavior spec (`docs/specs/casgrain-product-spec.md`)
+- project backlog PRD in the GitHub issue / Project item
+- product behavior spec (`docs/specs/casgrain-product-spec.md`)
+- issue-level repo spec artifacts under `docs/specs/issues/`
 - architecture notes / ADRs
 - `docs/validation.md`
 
