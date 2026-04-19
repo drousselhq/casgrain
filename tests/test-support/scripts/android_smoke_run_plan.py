@@ -34,6 +34,13 @@ FAILURE_CLASS_BOOT_READINESS = "boot-readiness-failure"
 FAILURE_CLASS_APP_FOREGROUND = "app-foreground-failure"
 FAILURE_CLASS_SELECTOR_TIMEOUT = "selector-timeout"
 FAILURE_CLASS_TEXT_TIMEOUT = "text-timeout"
+FAILURE_CLASS_UI_DUMP = "ui-dump-failure"
+
+
+class UIDumpFailure(Exception):
+    def __init__(self, message: str, *, ui_xml: str | None) -> None:
+        super().__init__(message)
+        self.ui_xml = ui_xml
 
 
 def parse_args() -> argparse.Namespace:
@@ -53,6 +60,12 @@ def utc_now() -> str:
 def expect(condition: bool, message: str) -> None:
     if not condition:
         raise SystemExit(message)
+
+
+def decode_command_output(output: str | bytes | None) -> str:
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace").strip()
+    return output.strip() if isinstance(output, str) else ""
 
 
 def load_json(path: Path, label: str) -> dict:
@@ -218,8 +231,8 @@ def run_adb(adb: str, *args: str, text: bool = True, timeout: float | None = Non
         timeout_label = f" after {error.timeout:g}s" if error.timeout is not None else ""
         raise SystemExit(f"adb {' '.join(args)} timed out{timeout_label}") from error
     except subprocess.CalledProcessError as error:
-        stdout = error.stdout.strip() if isinstance(error.stdout, str) else ""
-        stderr = error.stderr.strip() if isinstance(error.stderr, str) else ""
+        stdout = decode_command_output(error.stdout)
+        stderr = decode_command_output(error.stderr)
         details = stderr or stdout or str(error)
         raise SystemExit(f"adb {' '.join(args)} failed: {details}") from error
 
@@ -361,7 +374,12 @@ def wait_for_app_foreground(
         if app_is_in_foreground(last_snapshot, app_id):
             return last_snapshot
         if blocking_anr_package(last_snapshot.get("window", ""), app_id) is not None:
-            ui_root = parse_ui(dump_ui_xml(adb))
+            ui_root, _ = load_ui_root_for_wait(
+                adb,
+                artifact_dir=artifact_dir,
+                wait_description=f"waiting for fixture app {app_id!r} to reach the foreground",
+                foreground_snapshot=last_snapshot,
+            )
             if dismiss_known_system_dialog(adb, ui_root, app_id=app_id):
                 continue
         time.sleep(0.5)
@@ -384,9 +402,52 @@ def wait_for_app_foreground(
 
 def dump_ui_xml(adb: str) -> str:
     run_adb(adb, "shell", "uiautomator", "dump", UI_DUMP_REMOTE_PATH)
-    dump = run_adb(adb, "exec-out", "cat", UI_DUMP_REMOTE_PATH).stdout
-    expect(dump.strip(), "uiautomator dump returned empty XML")
-    return dump
+    dump = run_adb(adb, "exec-out", "cat", UI_DUMP_REMOTE_PATH, text=False).stdout
+    return dump.decode("utf-8", errors="replace") if isinstance(dump, bytes) else dump
+
+
+def load_ui_root(adb: str) -> tuple[ET.Element, str]:
+    try:
+        ui_xml = dump_ui_xml(adb)
+    except SystemExit as error:
+        raise UIDumpFailure(str(error), ui_xml="") from error
+    if not ui_xml.strip():
+        raise UIDumpFailure("uiautomator dump returned empty XML", ui_xml=ui_xml)
+    try:
+        return parse_ui(ui_xml), ui_xml
+    except SystemExit as error:
+        raise UIDumpFailure(str(error), ui_xml=ui_xml) from error
+
+
+def best_effort_foreground_state(adb: str) -> dict[str, str]:
+    try:
+        return dump_foreground_state(adb)
+    except SystemExit:
+        return {}
+
+
+def load_ui_root_for_wait(
+    adb: str,
+    *,
+    artifact_dir: Path | None,
+    wait_description: str,
+    foreground_snapshot: dict[str, str] | None = None,
+) -> tuple[ET.Element, str]:
+    try:
+        return load_ui_root(adb)
+    except UIDumpFailure as error:
+        latest_foreground = foreground_snapshot if foreground_snapshot is not None else best_effort_foreground_state(adb)
+        reason = f"failed to capture emulator UI hierarchy while {wait_description}: {error}"
+        if artifact_dir is not None:
+            write_failure_diagnostics(
+                artifact_dir,
+                reason,
+                failure_class=FAILURE_CLASS_UI_DUMP,
+                window_snapshot=latest_foreground.get("window") or None,
+                activity_snapshot=latest_foreground.get("activity") or None,
+                ui_xml=error.ui_xml,
+            )
+        raise SystemExit(reason) from error
 
 
 def write_text(path: Path, content: str) -> None:
@@ -503,8 +564,11 @@ def wait_for_selector(
     deadline = time.monotonic() + timeout_s
     last_xml = ""
     while time.monotonic() < deadline:
-        last_xml = dump_ui_xml(adb)
-        root = parse_ui(last_xml)
+        root, last_xml = load_ui_root_for_wait(
+            adb,
+            artifact_dir=artifact_dir,
+            wait_description=f"waiting for selector {selector!r}",
+        )
         node = find_node(root, selector)
         if node is not None:
             return node, last_xml
@@ -536,8 +600,11 @@ def wait_for_text(
     deadline = time.monotonic() + timeout_s
     last_xml = ""
     while time.monotonic() < deadline:
-        last_xml = dump_ui_xml(adb)
-        root = parse_ui(last_xml)
+        root, last_xml = load_ui_root_for_wait(
+            adb,
+            artifact_dir=artifact_dir,
+            wait_description=f"waiting for selector {selector!r} to have text {expected_text!r}",
+        )
         node = find_node(root, selector)
         if node is not None and node.attrib.get("text") == expected_text:
             return node, last_xml
