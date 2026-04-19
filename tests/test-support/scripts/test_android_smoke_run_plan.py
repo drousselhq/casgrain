@@ -52,6 +52,35 @@ def monotonic_side_effect(*values: float):
     return fake_monotonic
 
 
+class HostEnvironmentNormalizationTests(unittest.TestCase):
+    def test_build_android_host_environment_normalizes_runner_image_family_and_full_os_version(self) -> None:
+        emulator_info = {"device_name": "sdk_gphone64_x86_64", "os_version": "14"}
+        java_output = "java.runtime.version = 17.0.18+8\n"
+        gradle_output = "Gradle 8.7\n"
+
+        with patch.dict(
+            android_smoke_run_plan.os.environ,
+            {"ImageOS": "ubuntu24", "ImageVersion": "20260413.86.1"},
+            clear=False,
+        ), patch.object(
+            android_smoke_run_plan,
+            "command_output",
+            side_effect=[java_output, gradle_output],
+        ), patch.object(
+            android_smoke_run_plan,
+            "read_os_release_value",
+            side_effect=lambda field, fallback: {
+                "NAME": "Ubuntu",
+                "VERSION": "24.04.4 LTS (Noble Numbat)",
+            }.get(field, fallback),
+        ):
+            host_environment = android_smoke_run_plan.build_android_host_environment(emulator_info)
+
+        self.assertEqual(host_environment["runner"]["image_name"], "ubuntu-24.04")
+        self.assertEqual(host_environment["runner"]["os_version"], "24.04.4")
+        self.assertEqual(host_environment["runner"]["image_version"], "20260413.86.1")
+
+
 class BootSignalsReadyTests(unittest.TestCase):
     def test_ready_when_boot_properties_and_package_manager_are_ready(self) -> None:
         self.assertTrue(

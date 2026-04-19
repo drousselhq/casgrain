@@ -5,6 +5,7 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = REPO_ROOT / "tests" / "test-support" / "scripts" / "runner_host_review_report.py"
@@ -25,6 +26,87 @@ def load_case(name: str) -> tuple[dict[str, object], dict[str, object]]:
 
 
 class RunnerHostReviewReportTests(unittest.TestCase):
+    def test_collect_live_platform_reports_missing_successful_run_as_missing_evidence(self) -> None:
+        with patch.object(
+            MODULE,
+            "select_latest_successful_run",
+            side_effect=MODULE.RunnerHostWatchError("no successful android-emulator-smoke.yml run found on main"),
+        ):
+            observed = MODULE.collect_live_platform(
+                repo="drousselhq/casgrain",
+                workflow="android-emulator-smoke.yml",
+                artifact="casgrain-android-smoke",
+                branch="main",
+            )
+
+        self.assertEqual(observed["run"], {"id": None, "url": None})
+        self.assertEqual(
+            observed["host_environment_error"],
+            "no successful android-emulator-smoke.yml run found on main",
+        )
+
+    def test_collect_live_platform_reraises_non_missing_run_errors(self) -> None:
+        with patch.object(
+            MODULE,
+            "select_latest_successful_run",
+            side_effect=MODULE.RunnerHostWatchError("gh auth token expired"),
+        ):
+            with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+                MODULE.collect_live_platform(
+                    repo="drousselhq/casgrain",
+                    workflow="android-emulator-smoke.yml",
+                    artifact="casgrain-android-smoke",
+                    branch="main",
+                )
+
+        self.assertEqual(str(error.exception), "gh auth token expired")
+
+    def test_build_summary_handles_missing_successful_run_without_aborting(self) -> None:
+        baseline, _ = load_case("baseline-match")
+        observed_platforms = {
+            "android": {
+                "run": {"id": None, "url": None},
+                "host_environment_error": "no successful android-emulator-smoke.yml run found on main",
+            },
+            "ios": {
+                "run": {"id": 24600433713, "url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713"},
+                "host_environment": {
+                    "runner": {
+                        "label": "macos-15",
+                        "image_name": "macos-15-arm64",
+                        "image_version": "20260414.0270.1",
+                        "os_version": "15.7.4",
+                        "os_build": "24G517",
+                    },
+                    "xcode": {
+                        "app_path": "/Applications/Xcode_16.4.app",
+                        "version": "16.4",
+                        "simulator_sdk_version": "18.5",
+                    },
+                    "simulator": {
+                        "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+                        "runtime_name": "iOS 26.2",
+                        "device_name": "iPhone 16",
+                    },
+                },
+            },
+        }
+
+        summary = MODULE.build_summary(
+            repo="drousselhq/casgrain",
+            baseline=baseline,
+            observed_platforms=observed_platforms,
+            generated_at="2026-04-19T09:00:00Z",
+        )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        self.assertEqual(summary["platforms"]["android"]["run_id"], None)
+        self.assertEqual(
+            summary["platforms"]["android"]["missing_evidence"][0]["reason"],
+            "no successful android-emulator-smoke.yml run found on main",
+        )
+
     def test_build_summary_reports_no_review_needed_when_observed_facts_match_baseline(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
 

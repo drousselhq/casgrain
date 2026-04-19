@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -117,6 +118,18 @@ def github_run_metadata() -> dict[str, str]:
     }
 
 
+def normalize_runner_image_name(image_name: str, architecture: str) -> str:
+    normalized = image_name.strip().lower()
+    if not normalized or normalized == "unknown":
+        return image_name or "unknown"
+    macos_match = re.fullmatch(r"macos(\d+)", normalized)
+    if macos_match:
+        version = macos_match.group(1)
+        architecture = architecture.strip()
+        return f"macos-{version}-{architecture}" if architecture else f"macos-{version}"
+    return image_name
+
+
 def build_ios_host_environment(simulator_info: dict[str, str]) -> dict[str, object]:
     developer_dir = Path(command_output("xcode-select", "-p").splitlines()[0].strip())
     xcode_app = developer_dir.parents[1] if developer_dir.name == "Developer" else developer_dir
@@ -125,12 +138,14 @@ def build_ios_host_environment(simulator_info: dict[str, str]) -> dict[str, obje
     simulator_sdk_version = command_output("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version").splitlines()[0].strip()
     os_version = command_output("sw_vers", "-productVersion").splitlines()[0].strip()
     os_build = command_output("sw_vers", "-buildVersion").splitlines()[0].strip()
+    architecture = command_output("uname", "-m").splitlines()[0].strip()
+    raw_image_name = os.environ.get("ImageOS", "unknown")
     return {
         "generated_at": utc_now(),
         "workflow_run": github_run_metadata(),
         "runner": {
             "label": "macos-15",
-            "image_name": os.environ.get("ImageOS", "unknown"),
+            "image_name": normalize_runner_image_name(raw_image_name, architecture),
             "image_version": os.environ.get("ImageVersion", "unknown"),
             "os_name": "macOS",
             "os_version": os_version,

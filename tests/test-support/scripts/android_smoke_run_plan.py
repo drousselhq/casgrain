@@ -677,6 +677,25 @@ def parse_gradle_version(output: str) -> str:
     return match.group(1) if match else "unknown"
 
 
+def normalize_runner_image_name(image_name: str) -> str:
+    normalized = image_name.strip().lower()
+    if not normalized or normalized == "unknown":
+        return image_name or "unknown"
+    ubuntu_match = re.fullmatch(r"ubuntu(\d{2})(\d{2})?", normalized)
+    if ubuntu_match:
+        major = ubuntu_match.group(1)
+        minor = ubuntu_match.group(2) or "04"
+        return f"ubuntu-{major}.{minor}"
+    return image_name
+
+
+def normalize_linux_os_version(version_text: str) -> str:
+    match = re.search(r"\b(\d+\.\d+(?:\.\d+)?)\b", version_text)
+    if match:
+        return match.group(1)
+    return version_text.strip() or "unknown"
+
+
 def github_run_metadata() -> dict[str, str]:
     return {
         "repository": os.environ.get("GITHUB_REPOSITORY", "local"),
@@ -696,15 +715,19 @@ def github_run_metadata() -> dict[str, str]:
 def build_android_host_environment(emulator_info: dict[str, str]) -> dict[str, object]:
     java_output = command_output("java", "-XshowSettings:properties", "-version")
     gradle_output = command_output("gradle", "--version")
+    raw_image_name = os.environ.get("ImageOS", "unknown")
+    os_version = normalize_linux_os_version(
+        read_os_release_value("VERSION", read_os_release_value("VERSION_ID", "unknown"))
+    )
     return {
         "generated_at": utc_now(),
         "workflow_run": github_run_metadata(),
         "runner": {
             "label": "ubuntu-latest",
-            "image_name": os.environ.get("ImageOS", "unknown"),
+            "image_name": normalize_runner_image_name(raw_image_name),
             "image_version": os.environ.get("ImageVersion", "unknown"),
             "os_name": read_os_release_value("NAME", "Ubuntu"),
-            "os_version": read_os_release_value("VERSION_ID", "unknown"),
+            "os_version": os_version,
         },
         "java": {
             "distribution": "temurin",

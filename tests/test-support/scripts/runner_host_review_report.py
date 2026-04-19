@@ -193,6 +193,10 @@ def workflow_matches(configured: str, requested: str) -> bool:
     return Path(configured).name == Path(requested).name
 
 
+def is_missing_successful_run_error(message: str, branch: str) -> bool:
+    return message.startswith("no successful ") and message.endswith(f" run found on {branch}")
+
+
 def select_latest_successful_run(repo: str, workflow: str, branch: str) -> dict[str, Any]:
     runs = run_gh_json(
         [
@@ -250,7 +254,15 @@ def read_host_environment_from_downloaded_artifact(run_id: int, repo: str, artif
 
 
 def collect_live_platform(repo: str, workflow: str, artifact: str, branch: str) -> dict[str, Any]:
-    run = select_latest_successful_run(repo=repo, workflow=workflow, branch=branch)
+    try:
+        run = select_latest_successful_run(repo=repo, workflow=workflow, branch=branch)
+    except RunnerHostWatchError as exc:
+        if not is_missing_successful_run_error(str(exc), branch):
+            raise
+        return {
+            "run": {"id": None, "url": None},
+            "host_environment_error": str(exc),
+        }
     try:
         host_environment = read_host_environment_from_downloaded_artifact(run["id"], repo, artifact)
     except RunnerHostWatchError as exc:
@@ -270,21 +282,25 @@ def normalize_fixture_platform(platform_name: str, data: Any) -> dict[str, Any]:
     run = required_object_field(data, "run", error_context=f"fixture platform {platform_name}")
     run_id = run.get("id")
     run_url = run.get("url")
-    if not isinstance(run_id, int) or not isinstance(run_url, str) or not run_url:
-        raise RunnerHostWatchError(f"fixture platform {platform_name} run must include numeric id and non-empty url")
+    normalized_run = {
+        "id": run_id if isinstance(run_id, int) else None,
+        "url": run_url if isinstance(run_url, str) and run_url else None,
+    }
     if "host_environment" in data:
+        if normalized_run["id"] is None or normalized_run["url"] is None:
+            raise RunnerHostWatchError(f"fixture platform {platform_name} run must include numeric id and non-empty url")
         host_environment = required_object_field(data, "host_environment", error_context=f"fixture platform {platform_name}")
-        return {"run": {"id": run_id, "url": run_url}, "host_environment": host_environment}
+        return {"run": normalized_run, "host_environment": host_environment}
     reason = required_scalar_field(data, "host_environment_error", error_context=f"fixture platform {platform_name}")
-    return {"run": {"id": run_id, "url": run_url}, "host_environment_error": reason}
+    return {"run": normalized_run, "host_environment_error": reason}
 
 
 def build_platform_summary(platform_name: str, baseline_platform: dict[str, Any], observed_platform: dict[str, Any]) -> tuple[dict[str, Any], int]:
     run = required_object_field(observed_platform, "run", error_context=f"observed platform {platform_name}")
     run_id = run.get("id")
     run_url = run.get("url")
-    if not isinstance(run_id, int) or not isinstance(run_url, str) or not run_url:
-        raise RunnerHostWatchError(f"observed platform {platform_name} run must include id/url")
+    if (run_id is not None and not isinstance(run_id, int)) or (run_url is not None and not isinstance(run_url, str)):
+        raise RunnerHostWatchError(f"observed platform {platform_name} run must include id/url when present")
 
     summary = {
         "workflow": baseline_platform["workflow"],
@@ -307,6 +323,9 @@ def build_platform_summary(platform_name: str, baseline_platform: dict[str, Any]
         summary["status"] = "manual-review-required"
         summary["missing_evidence"].append({"reason": reason})
         return summary, 1
+
+    if not isinstance(run_id, int) or not isinstance(run_url, str) or not run_url:
+        raise RunnerHostWatchError(f"observed platform {platform_name} run must include id/url")
 
     observed = required_object_field(observed_platform, "host_environment", error_context=f"observed platform {platform_name}")
     summary["observed"] = observed
@@ -397,7 +416,11 @@ def render_markdown(summary: dict[str, Any]) -> str:
     for platform_name in ("android", "ios"):
         platform = summary["platforms"][platform_name]
         lines.append(f"## {display_names[platform_name]}")
-        lines.append(f"- Run: `{platform['run_id']}` ({platform['run_url']})")
+        run_id = sanitize_cell(platform["run_id"])
+        if platform["run_url"]:
+            lines.append(f"- Run: `{run_id}` ({platform['run_url']})")
+        else:
+            lines.append(f"- Run: `{run_id}` (no successful main run found)")
         lines.append(f"- Status: `{platform['status']}`")
         if platform["changed_facts"]:
             lines.append("- Drift:")
