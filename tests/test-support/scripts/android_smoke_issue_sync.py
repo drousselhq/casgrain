@@ -14,6 +14,11 @@ TRACKER_MARKER = "<!-- android-smoke-reliability-tracker -->"
 BLOCKER_MARKER_PREFIX = "<!-- android-smoke-reliability-blocker:"
 MANAGED_BLOCKER_LABELS = ["enhancement", "devops"]
 SCHEDULE_SHORTFALL_REASON = "schedule_main_runs_below_threshold"
+THRESHOLD_SHORTFALL_REASONS = {
+    "total_runs_below_threshold",
+    SCHEDULE_SHORTFALL_REASON,
+    "pull_request_runs_below_threshold",
+}
 TRACKER_SCRIPT_PATH = "tests/test-support/scripts/android_smoke_issue_sync.py"
 
 
@@ -270,6 +275,11 @@ def normalize_summary(summary: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def is_threshold_shortfall_only(summary: dict[str, Any]) -> bool:
+    reasons = summary["reasons"]
+    return bool(reasons) and set(reasons).issubset(THRESHOLD_SHORTFALL_REASONS)
+
+
 def is_schedule_shortfall_only(summary: dict[str, Any]) -> bool:
     reasons = summary["reasons"]
     return bool(reasons) and set(reasons) == {SCHEDULE_SHORTFALL_REASON}
@@ -278,7 +288,7 @@ def is_schedule_shortfall_only(summary: dict[str, Any]) -> bool:
 def needs_managed_blocker(summary: dict[str, Any]) -> bool:
     if summary["verdict"] != "not_qualified":
         return False
-    if is_schedule_shortfall_only(summary):
+    if is_threshold_shortfall_only(summary):
         return False
     blocker = summary.get("blocker")
     return isinstance(blocker, dict)
@@ -305,8 +315,8 @@ def build_sync_plan(
     blocker_plan: dict[str, Any] = {"action": "noop"}
     if normalized_summary["verdict"] == "qualified":
         report_kind = "qualified"
-    elif is_schedule_shortfall_only(normalized_summary):
-        report_kind = "schedule_shortfall_only"
+    elif is_threshold_shortfall_only(normalized_summary):
+        report_kind = "schedule_shortfall_only" if is_schedule_shortfall_only(normalized_summary) else "tracking_only"
     elif needs_managed_blocker(normalized_summary):
         report_kind = "managed_blocker"
         title = build_blocker_title(normalized_summary)

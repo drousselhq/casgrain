@@ -66,6 +66,30 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         self.assertIn("No blocker issue is required yet", tracker_body)
         self.assertIn("schedule_main_runs_below_threshold", tracker_body)
 
+    def test_build_sync_plan_keeps_tracker_open_without_blocker_for_total_threshold_shortfall(self) -> None:
+        summary = load_summary("schedule-shortfall")
+        summary["reasons"] = ["total_runs_below_threshold"]
+        summary["streak"] = {
+            "successful_run_count": 2,
+            "schedule_main_success_count": 1,
+            "pull_request_success_count": 1,
+            "run_ids": [24620000001, 24620000000],
+        }
+
+        plan = MODULE.build_sync_plan(
+            summary=summary,
+            markdown=load_markdown("schedule-shortfall"),
+            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
+            existing_issues=[],
+        )
+
+        self.assertEqual(plan["report_kind"], "tracking_only")
+        self.assertEqual(plan["tracker"]["desired_state"], "OPEN")
+        self.assertEqual(plan["blocker"]["action"], "noop")
+        tracker_body = MODULE.render_tracker_body(plan, blocker_issue_number=None)
+        self.assertIn("No blocker issue is required yet", tracker_body)
+        self.assertIn("total_runs_below_threshold", tracker_body)
+
     def test_build_sync_plan_closes_tracker_when_qualified(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("qualified"),
