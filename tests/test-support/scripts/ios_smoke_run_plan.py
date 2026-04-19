@@ -216,7 +216,7 @@ def validate_ios_host_environment(host_environment: dict[str, object]) -> None:
             f"host-environment.json must include non-empty workflow_run.{field_name}",
         )
     for group_name, required_fields in {
-        "runner": ("label", "image_name", "image_version", "os_version", "os_build"),
+        "runner": ("label", "image_name", "image_version", "os_name", "os_version", "os_build"),
         "xcode": ("app_path", "version", "simulator_sdk_version"),
         "simulator": ("runtime_identifier", "runtime_name", "device_name"),
     }.items():

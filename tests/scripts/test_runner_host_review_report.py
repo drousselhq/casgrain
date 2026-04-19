@@ -37,6 +37,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                 workflow="android-emulator-smoke.yml",
                 artifact="casgrain-android-smoke",
                 branch="main",
+                platform_name="android",
             )
 
         self.assertEqual(observed["run"], {"id": None, "url": None})
@@ -57,6 +58,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                     workflow="android-emulator-smoke.yml",
                     artifact="casgrain-android-smoke",
                     branch="main",
+                    platform_name="android",
                 )
 
         self.assertEqual(str(error.exception), "gh auth token expired")
@@ -84,6 +86,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                         "label": "macos-15",
                         "image_name": "macos-15-arm64",
                         "image_version": "20260414.0270.1",
+                        "os_name": "macOS",
                         "os_version": "15.7.4",
                         "os_build": "24G517",
                     },
@@ -130,6 +133,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         self.assertFalse(summary["alert"])
         self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["reason"], "baseline-match")
         self.assertEqual(summary["verdict"], "no review-needed")
         self.assertEqual(summary["platforms"]["android"]["status"], "no review-needed")
         self.assertEqual(summary["platforms"]["ios"]["status"], "no review-needed")
@@ -151,6 +155,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         self.assertTrue(summary["alert"])
         self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "baseline-drift")
         self.assertEqual(summary["verdict"], "manual-review-required")
         self.assertEqual(summary["platforms"]["android"]["status"], "manual-review-required")
         self.assertEqual(
@@ -175,6 +180,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         self.assertTrue(summary["alert"])
         self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "baseline-drift")
         self.assertEqual(summary["platforms"]["ios"]["status"], "manual-review-required")
         self.assertEqual(summary["platforms"]["ios"]["changed_facts"][0]["path"], "xcode.version")
         self.assertEqual(summary["platforms"]["ios"]["changed_facts"][0]["observed"], "16.5")
@@ -192,6 +198,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         self.assertTrue(summary["alert"])
         self.assertEqual(summary["advisory_count"], ios_watched_count)
+        self.assertEqual(summary["reason"], "missing-evidence")
         self.assertEqual(summary["verdict"], "manual-review-required")
         self.assertEqual(summary["platforms"]["ios"]["status"], "manual-review-required")
         self.assertEqual(summary["platforms"]["ios"]["missing_evidence"][0]["reason"], "host-environment.json missing")
@@ -222,6 +229,38 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             )
 
         self.assertIn("generated_at", str(error.exception))
+
+    def test_normalize_fixture_platform_reports_missing_ios_sections_as_ios_contract_gap(self) -> None:
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.normalize_fixture_platform(
+                "ios",
+                {
+                    "run": {
+                        "id": 24600433713,
+                        "url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713",
+                    },
+                    "host_environment": {
+                        "generated_at": "2026-04-19T08:00:00Z",
+                        "workflow_run": {
+                            "repository": "drousselhq/casgrain",
+                            "workflow": "ios-simulator-smoke",
+                            "run_id": "24600433713",
+                            "run_attempt": "1",
+                            "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713",
+                        },
+                        "runner": {
+                            "label": "macos-15",
+                            "image_name": "macos-15-arm64",
+                            "image_version": "20260414.0270.1",
+                            "os_name": "macOS",
+                            "os_version": "15.7.4",
+                            "os_build": "24G517",
+                        },
+                    },
+                },
+            )
+
+        self.assertIn("xcode", str(error.exception))
 
 
 if __name__ == "__main__":

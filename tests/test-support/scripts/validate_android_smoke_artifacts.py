@@ -119,8 +119,8 @@ def validate_success_contract(artifact_dir: Path) -> dict[str, Any]:
             f"host-environment.json must include non-empty workflow_run.{field_name}",
         )
     for group_name, required_fields in {
-        "runner": ("label", "image_name", "image_version", "os_version"),
-        "java": ("configured_major", "resolved_version"),
+        "runner": ("label", "image_name", "image_version", "os_name", "os_version"),
+        "java": ("distribution", "configured_major", "resolved_version"),
         "gradle": ("configured_version", "resolved_version"),
         "emulator": ("api_level", "device_name", "os_version"),
     }.items():

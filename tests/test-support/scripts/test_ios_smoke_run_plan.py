@@ -105,6 +105,42 @@ class HostEnvironmentNormalizationTests(unittest.TestCase):
 
         self.assertIn("generated_at", str(error.exception))
 
+    def test_validate_ios_host_environment_rejects_missing_runner_os_name(self) -> None:
+        host_environment = {
+            "generated_at": "2026-04-19T09:00:00Z",
+            "workflow_run": {
+                "repository": "drousselhq/casgrain",
+                "workflow": "ios-simulator-smoke",
+                "run_id": "24624581772",
+                "run_attempt": "1",
+                "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24624581772",
+            },
+            "runner": {
+                "label": "macos-15",
+                "image_name": "macos-15-arm64",
+                "image_version": "20260414.0270.1",
+                "os_name": "macOS",
+                "os_version": "15.7.4",
+                "os_build": "24G517",
+            },
+            "xcode": {
+                "app_path": "/Applications/Xcode_16.4.app",
+                "version": "16.4",
+                "simulator_sdk_version": "18.5",
+            },
+            "simulator": {
+                "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+                "runtime_name": "iOS 26.2",
+                "device_name": "iPhone 16",
+            },
+        }
+        host_environment["runner"].pop("os_name")
+
+        with self.assertRaises(SystemExit) as error:
+            ios_smoke_run_plan.validate_ios_host_environment(host_environment)
+
+        self.assertIn("runner.os_name", str(error.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

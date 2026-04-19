@@ -79,11 +79,35 @@ def required_scalar_field(container: dict[str, Any], field_name: str, *, error_c
     return str(value)
 
 
-def validate_host_environment_contract(host_environment: dict[str, Any], *, error_context: str) -> dict[str, Any]:
+def validate_host_environment_contract(
+    host_environment: dict[str, Any], *, error_context: str, platform_name: str
+) -> dict[str, Any]:
     required_scalar_field(host_environment, "generated_at", error_context=error_context)
     workflow_run = required_object_field(host_environment, "workflow_run", error_context=error_context)
     for field_name in ("repository", "workflow", "run_id", "run_attempt", "run_url"):
         required_scalar_field(workflow_run, field_name, error_context=f"{error_context} workflow_run")
+    runner = required_object_field(host_environment, "runner", error_context=error_context)
+    for field_name in ("label", "image_name", "image_version", "os_name", "os_version"):
+        required_scalar_field(runner, field_name, error_context=f"{error_context} runner")
+    if platform_name == "ios":
+        required_scalar_field(runner, "os_build", error_context=f"{error_context} runner")
+        xcode = required_object_field(host_environment, "xcode", error_context=error_context)
+        for field_name in ("app_path", "version", "simulator_sdk_version"):
+            required_scalar_field(xcode, field_name, error_context=f"{error_context} xcode")
+        simulator = required_object_field(host_environment, "simulator", error_context=error_context)
+        for field_name in ("runtime_identifier", "runtime_name", "device_name"):
+            required_scalar_field(simulator, field_name, error_context=f"{error_context} simulator")
+        return host_environment
+    if platform_name != "android":
+        raise RunnerHostWatchError(f"unsupported runner-host platform '{platform_name}'")
+    for group_name, required_fields in {
+        "java": ("distribution", "configured_major", "resolved_version"),
+        "gradle": ("configured_version", "resolved_version"),
+        "emulator": ("api_level", "device_name", "os_version"),
+    }.items():
+        group = required_object_field(host_environment, group_name, error_context=error_context)
+        for field_name in required_fields:
+            required_scalar_field(group, field_name, error_context=f"{error_context} {group_name}")
     return host_environment
 
 
@@ -236,7 +260,9 @@ def select_latest_successful_run(repo: str, workflow: str, branch: str) -> dict[
     raise RunnerHostWatchError(f"no successful {workflow} run found on {branch}")
 
 
-def read_host_environment_from_downloaded_artifact(run_id: int, repo: str, artifact_name: str) -> dict[str, Any]:
+def read_host_environment_from_downloaded_artifact(
+    run_id: int, repo: str, artifact_name: str, platform_name: str
+) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix=f"runner-host-{run_id}-") as tempdir:
         download_dir = Path(tempdir)
         run_gh(
@@ -258,10 +284,14 @@ def read_host_environment_from_downloaded_artifact(run_id: int, repo: str, artif
         payload = load_json_file(host_summary)
         if not isinstance(payload, dict):
             raise RunnerHostWatchError("host-environment.json root must be an object")
-        return validate_host_environment_contract(payload, error_context="host-environment.json")
+        return validate_host_environment_contract(
+            payload,
+            error_context="host-environment.json",
+            platform_name=platform_name,
+        )
 
 
-def collect_live_platform(repo: str, workflow: str, artifact: str, branch: str) -> dict[str, Any]:
+def collect_live_platform(repo: str, workflow: str, artifact: str, branch: str, platform_name: str) -> dict[str, Any]:
     try:
         run = select_latest_successful_run(repo=repo, workflow=workflow, branch=branch)
     except RunnerHostWatchError as exc:
@@ -272,7 +302,12 @@ def collect_live_platform(repo: str, workflow: str, artifact: str, branch: str) 
             "host_environment_error": str(exc),
         }
     try:
-        host_environment = read_host_environment_from_downloaded_artifact(run["id"], repo, artifact)
+        host_environment = read_host_environment_from_downloaded_artifact(
+            run["id"],
+            repo,
+            artifact,
+            platform_name,
+        )
     except RunnerHostWatchError as exc:
         return {
             "run": run,
@@ -303,6 +338,7 @@ def normalize_fixture_platform(platform_name: str, data: Any) -> dict[str, Any]:
             "host_environment": validate_host_environment_contract(
                 host_environment,
                 error_context=f"fixture platform {platform_name} host_environment",
+                platform_name=platform_name,
             ),
         }
     reason = required_scalar_field(data, "host_environment_error", error_context=f"fixture platform {platform_name}")
@@ -407,6 +443,16 @@ def build_summary(
         platforms_summary[platform_name] = platform_summary
         advisory_count += platform_count
 
+    if advisory_count == 0:
+        reason = "baseline-match"
+    elif any(
+        platform["missing_evidence"] or platform["missing_facts"]
+        for platform in platforms_summary.values()
+    ):
+        reason = "missing-evidence"
+    else:
+        reason = "baseline-drift"
+
     return {
         "generated_at": generated_at,
         "repo": repo,
@@ -414,6 +460,7 @@ def build_summary(
         "scope": normalized_baseline["scope"],
         "alert": advisory_count > 0,
         "advisory_count": advisory_count,
+        "reason": reason,
         "verdict": "manual-review-required" if advisory_count > 0 else "no review-needed",
         "platforms": platforms_summary,
     }
@@ -502,12 +549,14 @@ def main() -> int:
                     workflow=args.android_workflow,
                     artifact=args.android_artifact,
                     branch=normalized_baseline["platforms"]["android"]["branch"],
+                    platform_name="android",
                 ),
                 "ios": collect_live_platform(
                     repo=repo,
                     workflow=args.ios_workflow,
                     artifact=args.ios_artifact,
                     branch=normalized_baseline["platforms"]["ios"]["branch"],
+                    platform_name="ios",
                 ),
             }
 

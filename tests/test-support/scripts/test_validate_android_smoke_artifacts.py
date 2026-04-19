@@ -218,9 +218,11 @@ class SuccessContractHostEnvironmentTests(unittest.TestCase):
                         "label": "ubuntu-latest",
                         "image_name": "ubuntu-24.04",
                         "image_version": "20260413.86.1",
+                        "os_name": "Ubuntu",
                         "os_version": "24.04.4",
                     },
                     "java": {
+                        "distribution": "temurin",
                         "configured_major": "17",
                         "resolved_version": "17.0.18+8",
                     },
@@ -299,6 +301,32 @@ class SuccessContractHostEnvironmentTests(unittest.TestCase):
                 validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
 
         self.assertIn("workflow_run.run_url", str(error.exception))
+
+    def test_validate_success_contract_rejects_missing_android_runner_os_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            self.make_success_artifact_dir(artifact_dir)
+            host_environment = json.loads((artifact_dir / "host-environment.json").read_text())
+            host_environment["runner"].pop("os_name")
+            (artifact_dir / "host-environment.json").write_text(json.dumps(host_environment))
+
+            with self.assertRaises(SystemExit) as error:
+                validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
+
+        self.assertIn("runner.os_name", str(error.exception))
+
+    def test_validate_success_contract_rejects_missing_android_java_distribution(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            self.make_success_artifact_dir(artifact_dir)
+            host_environment = json.loads((artifact_dir / "host-environment.json").read_text())
+            host_environment["java"].pop("distribution")
+            (artifact_dir / "host-environment.json").write_text(json.dumps(host_environment))
+
+            with self.assertRaises(SystemExit) as error:
+                validate_android_smoke_artifacts.validate_success_contract(artifact_dir)
+
+        self.assertIn("java.distribution", str(error.exception))
 
 
 if __name__ == "__main__":
