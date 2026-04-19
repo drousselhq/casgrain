@@ -1,6 +1,23 @@
 name: ios-simulator-smoke
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - crates/application/**
+      - crates/casgrain/**
+      - crates/compiler/**
+      - crates/domain/**
+      - crates/runner/**
+      - crates/ios/**
+      - tests/test-support/fixtures/ios-smoke/**
+      - tests/test-support/scripts/ios_smoke.sh
+      - tests/test-support/scripts/ios_smoke_run_plan.py
+      - .github/workflows/ios-simulator-smoke.yml
+      - .github/runner-host-watch.json
   workflow_dispatch:
     inputs:
       reason:
