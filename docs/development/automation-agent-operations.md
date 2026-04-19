@@ -36,19 +36,11 @@ These labels are still the durable execution-state surface consumed by automatio
 
 Use GitHub-native issue relationships (`Blocked by`, parent/sub-issue links) when possible instead of encoding dependencies only in comments.
 
-## Android smoke reliability issue sync
-
-The Android smoke workflow now includes a repo-owned reliability issue-sync path built around the existing reliability-window reporter.
-
-- Tracker issue `#132` is the durable live-evidence tracker after the issue-sync slice lands.
-- Scheduled and manually dispatched repository runs may update or close `#132` from the reporter output.
-- When the synced report surfaces a concrete blocker beyond plain schedule shortfall, the sync may create or reuse one bounded `enhancement` + `devops` blocker issue instead of leaving the tracker ambiguous.
-- This automation does **not** promote Android smoke to a required merge gate and does **not** replace the broader Android docs/policy work tracked under `#80`.
-
 ## What this repo does not define
 
 Casgrain does **not** keep the following automation internals in-repo anymore:
 
+Do not keep a separate issue open solely to wait for future evidence unless that issue is itself a concrete tracked slice of work; if there is no slice to implement, keep the condition in automation/docs and file real defects directly when they appear.
 - agent role diagrams
 - lane/state-machine diagrams
 - cron schedules
