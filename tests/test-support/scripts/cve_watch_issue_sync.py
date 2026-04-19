@@ -231,10 +231,8 @@ def main() -> int:
             args.repo,
             "--state",
             "all",
-            "--search",
-            f"{summary.get('issue_title', '')} in:title",
             "--limit",
-            "100",
+            "500",
             "--json",
             "number,title,body,state",
         )
