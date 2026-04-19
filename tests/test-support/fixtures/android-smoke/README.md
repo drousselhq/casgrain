@@ -47,16 +47,14 @@ Artifacts required in the validated success bundle:
 - `ui-before-tap.xml`
 - `ui-after-tap.xml`
 
-Artifacts required in the validated runner-managed failure bundle:
-- `failure.json`
-- `evidence-summary.json`
-- `foreground-window.txt`
-- `foreground-activity.txt`
-- `ui-last.xml`
+Artifacts emitted for validated runner-managed failure bundles:
+- always: `failure.json`
+- always: `evidence-summary.json`
+- when the runner reached foreground/UI capture points: `foreground-window.txt`, `foreground-activity.txt`, and/or `ui-last.xml`
 
 CI proof path:
 - `.github/workflows/android-emulator-smoke.yml` builds the fixture APK on GitHub Actions, enables `/dev/kvm` access on the hosted Ubuntu runner so the x86_64 emulator can boot with hardware acceleration, runs `casgrain run-android-smoke`, validates the emitted artifact contract with `tests/test-support/scripts/validate_android_smoke_artifacts.py`, and uploads the resulting evidence bundle as `casgrain-android-smoke`
 
-The machine-readable `evidence-summary.json` records whether the run produced the success contract (`trace.json` plus the stable sibling artifacts) or the runner-managed failure contract (`failure.json` plus the referenced diagnostics). If the workflow fails before the runner can emit either bundle, the workflow now treats that as an explicit contract breach instead of pretending usable smoke evidence exists.
+The machine-readable `evidence-summary.json` records whether the run produced the success contract (`trace.json` plus the stable sibling artifacts) or the runner-managed failure contract (`failure.json` plus the referenced diagnostics). For structured runner failures, `failure.json` now carries a stable `failure_class`, and the summary mirrors that classification so CI consumers can distinguish boot-readiness, app-foreground, UI-dump, selector/text timeout, and `artifact-contract-breach` cases without log spelunking. Empty, malformed, or otherwise failed `uiautomator` dump capture now stays inside the runner-managed `ui-dump-failure` path, which preserves `ui-last.xml` (empty when the dump yielded no bytes) instead of degrading into a missing-artifact contract breach. If the workflow fails before the runner can emit either bundle, the workflow now treats that as an explicit contract breach instead of pretending usable smoke evidence exists.
 
 The runner stays honest about prerequisites: if `adb` is unavailable, no emulator is ready, or the APK is missing, the command fails with a concrete message instead of pretending to execute the smoke slice.

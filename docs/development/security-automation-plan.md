@@ -49,6 +49,13 @@ Trade-offs:
 Failure surfacing:
 - required GitHub Actions check on PRs
 - contributors should run `cargo audit` locally before opening a PR when changing dependencies
+- the weekly `cve-watch` workflow keeps a separate managed findings issue for Rust dependency advisories so newly published RustSec CVEs do not rely only on PR-time execution
+
+Scheduled watch expansion:
+- the same `cve-watch` workflow now also queries GitHub-native Dependabot alerts for the repo's watched non-Cargo dependency surfaces (`github-actions` plus the Android smoke fixture's Gradle-managed dependencies)
+- the workflow also evaluates the checked-in `.github/security-tooling-watch.json` inventory for repo-controlled security tooling installed by workflows outside Cargo.lock / Dependabot coverage
+- that security-tooling slice uses GitHub `securityVulnerabilities` GraphQL data for pinned Rust CLI packages (`cargo-audit`, `cargo-deny`) and renders `manual-review-required` for `gitleaks` until the repo adopts a trustworthy machine-readable advisory source for that downloaded release-tarball path
+- those expansions intentionally stay scoped to dependency-graph-backed alerts plus the explicit checked-in inventory rather than broad runner-image or generic downloaded-tool CVE scraping, which remains manual until a later bounded slice proves worth the noise
 
 ## 2. Committed secrets
 

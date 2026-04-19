@@ -667,6 +667,65 @@ mod tests {
     }
 
     #[test]
+    fn runner_abort_policy_records_final_attempt_count_and_failure_context_linkage() {
+        let mut engine = ScriptedEngine {
+            snapshot: DeviceSnapshot {
+                foreground_app: Some("app.under.test".into()),
+                ..DeviceSnapshot::default()
+            },
+            failures_before_success: 3,
+        };
+        let mut plan = sample_plan(AssertionKind::AppInForeground {
+            app_id: "app.under.test".into(),
+        });
+        plan.steps[0].description = "retry exhaustion aborts the run".into();
+        plan.steps[0].retry.max_attempts = 3;
+        plan.steps[0].artifacts.capture_on_failure = true;
+        plan.steps.push(PlanStep {
+            step_id: "step-2".into(),
+            intent: StepIntent::Assert,
+            description: "later steps are skipped after abort".into(),
+            action: ActionKind::Noop,
+            guards: vec![],
+            postconditions: vec![AssertionKind::AppInForeground {
+                app_id: "app.under.test".into(),
+            }],
+            timeout_ms: 1_000,
+            retry: RetryPolicy::default(),
+            on_failure: FailurePolicy::AbortRun,
+            artifacts: ArtifactPolicy::default(),
+        });
+
+        let trace = DeterministicRunner::new("run-abort-retry").execute(&mut engine, &plan);
+
+        assert_eq!(trace.status, RunStatus::Failed);
+        assert_eq!(trace.steps.len(), 1);
+        assert_eq!(trace.steps[0].status, StepStatus::Failed);
+        assert_eq!(trace.steps[0].attempts, 3);
+        assert_eq!(
+            trace.steps[0].failure.as_ref().map(|failure| &failure.code),
+            Some(&FailureCode::EngineError)
+        );
+        assert_eq!(
+            trace.steps[0]
+                .failure
+                .as_ref()
+                .map(|failure| failure.step_id.as_str()),
+            Some("step-1")
+        );
+        assert_eq!(trace.artifacts.len(), 1);
+        assert_eq!(trace.artifacts[0].artifact_type, "failure_context");
+        assert_eq!(trace.artifacts[0].step_id.as_deref(), Some("step-1"));
+        assert_eq!(trace.steps[0].artifacts.len(), 1);
+        assert_eq!(trace.steps[0].artifacts[0].artifact_type, "failure_context");
+        assert_eq!(
+            trace.steps[0].artifacts[0].step_id.as_deref(),
+            Some("step-1")
+        );
+        assert!(trace.finished_at.is_some());
+    }
+
+    #[test]
     fn runner_emits_after_step_snapshot_artifacts_when_requested() {
         let mut engine = FakeEngine {
             snapshot: DeviceSnapshot {

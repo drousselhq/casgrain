@@ -1,0 +1,45 @@
+{
+  "issue_title": "security: security-tooling CVE watch findings",
+  "scope": "Workflow-installed security tooling outside Cargo.lock / Dependabot coverage",
+  "tools": [
+    {
+      "tool": "gitleaks",
+      "version": "8.30.1",
+      "workflows": [
+        ".github/workflows/security.yml:16",
+        ".github/workflows/security.yml:31"
+      ],
+      "source_rule": {
+        "kind": "manual-review-required",
+        "rationale": "The repo currently installs gitleaks from a verified upstream release tarball, but this slice does not yet wire a trustworthy machine-readable advisory feed for that downloaded binary path. Keep the surface explicit in the workflow summary instead of scraping release notes."
+      }
+    },
+    {
+      "tool": "cargo-audit",
+      "version": "0.22.1",
+      "workflows": [
+        ".github/workflows/security.yml:54",
+        ".github/workflows/cve-watch.yml:35"
+      ],
+      "source_rule": {
+        "kind": "github-security-vulnerabilities",
+        "ecosystem": "RUST",
+        "package": "cargo-audit",
+        "source": "GitHub securityVulnerabilities GraphQL"
+      }
+    },
+    {
+      "tool": "cargo-deny",
+      "version": "0.18.3",
+      "workflows": [
+        ".github/workflows/security.yml:73"
+      ],
+      "source_rule": {
+        "kind": "github-security-vulnerabilities",
+        "ecosystem": "RUST",
+        "package": "cargo-deny",
+        "source": "GitHub securityVulnerabilities GraphQL"
+      }
+    }
+  ]
+}

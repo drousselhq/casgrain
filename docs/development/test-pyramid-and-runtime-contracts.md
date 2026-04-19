@@ -95,14 +95,16 @@ Examples today:
 - `runner::tests::runner_passes_for_matching_selector`
 - `runner::tests::runner_fails_for_missing_selector`
 - `runner::tests::runner_can_execute_small_login_like_flow`
+- `runner::tests::runner_retries_a_step_until_it_succeeds`
+- `runner::tests::runner_continue_policy_records_failure_and_executes_later_steps`
+- `runner::tests::runner_abort_policy_records_final_attempt_count_and_failure_context_linkage`
+- `runner::tests::runner_emits_after_step_snapshot_artifacts_when_requested`
 - `runner::mock::tests::login_fixture_contains_expected_controls`
 - `runner::mock::tests::tapping_login_reveals_home_screen`
 - `runner::mock::tests::screenshot_action_emits_artifact`
 
 Expected growth in this layer:
-- retry and timeout semantics
-- failure-policy coverage for abort vs continue behavior
-- trace and artifact manifest assertions
+- explicit timeout semantics once runner-native timeout behavior is defined
 - adapter-facing contract tests that confirm platform-specific failures map into domain failure codes
 
 #### Layer 3 — CLI smoke tests
@@ -114,18 +116,25 @@ Purpose:
 Current coverage in the repo:
 - usage and unknown-command handling
 - compile failure rendering
-- `run-mock` success path from feature file to human-readable output
+- `run-mock` success and failure rendering plus failure-trace JSON contract checks
+- `run-ios-smoke` success/failure summaries and `--trace-json` contract checks via injected fake runners
+- `run-android-smoke` success/failure summaries and `--trace-json` contract checks via injected fake runners
+- harness-bootstrap failure coverage that preserves explicit lane-specific errors for invalid JSON or non-zero external smoke runners
 
 Examples today:
 - `casgrain::tests::usage_is_returned_for_missing_arguments`
 - `casgrain::tests::usage_is_returned_for_unknown_command`
 - `casgrain::tests::compile_failure_is_rendered_cleanly`
 - `casgrain::tests::run_mock_reports_successful_flow`
+- `casgrain::tests::run_mock_failure_trace_json_preserves_semantic_failure_fields`
+- `casgrain::tests::run_ios_smoke_failure_trace_json_preserves_semantic_failure_fields`
+- `casgrain::tests::run_android_smoke_failure_trace_json_preserves_semantic_failure_fields`
+- `casgrain::tests::run_ios_smoke_invalid_runner_json_fails_with_explicit_lane_context`
+- `casgrain::tests::run_android_smoke_non_zero_runner_failure_fails_with_explicit_lane_context`
 
 Expected growth in this layer:
-- machine-readable output snapshots
-- trace JSON contract checks
 - explicit coverage for future stable CLI subcommands
+- additional contract checks when new machine-consumed CLI modes or smoke lanes become stable
 
 #### Layer 4 — fixture-app simulator/emulator integration tests
 
