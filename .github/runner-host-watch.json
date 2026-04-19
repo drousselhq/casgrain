@@ -1,0 +1,42 @@
+{
+  "issue_title": "security: runner-host review needed",
+  "scope": "Runner-image and host-toolchain drift across the scheduled Android and iOS smoke workflows",
+  "platforms": {
+    "android": {
+      "workflow": ".github/workflows/android-emulator-smoke.yml",
+      "artifact": "casgrain-android-smoke",
+      "branch": "main",
+      "watched_facts": [
+        {"path": "runner.label", "label": "runner label", "baseline": "ubuntu-latest"},
+        {"path": "runner.image_name", "label": "runner image", "baseline": "ubuntu-24.04"},
+        {"path": "runner.image_version", "label": "runner image version", "baseline": "20260413.86.1"},
+        {"path": "runner.os_version", "label": "runner OS version", "baseline": "24.04.4"},
+        {"path": "java.configured_major", "label": "configured Java major", "baseline": "17"},
+        {"path": "java.resolved_version", "label": "resolved Java version", "baseline": "17.0.18+8"},
+        {"path": "gradle.configured_version", "label": "configured Gradle version", "baseline": "8.7"},
+        {"path": "gradle.resolved_version", "label": "resolved Gradle version", "baseline": "8.7"},
+        {"path": "emulator.api_level", "label": "Android API level", "baseline": "34"},
+        {"path": "emulator.device_name", "label": "emulator device", "baseline": "sdk_gphone64_x86_64"},
+        {"path": "emulator.os_version", "label": "Android runtime", "baseline": "14"}
+      ]
+    },
+    "ios": {
+      "workflow": ".github/workflows/ios-simulator-smoke.yml",
+      "artifact": "casgrain-ios-smoke",
+      "branch": "main",
+      "watched_facts": [
+        {"path": "runner.label", "label": "runner label", "baseline": "macos-15"},
+        {"path": "runner.image_name", "label": "runner image", "baseline": "macos-15-arm64"},
+        {"path": "runner.image_version", "label": "runner image version", "baseline": "20260414.0270.1"},
+        {"path": "runner.os_version", "label": "runner OS version", "baseline": "15.7.4"},
+        {"path": "runner.os_build", "label": "runner OS build", "baseline": "24G517"},
+        {"path": "xcode.app_path", "label": "Xcode app path", "baseline": "/Applications/Xcode_16.4.app"},
+        {"path": "xcode.version", "label": "Xcode version", "baseline": "16.4"},
+        {"path": "xcode.simulator_sdk_version", "label": "iPhoneSimulator SDK version", "baseline": "18.5"},
+        {"path": "simulator.runtime_identifier", "label": "simulator runtime identifier", "baseline": "com.apple.CoreSimulator.SimRuntime.iOS-26-2"},
+        {"path": "simulator.runtime_name", "label": "simulator runtime name", "baseline": "iOS 26.2"},
+        {"path": "simulator.device_name", "label": "simulator device name", "baseline": "iPhone 16"}
+      ]
+    }
+  }
+}
