@@ -53,15 +53,64 @@ def monotonic_side_effect(*values: float):
 
 
 class HostEnvironmentNormalizationTests(unittest.TestCase):
-    def test_build_android_host_environment_normalizes_runner_image_family_and_full_os_version(self) -> None:
+    def test_load_android_workflow_config_reads_watched_values_from_workflow_yaml(self) -> None:
+        workflow = """jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up Java
+        with:
+          java-version: '21'
+      - name: Set up Gradle
+        with:
+          gradle-version: '8.10'
+      - name: Run generated-plan Android smoke path
+        with:
+          api-level: 35
+          arch: arm64-v8a
+          target: google_apis_playstore
+          profile: pixel_8
+"""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workflow_path = Path(tmpdir) / "android-emulator-smoke.yml"
+            workflow_path.write_text(workflow, encoding="utf-8")
+            config = android_smoke_run_plan.load_android_workflow_config(workflow_path)
+
+        self.assertEqual(
+            config,
+            {
+                "runner_label": "ubuntu-24.04",
+                "java_version": "21",
+                "gradle_version": "8.10",
+                "api_level": "35",
+                "arch": "arm64-v8a",
+                "target": "google_apis_playstore",
+                "profile": "pixel_8",
+            },
+        )
+
+    def test_build_android_host_environment_uses_workflow_config_for_watched_fields(self) -> None:
         emulator_info = {"device_name": "sdk_gphone64_x86_64", "os_version": "14"}
-        java_output = "java.runtime.version = 17.0.18+8\n"
-        gradle_output = "Gradle 8.7\n"
+        java_output = "java.runtime.version = 21.0.2+13\n"
+        gradle_output = "Gradle 8.10\n"
 
         with patch.dict(
             android_smoke_run_plan.os.environ,
             {"ImageOS": "ubuntu24", "ImageVersion": "20260413.86.1"},
             clear=False,
+        ), patch.object(
+            android_smoke_run_plan,
+            "load_android_workflow_config",
+            return_value={
+                "runner_label": "ubuntu-24.04",
+                "java_version": "21",
+                "gradle_version": "8.10",
+                "api_level": "35",
+                "arch": "arm64-v8a",
+                "target": "google_apis_playstore",
+                "profile": "pixel_8",
+            },
         ), patch.object(
             android_smoke_run_plan,
             "command_output",
@@ -76,9 +125,15 @@ class HostEnvironmentNormalizationTests(unittest.TestCase):
         ):
             host_environment = android_smoke_run_plan.build_android_host_environment(emulator_info)
 
+        self.assertEqual(host_environment["runner"]["label"], "ubuntu-24.04")
         self.assertEqual(host_environment["runner"]["image_name"], "ubuntu-24.04")
         self.assertEqual(host_environment["runner"]["os_version"], "24.04.4")
-        self.assertEqual(host_environment["runner"]["image_version"], "20260413.86.1")
+        self.assertEqual(host_environment["java"]["configured_major"], "21")
+        self.assertEqual(host_environment["gradle"]["configured_version"], "8.10")
+        self.assertEqual(host_environment["emulator"]["api_level"], "35")
+        self.assertEqual(host_environment["emulator"]["arch"], "arm64-v8a")
+        self.assertEqual(host_environment["emulator"]["target"], "google_apis_playstore")
+        self.assertEqual(host_environment["emulator"]["profile"], "pixel_8")
 
 
 class BootSignalsReadyTests(unittest.TestCase):

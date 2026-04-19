@@ -9,6 +9,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+IOS_SMOKE_WORKFLOW_PATH = Path(__file__).resolve().parents[3] / ".github" / "workflows" / "ios-simulator-smoke.yml"
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -118,6 +120,43 @@ def github_run_metadata() -> dict[str, str]:
     }
 
 
+def read_workflow_job_block(path: Path, job_name: str) -> str:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        raise SystemExit(f"failed to read workflow file at {path}: {error}") from error
+
+    job_header = f"  {job_name}:"
+    start_index = None
+    for index, line in enumerate(lines):
+        if line == job_header:
+            start_index = index + 1
+            break
+    if start_index is None:
+        raise SystemExit(f"workflow file {path} is missing jobs.{job_name}")
+
+    collected: list[str] = []
+    for line in lines[start_index:]:
+        if re.match(r"^  [A-Za-z0-9_-]+:\s*$", line):
+            break
+        collected.append(line)
+    return "\n".join(collected)
+
+
+def extract_workflow_scalar(block: str, key: str, *, error_context: str) -> str:
+    match = re.search(rf"^\s*{re.escape(key)}:\s*['\"]?([^'\"\n]+)['\"]?\s*$", block, flags=re.MULTILINE)
+    if match:
+        return match.group(1).strip()
+    raise SystemExit(f"workflow config is missing {error_context}")
+
+
+def load_ios_workflow_config(path: Path = IOS_SMOKE_WORKFLOW_PATH) -> dict[str, str]:
+    smoke_job = read_workflow_job_block(path, "smoke")
+    return {
+        "runner_label": extract_workflow_scalar(smoke_job, "runs-on", error_context="jobs.smoke.runs-on")
+    }
+
+
 def normalize_runner_image_name(image_name: str, architecture: str) -> str:
     normalized = image_name.strip().lower()
     if not normalized or normalized == "unknown":
@@ -131,6 +170,7 @@ def normalize_runner_image_name(image_name: str, architecture: str) -> str:
 
 
 def build_ios_host_environment(simulator_info: dict[str, str]) -> dict[str, object]:
+    workflow_config = load_ios_workflow_config()
     developer_dir = Path(command_output("xcode-select", "-p").splitlines()[0].strip())
     xcode_app = developer_dir.parents[1] if developer_dir.name == "Developer" else developer_dir
     xcode_version_output = command_output("xcodebuild", "-version").splitlines()
@@ -144,7 +184,7 @@ def build_ios_host_environment(simulator_info: dict[str, str]) -> dict[str, obje
         "generated_at": utc_now(),
         "workflow_run": github_run_metadata(),
         "runner": {
-            "label": "macos-15",
+            "label": workflow_config["runner_label"],
             "image_name": normalize_runner_image_name(raw_image_name, architecture),
             "image_version": os.environ.get("ImageVersion", "unknown"),
             "os_name": "macOS",
