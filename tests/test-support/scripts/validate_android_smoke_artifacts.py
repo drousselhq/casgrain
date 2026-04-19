@@ -25,11 +25,13 @@ BOOT_READINESS_FAILURE = "boot-readiness-failure"
 APP_FOREGROUND_FAILURE = "app-foreground-failure"
 SELECTOR_TIMEOUT = "selector-timeout"
 TEXT_TIMEOUT = "text-timeout"
+UI_DUMP_FAILURE = "ui-dump-failure"
 RUNNER_FAILURE_CLASSES = {
     BOOT_READINESS_FAILURE,
     APP_FOREGROUND_FAILURE,
     SELECTOR_TIMEOUT,
     TEXT_TIMEOUT,
+    UI_DUMP_FAILURE,
 }
 
 
@@ -143,6 +145,11 @@ def validate_failure_contract(artifact_dir: Path) -> dict[str, Any]:
         expect(
             any(value is not None for value in validated_refs.values()),
             "failure.json must reference at least one preserved diagnostic artifact",
+        )
+    if failure_class == UI_DUMP_FAILURE:
+        expect(
+            validated_refs["last_ui_dump"] is not None,
+            "ui-dump-failure must reference last_ui_dump so the captured UI dump remains reviewable",
         )
 
     expect(not (artifact_dir / "trace.json").exists(), "failure artifact sets must not also contain trace.json")

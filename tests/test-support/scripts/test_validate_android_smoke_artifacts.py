@@ -62,6 +62,53 @@ class ValidateFailureContractTests(unittest.TestCase):
         self.assertEqual(contract["failure_class"], "boot-readiness-failure")
         self.assertEqual(contract["present_diagnostics"], [])
 
+    def test_validate_failure_contract_allows_ui_dump_failures_with_preserved_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            (artifact_dir / "foreground-window.txt").write_text("launcher")
+            (artifact_dir / "ui-last.xml").write_text("")
+            (artifact_dir / "failure.json").write_text(
+                json.dumps(
+                    {
+                        "reason": "failed to capture emulator UI hierarchy while waiting for selector 'tap-button': uiautomator dump returned empty XML",
+                        "failure_class": "ui-dump-failure",
+                        "artifacts": {
+                            "foreground_window": "foreground-window.txt",
+                            "foreground_activity": None,
+                            "last_ui_dump": "ui-last.xml",
+                        },
+                    }
+                )
+            )
+
+            contract = validate_android_smoke_artifacts.validate_failure_contract(artifact_dir)
+
+        self.assertEqual(contract["failure_class"], "ui-dump-failure")
+        self.assertEqual(contract["present_diagnostics"], ["foreground-window.txt", "ui-last.xml"])
+
+    def test_validate_failure_contract_rejects_ui_dump_failure_without_last_ui_dump(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_dir = Path(tmpdir)
+            (artifact_dir / "foreground-window.txt").write_text("launcher")
+            (artifact_dir / "failure.json").write_text(
+                json.dumps(
+                    {
+                        "reason": "failed to capture emulator UI hierarchy while waiting for selector 'tap-button': uiautomator dump returned empty XML",
+                        "failure_class": "ui-dump-failure",
+                        "artifacts": {
+                            "foreground_window": "foreground-window.txt",
+                            "foreground_activity": None,
+                            "last_ui_dump": None,
+                        },
+                    }
+                )
+            )
+
+            with self.assertRaises(SystemExit) as error:
+                validate_android_smoke_artifacts.validate_failure_contract(artifact_dir)
+
+        self.assertIn("ui-dump-failure must reference last_ui_dump", str(error.exception))
+
     def test_validate_failure_contract_rejects_unknown_failure_class(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             artifact_dir = Path(tmpdir)
