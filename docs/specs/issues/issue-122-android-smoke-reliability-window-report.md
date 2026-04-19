@@ -3,7 +3,8 @@
 - Issue: `#122`
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #122`
-- Follow-up after this slice lands: `#127` (`Record Android smoke qualifying window after report tooling lands`)
+- Immediate follow-up after this slice lands: `#127` (`Android smoke reliability-window issue sync`)
+- Live tracker after that follow-up lands: `#132` (`Track Android smoke qualification after reliability sync lands`)
 
 ## Why this slice exists
 
@@ -31,7 +32,7 @@ This slice must:
 4. emit both machine-readable JSON and concise markdown output
 5. stay fully testable offline from saved fixtures
 
-This slice is **only** the reporter/tooling slice. The later operational judgment after enough new scheduled runs accrue belongs to follow-up issue #127.
+This slice is **only** the reporter/tooling slice. The immediate follow-up is issue `#127`, which adds repo-owned issue sync around the report output. The later operational judgment after enough new scheduled runs accrue belongs to tracker issue `#132`.
 
 ## Required implementation artifacts
 
@@ -170,5 +171,6 @@ The live invocation above should currently produce a **not qualified** result un
 The implementation PR for this spec should be able to close `#122` because it finishes the immediate tooling slice.
 
 After that PR merges:
-- issue #127 becomes the place where automation or maintainers record the first actual qualified window (or open the next blocker issue)
-- issues #80 and #79 stay blocked on that later evidence, not merely on the existence of the reporter
+- issue `#127` is the immediate follow-up that adds repo-owned issue sync around the reporter output
+- after `#127` lands, issue `#132` becomes the place where automation or maintainers track the first actual qualified window (or open the next blocker issue)
+- issues `#80` and `#79` stay blocked on `#132`, not merely on the existence of the reporter or the issue-sync helper
