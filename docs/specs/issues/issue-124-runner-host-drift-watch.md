@@ -199,6 +199,25 @@ Add focused tests at:
 
 The tests should import the script module the same way the repo already tests the other reporting helpers.
 
+### 6. Required repo docs updates
+
+The later implementation PR must explicitly update these canonical repo docs:
+
+- `docs/development/cve-watch-operations.md`
+- `docs/development/security-automation-plan.md`
+- `docs/development/security-owasp-baseline.md`
+
+Those docs updates must say, in repo-owned language rather than issue-only shorthand:
+- which runner/host facts are watched from `.github/runner-host-watch.json`
+- which evidence artifacts feed the review (`host-environment.json` for both mobile smoke workflows, with `emulator.json`, `simulator.json`, and `xcodebuild.log` remaining supporting evidence where relevant)
+- that the weekly `cve-watch` scope/output now includes this runner-host drift watch as a fourth low-noise review lane, and that drift or missing/unreadable evidence opens/updates the managed `security: runner-host review needed` issue via the existing sync flow
+- that any blanket wording claiming `manual-review-required` outcomes never open managed issues, or that `cve-watch` still has only three low-noise slices, is updated or removed so the canonical docs stay internally consistent
+- that this slice opens review only when watched facts drift or required evidence is missing/unreadable
+- that the result is drift-triggered **manual review**, not direct runner-image / host-toolchain advisory automation in this slice
+- that any later source-backed advisory automation remains deferred to follow-up issue `#129`
+
+The spec should leave no room for a later implementation PR to claim completion while keeping those canonical docs ambiguous or stale.
+
 ## Reporter input/output contract
 
 ### Live inputs
@@ -259,7 +278,7 @@ It must include:
 - one new reporter script
 - one new unit-test module plus a small fixture set
 - one `cve-watch` job integration
-- the minimal docs updates required by the issue body
+- explicit docs updates to `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` as specified above
 
 ### Explicit non-goals
 - **no** scraping of every package preinstalled on hosted runners
