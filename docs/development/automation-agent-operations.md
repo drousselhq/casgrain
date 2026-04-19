@@ -42,7 +42,7 @@ Core execution labels:
 - `qa-passed` — QA validated the scoped change
 - `po-approved` — product-owner proxy approved the PR for merge when the remaining gates are green
 - `blocked` — waiting on another issue, repo capability, or external dependency
-- `waiting-on-human` — waiting on explicit human action outside the repo automation workflow
+- `waiting-on-human` — waiting on explicit human action or decision outside the repo automation workflow; not for passive monitoring or synthetic gate trackers
 
 Stewardship labels:
 - `docs-needed`, `docs-approved`, `docs-blocked`
@@ -54,6 +54,7 @@ Routing rule:
 - if an issue is unlabeled, it is backlog only and is not yet released into execution
 
 Use GitHub-native relationship metadata (`Blocked by`, `blocking`, Parent/sub-issue) to express true dependencies whenever GitHub can represent them directly. Labels and comments should reflect that state clearly, not replace it.
+Do not keep a separate issue open solely to wait for future evidence unless that issue is itself a concrete tracked slice of work; if there is no slice to implement, keep the condition in automation/docs and file real defects directly when they appear.
 
 ## Human and agent boundaries
 
@@ -358,8 +359,8 @@ This ordering keeps repo maintenance grounded in evidence rather than jumping di
 stateDiagram-v2
     [*] --> Backlog: issue opened / not yet released
 
-    Backlog --> ReadyDev: PO releases issue\nadd ready-for-dev
-    Backlog --> ReadyDevOps: PO releases infra issue\nadd ready-for-dev + devops
+    Backlog --> ReadyDev: PO Backlog Release Agent\nadd ready-for-dev
+    Backlog --> ReadyDevOps: PO Backlog Release Agent\nadd ready-for-dev + devops
     Backlog --> Blocked: dependency or external blocker\nadd blocked
     Backlog --> WaitingHuman: explicit human action needed\nadd waiting-on-human
 
@@ -396,7 +397,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    PO[PO Approval Agent\nreleases backlog and approves merge] -->|ready-for-dev| DEVSEL{devops label present?}
+    PO[PO Backlog Release Agent\nreleases backlog] -->|ready-for-dev| DEVSEL{devops label present?}
     DEVSEL -->|no| DEV[Dev Delivery Agent\nproduct and general implementation lane]
     DEVSEL -->|yes| DOPS[DevOps Agent\nCI, workflow, security, release automation lane]
 

@@ -9,6 +9,8 @@ Before merging work, run the required checks below unless the PR is explicitly s
 Repository reality today:
 - `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, and `cargo-deny-policy` status checks
 - expensive simulator/emulator smoke workflows are manual-only so unsolicited public PRs do not automatically burn minutes
+- smoke runs are advisory evidence, not a separate qualification gate; do not delay unrelated work on a future-run streak
+- if a smoke run exposes a concrete defect, file that defect directly instead of inventing a tracker issue for qualification timing
 - CodeQL runs on PRs and `main` pushes as an always-on static-analysis baseline for Actions workflow logic and Rust code; keep it advisory until the workflow proves stable on this repo
 - PR authors and mergers must still avoid bypassing the merge gate just because an admin path exists
 
