@@ -163,12 +163,15 @@ Current automated cadence:
 3. the workflow now also evaluates `.github/security-tooling-watch.json`, the checked-in inventory of workflow-installed security tooling outside Cargo.lock / Dependabot coverage:
    - `cargo-audit` and `cargo-deny` use GitHub `securityVulnerabilities` GraphQL data keyed by the pinned crates.io package and compare the pinned version against the advisory `vulnerableVersionRange`
    - `gitleaks` stays explicit `manual-review-required` until the repo adopts a trustworthy machine-readable advisory source for its downloaded release-tarball path
-4. all three slices render triage-friendly markdown, sync a managed GitHub findings issue only when active actionable advisories exist, and close that managed issue again on later clean runs
+4. the workflow also evaluates `.github/runner-host-watch.json`, the checked-in inventory of watched runner-image / host-toolchain facts for the Android and iOS smoke workflows:
+   - both mobile smoke artifacts now include `host-environment.json` as the normalized runner/toolchain evidence source, with `emulator.json`, `simulator.json`, and `xcodebuild.log` remaining supporting evidence
+   - the watch compares only the inventoried runner image, OS, Java, Gradle, Xcode, and simulator facts against the baseline and opens `security: runner-host review needed` only when a watched fact drifts or required host evidence is missing/unreadable
+5. all four slices render triage-friendly markdown, sync a managed GitHub findings issue only when their slice-specific alert condition is active, and close that managed issue again on later clean runs
 
 Remaining manual review:
-1. review authoritative sources for surfaces that are still outside the automated dependency graph and explicit security-tooling inventory, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
+1. review authoritative sources for surfaces that are still outside the automated dependency graph, explicit security-tooling inventory, and drift-based runner-host watch, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
 2. compare findings only against Casgrain's actual remaining manual surface area:
-   - Android/iOS host-image or runner-environment CVEs
+   - source-backed runner-image / host-toolchain advisory evaluation beyond simple drift detection
    - repo-security tooling or settings-side gaps that require maintainer/platform action rather than an in-repo diff
    - any downloaded tooling not yet represented in `.github/security-tooling-watch.json` with a trustworthy source rule
 3. classify each finding as one of:
@@ -179,12 +182,12 @@ Remaining manual review:
 5. if the safe fix depends on settings, billing, unavailable runners, or maintainer-only activation, use `blocked` and/or `waiting-on-human` explicitly instead of inventing a fake in-repo resolution
 
 Tracked gap:
-- follow-up issue #124 now tracks the remaining runner-image / host-toolchain CVE surfaces and any later manual-only expansion beyond the checked-in security-tooling inventory
+- follow-up issue #129 now tracks any later promotion of runner-image / host-toolchain drift detection into source-backed advisory automation
 
 ## Known gaps and tracked follow-up
 
 - #73 — activate the Renovate lane by enabling the app/runner outside the repo
-- #124 — review the remaining runner-image / host-toolchain CVE surfaces that still sit outside the current low-noise watch
+- #129 — evaluate whether the runner-host drift watch should later grow into source-backed advisory automation
 - #82 — pin remaining mutable GitHub Actions references to immutable commit SHAs
 
 ## Triage rules for security findings

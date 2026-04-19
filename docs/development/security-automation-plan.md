@@ -55,7 +55,8 @@ Scheduled watch expansion:
 - the same `cve-watch` workflow now also queries GitHub-native Dependabot alerts for the repo's watched non-Cargo dependency surfaces (`github-actions` plus the Android smoke fixture's Gradle-managed dependencies)
 - the workflow also evaluates the checked-in `.github/security-tooling-watch.json` inventory for repo-controlled security tooling installed by workflows outside Cargo.lock / Dependabot coverage
 - that security-tooling slice uses GitHub `securityVulnerabilities` GraphQL data for pinned Rust CLI packages (`cargo-audit`, `cargo-deny`) and renders `manual-review-required` for `gitleaks` until the repo adopts a trustworthy machine-readable advisory source for that downloaded release-tarball path
-- those expansions intentionally stay scoped to dependency-graph-backed alerts plus the explicit checked-in inventory rather than broad runner-image or generic downloaded-tool CVE scraping, which remains manual until a later bounded slice proves worth the noise
+- the workflow also evaluates the checked-in `.github/runner-host-watch.json` inventory against `host-environment.json` artifacts emitted by the Android and iOS smoke workflows, opening `security: runner-host review needed` only when the inventoried runner/toolchain facts drift or the required host evidence is missing/unreadable
+- those expansions intentionally stay scoped to dependency-graph-backed alerts, the explicit checked-in security-tooling inventory, and drift-triggered runner-host review rather than broad runner-image or generic downloaded-tool CVE scraping; any later source-backed advisory automation for runner hosts remains follow-up work in #129
 
 ## 2. Committed secrets
 

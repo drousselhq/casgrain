@@ -35,6 +35,7 @@ FAILURE_CLASS_APP_FOREGROUND = "app-foreground-failure"
 FAILURE_CLASS_SELECTOR_TIMEOUT = "selector-timeout"
 FAILURE_CLASS_TEXT_TIMEOUT = "text-timeout"
 FAILURE_CLASS_UI_DUMP = "ui-dump-failure"
+ANDROID_SMOKE_WORKFLOW_PATH = Path(__file__).resolve().parents[3] / ".github" / "workflows" / "android-emulator-smoke.yml"
 
 
 class UIDumpFailure(Exception):
@@ -642,6 +643,188 @@ def read_device_property(adb: str, prop: str, fallback: str) -> str:
     return value or fallback
 
 
+def read_os_release_value(field_name: str, fallback: str) -> str:
+    os_release = Path("/etc/os-release")
+    if not os_release.is_file():
+        return fallback
+    for line in os_release.read_text(encoding="utf-8").splitlines():
+        if line.startswith(f"{field_name}="):
+            return line.split("=", 1)[1].strip().strip('"') or fallback
+    return fallback
+
+
+def command_output(*args: str) -> str:
+    completed = subprocess.run(
+        list(args),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return (completed.stdout + completed.stderr).strip()
+
+
+def parse_java_runtime_version(output: str) -> str:
+    match = re.search(r"java\.runtime\.version\s*=\s*(\S+)", output)
+    if match:
+        return match.group(1).removesuffix("-LTS")
+    match = re.search(r"Runtime Version .*? (\S+)", output)
+    if match:
+        return match.group(1).removesuffix("-LTS")
+    return "unknown"
+
+
+def parse_gradle_version(output: str) -> str:
+    match = re.search(r"^Gradle\s+(\S+)", output, flags=re.MULTILINE)
+    return match.group(1) if match else "unknown"
+
+
+def read_workflow_job_block(path: Path, job_name: str) -> str:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        raise SystemExit(f"failed to read workflow file at {path}: {error}") from error
+
+    job_header = f"  {job_name}:"
+    start_index = None
+    for index, line in enumerate(lines):
+        if line == job_header:
+            start_index = index + 1
+            break
+    if start_index is None:
+        raise SystemExit(f"workflow file {path} is missing jobs.{job_name}")
+
+    collected: list[str] = []
+    for line in lines[start_index:]:
+        if re.match(r"^  [A-Za-z0-9_-]+:\s*$", line):
+            break
+        collected.append(line)
+    return "\n".join(collected)
+
+
+def extract_workflow_scalar(block: str, key: str, *, error_context: str) -> str:
+    match = re.search(rf"^\s*{re.escape(key)}:\s*['\"]?([^'\"\n]+)['\"]?\s*$", block, flags=re.MULTILINE)
+    if match:
+        return match.group(1).strip()
+    raise SystemExit(f"workflow config is missing {error_context}")
+
+
+def extract_step_block(job_block: str, step_name: str) -> str:
+    current_block: list[str] = []
+    for line in job_block.splitlines():
+        if re.match(r"^ {6}- ", line):
+            if current_block:
+                block_text = "\n".join(current_block)
+                if re.search(rf"^      - name:\s*{re.escape(step_name)}\s*$", block_text, flags=re.MULTILINE):
+                    return block_text
+            current_block = [line]
+        elif current_block:
+            current_block.append(line)
+
+    if current_block:
+        block_text = "\n".join(current_block)
+        if re.search(rf"^      - name:\s*{re.escape(step_name)}\s*$", block_text, flags=re.MULTILINE):
+            return block_text
+
+    raise SystemExit(f"workflow config is missing step {step_name!r}")
+
+
+def load_android_workflow_config(path: Path = ANDROID_SMOKE_WORKFLOW_PATH) -> dict[str, str]:
+    smoke_job = read_workflow_job_block(path, "smoke")
+    java_step = extract_step_block(smoke_job, "Set up Java")
+    gradle_step = extract_step_block(smoke_job, "Set up Gradle")
+    emulator_step = extract_step_block(smoke_job, "Run generated-plan Android smoke path")
+    return {
+        "runner_label": extract_workflow_scalar(smoke_job, "runs-on", error_context="jobs.smoke.runs-on"),
+        "java_version": extract_workflow_scalar(java_step, "java-version", error_context="Set up Java java-version"),
+        "gradle_version": extract_workflow_scalar(
+            gradle_step,
+            "gradle-version",
+            error_context="Set up Gradle gradle-version",
+        ),
+        "api_level": extract_workflow_scalar(
+            emulator_step,
+            "api-level",
+            error_context="Android emulator runner api-level",
+        ),
+        "arch": extract_workflow_scalar(emulator_step, "arch", error_context="Android emulator runner arch"),
+        "target": extract_workflow_scalar(emulator_step, "target", error_context="Android emulator runner target"),
+        "profile": extract_workflow_scalar(emulator_step, "profile", error_context="Android emulator runner profile"),
+    }
+
+
+def normalize_runner_image_name(image_name: str) -> str:
+    normalized = image_name.strip().lower()
+    if not normalized or normalized == "unknown":
+        return image_name or "unknown"
+    ubuntu_match = re.fullmatch(r"ubuntu(\d{2})(\d{2})?", normalized)
+    if ubuntu_match:
+        major = ubuntu_match.group(1)
+        minor = ubuntu_match.group(2) or "04"
+        return f"ubuntu-{major}.{minor}"
+    return image_name
+
+
+def normalize_linux_os_version(version_text: str) -> str:
+    match = re.search(r"\b(\d+\.\d+(?:\.\d+)?)\b", version_text)
+    if match:
+        return match.group(1)
+    return version_text.strip() or "unknown"
+
+
+def github_run_metadata() -> dict[str, str]:
+    return {
+        "repository": os.environ.get("GITHUB_REPOSITORY", "local"),
+        "workflow": os.environ.get("GITHUB_WORKFLOW", "android-emulator-smoke"),
+        "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
+        "run_url": os.environ.get(
+            "GITHUB_SERVER_URL", "https://github.com"
+        )
+        + "/"
+        + os.environ.get("GITHUB_REPOSITORY", "local")
+        + "/actions/runs/"
+        + os.environ.get("GITHUB_RUN_ID", "local"),
+    }
+
+
+def build_android_host_environment(emulator_info: dict[str, str]) -> dict[str, object]:
+    workflow_config = load_android_workflow_config()
+    java_output = command_output("java", "-XshowSettings:properties", "-version")
+    gradle_output = command_output("gradle", "--version")
+    raw_image_name = os.environ.get("ImageOS", "unknown")
+    os_version = normalize_linux_os_version(
+        read_os_release_value("VERSION", read_os_release_value("VERSION_ID", "unknown"))
+    )
+    return {
+        "generated_at": utc_now(),
+        "workflow_run": github_run_metadata(),
+        "runner": {
+            "label": workflow_config["runner_label"],
+            "image_name": normalize_runner_image_name(raw_image_name),
+            "image_version": os.environ.get("ImageVersion", "unknown"),
+            "os_name": read_os_release_value("NAME", "Ubuntu"),
+            "os_version": os_version,
+        },
+        "java": {
+            "distribution": "temurin",
+            "configured_major": workflow_config["java_version"],
+            "resolved_version": parse_java_runtime_version(java_output),
+        },
+        "gradle": {
+            "configured_version": workflow_config["gradle_version"],
+            "resolved_version": parse_gradle_version(gradle_output),
+        },
+        "emulator": {
+            "api_level": workflow_config["api_level"],
+            "arch": workflow_config["arch"],
+            "target": workflow_config["target"],
+            "profile": workflow_config["profile"],
+            "device_name": emulator_info["device_name"],
+            "os_version": emulator_info["os_version"],
+        },
+    }
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
@@ -657,6 +840,7 @@ def main() -> int:
     apk_path = resolve_apk_path(repo_root)
     screenshot_path = artifact_dir / "android-tap-counter-1.png"
     emulator_info_path = artifact_dir / "emulator.json"
+    host_environment_path = artifact_dir / "host-environment.json"
     before_tap_dump_path = artifact_dir / "ui-before-tap.xml"
     after_tap_dump_path = artifact_dir / "ui-after-tap.xml"
 
@@ -711,6 +895,8 @@ def main() -> int:
         "os_version": os_version,
     }
     emulator_info_path.write_text(json.dumps(emulator_info, indent=2) + "\n")
+    host_environment = build_android_host_environment(emulator_info)
+    host_environment_path.write_text(json.dumps(host_environment, indent=2) + "\n")
 
     steps = [
         {
@@ -751,6 +937,13 @@ def main() -> int:
                 "artifact_type": "emulator_descriptor",
                 "path": str(emulator_info_path),
                 "sha256": sha256_for(emulator_info_path),
+                "step_id": None,
+            },
+            {
+                "artifact_id": "android-host-environment",
+                "artifact_type": "host_environment",
+                "path": str(host_environment_path),
+                "sha256": sha256_for(host_environment_path),
                 "step_id": None,
             },
             {

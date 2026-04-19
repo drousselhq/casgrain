@@ -1,6 +1,28 @@
 name: android-emulator-smoke
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - crates/application/**
+      - crates/casgrain/**
+      - crates/compiler/**
+      - crates/domain/**
+      - crates/runner/**
+      - crates/android/**
+      - tests/test-support/fixtures/android-smoke/**
+      - tests/test-support/fixtures/android-smoke/reliability-issue-sync/**
+      - tests/test-support/scripts/android_smoke_run_plan.py
+      - tests/test-support/scripts/android_smoke_reliability_window.py
+      - tests/test-support/scripts/android_smoke_issue_sync.py
+      - tests/test-support/scripts/validate_android_smoke_artifacts.py
+      - tests/scripts/test_android_smoke_reliability_window.py
+      - tests/scripts/test_android_smoke_issue_sync.py
+      - .github/workflows/android-emulator-smoke.yml
+      - .github/runner-host-watch.json
   workflow_dispatch:
     inputs:
       reason:

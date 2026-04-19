@@ -52,6 +52,103 @@ def monotonic_side_effect(*values: float):
     return fake_monotonic
 
 
+class HostEnvironmentNormalizationTests(unittest.TestCase):
+    def test_load_android_workflow_config_reads_watched_values_from_workflow_yaml(self) -> None:
+        workflow = """jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up Java
+        with:
+          java-version: '21'
+      - name: Set up Gradle
+        with:
+          gradle-version: '8.10'
+      - name: Run generated-plan Android smoke path
+        with:
+          api-level: 35
+          arch: arm64-v8a
+          target: google_apis_playstore
+          profile: pixel_8
+"""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workflow_path = Path(tmpdir) / "android-emulator-smoke.yml"
+            workflow_path.write_text(workflow, encoding="utf-8")
+            config = android_smoke_run_plan.load_android_workflow_config(workflow_path)
+
+        self.assertEqual(
+            config,
+            {
+                "runner_label": "ubuntu-24.04",
+                "java_version": "21",
+                "gradle_version": "8.10",
+                "api_level": "35",
+                "arch": "arm64-v8a",
+                "target": "google_apis_playstore",
+                "profile": "pixel_8",
+            },
+        )
+
+    def test_build_android_host_environment_uses_workflow_config_for_watched_fields(self) -> None:
+        emulator_info = {"device_name": "sdk_gphone64_x86_64", "os_version": "14"}
+        java_output = "java.runtime.version = 21.0.2+13\n"
+        gradle_output = "Gradle 8.10\n"
+
+        with patch.dict(
+            android_smoke_run_plan.os.environ,
+            {
+                "ImageOS": "ubuntu24",
+                "ImageVersion": "20260413.86.1",
+                "GITHUB_REPOSITORY": "drousselhq/casgrain",
+                "GITHUB_WORKFLOW": "android-emulator-smoke",
+                "GITHUB_RUN_ID": "24624943594",
+                "GITHUB_RUN_ATTEMPT": "1",
+            },
+            clear=False,
+        ), patch.object(
+            android_smoke_run_plan,
+            "load_android_workflow_config",
+            return_value={
+                "runner_label": "ubuntu-24.04",
+                "java_version": "21",
+                "gradle_version": "8.10",
+                "api_level": "35",
+                "arch": "arm64-v8a",
+                "target": "google_apis_playstore",
+                "profile": "pixel_8",
+            },
+        ), patch.object(
+            android_smoke_run_plan,
+            "command_output",
+            side_effect=[java_output, gradle_output],
+        ), patch.object(
+            android_smoke_run_plan,
+            "read_os_release_value",
+            side_effect=lambda field, fallback: {
+                "NAME": "Ubuntu",
+                "VERSION": "24.04.4 LTS (Noble Numbat)",
+            }.get(field, fallback),
+        ), patch.object(
+            android_smoke_run_plan,
+            "utc_now",
+            return_value="2026-04-19T09:00:00Z",
+        ):
+            host_environment = android_smoke_run_plan.build_android_host_environment(emulator_info)
+
+        self.assertEqual(host_environment["generated_at"], "2026-04-19T09:00:00Z")
+        self.assertEqual(host_environment["workflow_run"]["run_url"], "https://github.com/drousselhq/casgrain/actions/runs/24624943594")
+        self.assertEqual(host_environment["runner"]["label"], "ubuntu-24.04")
+        self.assertEqual(host_environment["runner"]["image_name"], "ubuntu-24.04")
+        self.assertEqual(host_environment["runner"]["os_version"], "24.04.4")
+        self.assertEqual(host_environment["java"]["configured_major"], "21")
+        self.assertEqual(host_environment["gradle"]["configured_version"], "8.10")
+        self.assertEqual(host_environment["emulator"]["api_level"], "35")
+        self.assertEqual(host_environment["emulator"]["arch"], "arm64-v8a")
+        self.assertEqual(host_environment["emulator"]["target"], "google_apis_playstore")
+        self.assertEqual(host_environment["emulator"]["profile"], "pixel_8")
+
+
 class BootSignalsReadyTests(unittest.TestCase):
     def test_ready_when_boot_properties_and_package_manager_are_ready(self) -> None:
         self.assertTrue(
