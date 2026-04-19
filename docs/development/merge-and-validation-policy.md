@@ -59,6 +59,9 @@ Expected bar:
 
 Default action:
 - prepare the PR, but do not silently merge
+- add `waiting-on-human` before requesting review so the workflow state is explicit
+- leave a PR comment that states the requested human action, the return path back to automation, and the next owner after release
+- do not leave a PR floating with only a review request and no workflow hold
 
 ## Required validation
 

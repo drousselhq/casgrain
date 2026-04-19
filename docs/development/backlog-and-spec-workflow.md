@@ -85,6 +85,7 @@ Issue-side:
 
 PR-side:
 - `analyst-spec` — this PR is the Analyst-created spec-entry PR
+- `waiting-on-human` — explicit hold for required human action; the PR must also carry a comment explaining the action and return path back into automation
 - plus the normal delivery labels (`needs-qa`, `qa-passed`, `needs-security`, `needs-po`, `needs-merge`, docs/security labels)
 
 ## Responsibilities by lane
