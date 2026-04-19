@@ -1,0 +1,43 @@
+{
+  "managed_issue_title": "security: runner-host review needed",
+  "groups": [
+    {
+      "key": "runner-images",
+      "surface": "GitHub-hosted runner images and OS facts",
+      "platforms": ["android", "ios"],
+      "watched_fact_paths": [
+        {"platform": "android", "path": "runner.label"}
+      ],
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main does not yet evaluate authoritative runner metadata.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "candidate_source": "GitHub-hosted runner image release metadata"
+    },
+    {
+      "key": "android-java-gradle",
+      "surface": "Android Java and Gradle host toolchain facts",
+      "platforms": ["android"],
+      "watched_fact_paths": [
+        {"platform": "android", "path": "java.configured_major"}
+      ],
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main does not yet query authoritative Java or Gradle sources.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "follow_up_issue": 142,
+      "candidate_source": "Authoritative Java and Gradle release metadata"
+    },
+    {
+      "key": "ios-xcode-simulator",
+      "surface": "iOS Xcode and simulator runtime host facts",
+      "platforms": ["ios"],
+      "watched_fact_paths": [
+        {"platform": "ios", "path": "xcode.version"}
+      ],
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main does not yet evaluate Apple release metadata.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "follow_up_issue": 144,
+      "candidate_source": "Apple Xcode and simulator runtime release metadata"
+    }
+  ]
+}
