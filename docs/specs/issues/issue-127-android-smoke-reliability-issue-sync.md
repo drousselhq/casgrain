@@ -3,7 +3,7 @@
 - Issue: `#127`
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #127`
-- Live tracker after this slice lands: `#132` (`Track Android smoke qualification after reliability sync lands`)
+- The later live-evidence outcome is advisory only; the repo does not use a separate qualification-tracker issue.
 
 ## Why this slice exists
 
@@ -23,7 +23,7 @@ The original issue mixed:
 1. the immediate tooling gap — sync the existing report into GitHub issue state
 2. the later wall-clock outcome — wait for enough scheduled `main` runs to accumulate and then record the first qualified window
 
-This issue is now narrowed to **only** the first concern. The later live-evidence outcome lives under follow-up tracker issue `#132`.
+This issue is now narrowed to **only** the first concern. The later live-evidence outcome remains advisory only and does not use a separate tracker issue.
 
 ## Scope of this slice
 
@@ -31,12 +31,12 @@ Build a repo-owned sync path around the existing Android smoke reliability repor
 
 This slice must:
 1. consume the existing summary JSON plus markdown emitted by `android_smoke_reliability_window.py`
-2. synchronize tracker issue `#132` deterministically from that report output
+2. synchronize the existing report output into durable GitHub state
 3. avoid spurious blocker issues when the report is still only short on scheduled `main` runs
 4. open or update a bounded blocker issue when the synced report later surfaces a concrete new blocker beyond simple schedule shortfall
 5. stay testable offline from saved fixtures plus one honest dry-run against the live repo state
 
-This slice is **not** the later qualification judgment itself. The automation added here should make that later judgment durable and boring, but the future qualifying window remains tracked by `#132`.
+This slice is **not** the later qualification judgment itself. The automation added here should make that later judgment durable and boring, but there is no separate qualification tracker issue.
 
 ## Required implementation artifacts
 
@@ -50,16 +50,16 @@ The script should follow the same narrow-sync style as:
 - `tests/test-support/scripts/cve_watch_issue_sync.py`
 
 Implementation contract:
-- accept the repo, tracker issue number, summary JSON path, and markdown file path as explicit inputs
+- accept the repo, summary JSON path, and markdown file path as explicit inputs
 - use a thin `gh`-based mutation layer rather than a second GitHub client stack
 - support a `--dry-run` mode that prints the planned action without mutating GitHub
 - use explicit HTML comment markers so the automation can recognize tracker/blocker bodies it owns on later runs
 - keep plan selection pure enough to unit-test without live GitHub access
 
-Required tracker behavior for issue `#132`:
-- if the report is `not_qualified` **only** because `schedule_main_runs_below_threshold`, update or reopen `#132` with the current report body and keep it open
-- if the report is `qualified`, update `#132` with the qualifying run IDs/event counts and close it as `completed`
-- if the report is `not_qualified` and the report identifies a concrete blocker beyond plain schedule shortfall, update `#132` with that blocker summary and link the blocker issue created/reused below
+Required report behavior:
+- if the report is `not_qualified` **only** because `schedule_main_runs_below_threshold`, keep the reporter output advisory and do not open a separate tracker issue
+- if the report is `qualified`, record the qualifying run IDs/event counts in the report output and stop surfacing the advisory shortfall state
+- if the report is `not_qualified` and the report identifies a concrete blocker beyond plain schedule shortfall, update the report output with that blocker summary and link the blocker issue created/reused below
 
 ### 2. Managed blocker issue behavior
 
@@ -135,7 +135,7 @@ The later implementation PR must update:
 
 That doc update must explicitly state:
 - the Android smoke workflow now has a repo-owned reliability issue-sync path
-- tracker issue `#132` is the durable live-evidence tracker after this slice lands
+- the repo does not use a separate live tracker issue for qualification state
 - the sync may create or reuse one bounded blocker issue when the report surfaces a concrete new blocker
 - this slice does **not** promote Android to a required merge gate and does **not** replace the broader docs/policy work under `#80`
 
@@ -181,7 +181,6 @@ python3 tests/test-support/scripts/android_smoke_reliability_window.py \
   --markdown-out /tmp/android-smoke-reliability-window.md
 python3 tests/test-support/scripts/android_smoke_issue_sync.py \
   --repo drousselhq/casgrain \
-  --tracker-issue 132 \
   --summary-json /tmp/android-smoke-reliability-window.json \
   --markdown-file /tmp/android-smoke-reliability-window.md \
   --dry-run
@@ -194,5 +193,5 @@ The current live dry-run should plan an **open/update tracker only** action beca
 The implementation PR for this spec should be able to close `#127` because it finishes the immediate repo-controlled sync/tooling slice.
 
 After that PR merges:
-- issue `#132` remains the live evidence tracker until a qualified window is recorded or a concrete blocker issue is linked
-- issues `#80` and `#79` stay blocked on `#132`, not merely on the existence of the reporter or this sync helper
+- the live evidence outcome remains advisory only; any concrete blocker issue is linked directly from the report output
+- issues `#80` and `#79` stay blocked on the actual Android readiness work they represent, not on a separate qualification tracker
