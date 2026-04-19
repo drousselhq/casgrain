@@ -36,11 +36,18 @@ These labels are still the durable execution-state surface consumed by automatio
 
 Use GitHub-native issue relationships (`Blocked by`, parent/sub-issue links) when possible instead of encoding dependencies only in comments.
 
+## Android smoke live tracker contract
+
+- The repo-owned Android smoke reliability sync currently targets tracker issue `#132` on `main`.
+- That tracker is the durable live record for Android reliability-window status while Android smoke remains advisory for merge gating.
+- A threshold-only shortfall such as `schedule_main_runs_below_threshold` should keep tracker `#132` updateable/reopenable and should **not** create a blocker issue by itself.
+- If the synced report later surfaces a concrete blocker beyond threshold shortfall, the automation may create or reuse one bounded blocker issue and link that blocker from tracker `#132`.
+- This tracker/blocker flow documents live Android readiness state; it does **not** itself promote Android to a required merge gate.
+
 ## What this repo does not define
 
 Casgrain does **not** keep the following automation internals in-repo anymore:
 
-Do not keep a separate issue open solely to wait for future evidence unless that issue is itself a concrete tracked slice of work; if there is no slice to implement, keep the condition in automation/docs and file real defects directly when they appear.
 - agent role diagrams
 - lane/state-machine diagrams
 - cron schedules
