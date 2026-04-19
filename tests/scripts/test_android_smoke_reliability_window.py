@@ -591,6 +591,81 @@ class AndroidSmokeReliabilityWindowTests(unittest.TestCase):
         self.assertEqual(summary["verdict"], "qualified")
         self.assertEqual(summary["streak"]["run_ids"][0], 9000)
 
+    def test_merge_current_run_into_payload_replaces_matching_run_without_reordering_newer_completed_runs(self) -> None:
+        payload = {
+            "repo": "drousselhq/casgrain",
+            "workflow": "android-emulator-smoke.yml",
+            "artifact_name": "casgrain-android-smoke",
+            "runs": [
+                {
+                    "id": 9001,
+                    "url": "https://example.test/runs/9001",
+                    "event": "pull_request",
+                    "head_branch": "feature/newer",
+                    "status": "completed",
+                    "conclusion": "success",
+                    "artifact_summary": {
+                        "available": True,
+                        "summary": {"contract": {"status": "passed", "failure_class": None}},
+                    },
+                },
+                {
+                    "id": 9000,
+                    "url": "https://example.test/runs/9000",
+                    "event": "schedule",
+                    "head_branch": "main",
+                    "status": "in_progress",
+                    "conclusion": "pending",
+                    "artifact_summary": {"available": False, "error": "running"},
+                },
+                {
+                    "id": 8999,
+                    "url": "https://example.test/runs/8999",
+                    "event": "pull_request",
+                    "head_branch": "feature/older",
+                    "status": "completed",
+                    "conclusion": "success",
+                    "artifact_summary": {
+                        "available": True,
+                        "summary": {"contract": {"status": "passed", "failure_class": None}},
+                    },
+                },
+                {
+                    "id": 8998,
+                    "url": "https://example.test/runs/8998",
+                    "event": "pull_request",
+                    "head_branch": "feature/failing",
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "artifact_summary": {
+                        "available": True,
+                        "summary": {"contract": {"status": "failed", "failure_class": "artifact-contract-breach"}},
+                    },
+                },
+            ],
+        }
+        current_run = {
+            "id": 9000,
+            "url": "https://example.test/runs/9000",
+            "event": "schedule",
+            "head_branch": "main",
+            "status": "completed",
+            "conclusion": "success",
+            "artifact_summary": {
+                "available": True,
+                "summary": {"contract": {"status": "passed", "failure_class": None}},
+            },
+        }
+
+        merged_payload = MODULE.merge_current_run_into_payload(payload, current_run)
+        summary = MODULE.build_summary(merged_payload, generated_at="2026-04-19T04:00:00+00:00")
+
+        self.assertEqual([run["id"] for run in merged_payload["runs"]], [9001, 9000, 8999, 8998])
+        self.assertEqual(sum(1 for run in merged_payload["runs"] if run["id"] == 9000), 1)
+        self.assertEqual(merged_payload["runs"][1]["status"], "completed")
+        self.assertEqual(merged_payload["runs"][1]["conclusion"], "success")
+        self.assertEqual(summary["streak"]["run_ids"], [9001, 9000, 8999])
+
 
 if __name__ == "__main__":
     unittest.main()

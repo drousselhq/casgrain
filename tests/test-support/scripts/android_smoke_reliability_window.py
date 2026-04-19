@@ -519,13 +519,18 @@ def merge_current_run_into_payload(payload: dict[str, Any], current_run: RunReco
         raise ReliabilityWindowError("reliability window payload root must be an object")
     raw_runs = list_field(payload, "runs", error_context="reliability window payload")
 
+    if any(isinstance(run, dict) and run.get("id") == current_run["id"] for run in raw_runs):
+        return {
+            **payload,
+            "runs": [
+                current_run if isinstance(run, dict) and run.get("id") == current_run["id"] else run
+                for run in raw_runs
+            ],
+        }
+
     merged_runs: list[Any] = []
     inserted = False
     for run in raw_runs:
-        if isinstance(run, dict) and run.get("id") == current_run["id"]:
-            merged_runs.append(current_run)
-            inserted = True
-            continue
         if not inserted and isinstance(run, dict) and run.get("status") != "completed":
             merged_runs.append(run)
             continue
