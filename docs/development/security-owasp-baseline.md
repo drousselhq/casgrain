@@ -153,15 +153,21 @@ Required baseline:
 - relevant findings should turn into GitHub issues or PRs instead of disappearing into chat or ad hoc notes
 
 Current repo status:
-- **partially meets baseline**
+- **mostly meets baseline**, with a small set of non-dependency surfaces still handled manually
 
-Current process until automation lands:
-1. review the weekly security lane inputs from authoritative sources, starting with cve.org / CVE Services data, GitHub security advisories, RustSec advisories, and advisories or release notes for workflow-critical tooling
-2. compare findings only against Casgrain's actual surface area:
-   - Rust crates in `Cargo.lock`
-   - GitHub Actions and workflow helper tooling used under `.github/workflows/`
-   - Android/iOS CI tooling referenced by scripts and workflows
-   - repo-security tooling already relied on for merge gates (`gitleaks`, `cargo-audit`, `cargo-deny`, CodeQL, Renovate once active)
+Current automated cadence:
+1. the weekly `cve-watch` workflow runs `cargo audit --json` for Rust crate advisories
+2. the same workflow also queries open GitHub-native Dependabot alerts for the repo's watched non-Cargo ecosystems:
+   - GitHub Actions dependencies referenced by `.github/workflows/`
+   - Gradle-managed dependencies used by the Android smoke fixture
+3. both slices render triage-friendly markdown, sync a managed GitHub findings issue only when active advisories exist, and close that managed issue again on later clean runs
+
+Remaining manual review:
+1. review authoritative sources for surfaces that are still outside the automated dependency graph, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
+2. compare findings only against Casgrain's actual remaining manual surface area:
+   - downloaded CLI/tooling outside Cargo and Dependabot coverage
+   - Android/iOS host-image or runner-environment CVEs
+   - repo-security tooling or settings-side gaps that require maintainer/platform action rather than an in-repo diff
 3. classify each finding as one of:
    - **action now** — directly affects a package/tool/action currently used by the repo and needs an issue or PR immediately
    - **track** — plausibly relevant but needs version/surface verification before action
@@ -170,7 +176,7 @@ Current process until automation lands:
 5. if the safe fix depends on settings, billing, unavailable runners, or maintainer-only activation, use `blocked` and/or `waiting-on-human` explicitly instead of inventing a fake in-repo resolution
 
 Tracked gap:
-- issue #75 tracks the automation/reporting slice so this review cadence becomes durable instead of relying on manual periodic checks
+- issue #75 now tracks the remaining non-dependency/manual surfaces so the repo can later decide whether downloaded tooling and runner-environment CVEs deserve another bounded automation slice
 
 ## Known gaps and tracked follow-up
 
