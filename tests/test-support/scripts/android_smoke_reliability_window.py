@@ -49,6 +49,37 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Optional ISO-8601 UTC timestamp override for deterministic output",
     )
+    parser.add_argument(
+        "--current-run-id",
+        type=int,
+        default=0,
+        help="Optional current workflow run ID to splice into the payload as a completed run",
+    )
+    parser.add_argument(
+        "--current-run-url",
+        default="",
+        help="Optional current workflow run URL used with --current-run-id",
+    )
+    parser.add_argument(
+        "--current-run-event",
+        default="",
+        help="Optional current workflow event used with --current-run-id",
+    )
+    parser.add_argument(
+        "--current-run-head-branch",
+        default="",
+        help="Optional current workflow head branch used with --current-run-id",
+    )
+    parser.add_argument(
+        "--current-run-conclusion",
+        default="",
+        help="Optional current workflow conclusion used with --current-run-id",
+    )
+    parser.add_argument(
+        "--current-artifact-dir",
+        default="",
+        help="Optional directory containing the current run artifact used with --current-run-id",
+    )
     return parser.parse_args()
 
 
@@ -447,6 +478,66 @@ def load_artifact_summary_file(summary_path: Path) -> dict[str, Any]:
     return {"available": True, "summary": summary_payload}
 
 
+def collect_local_artifact_summary(artifact_dir: Path) -> dict[str, Any]:
+    if not artifact_dir.exists():
+        return {"available": False, "error": f"artifact directory does not exist: {artifact_dir}"}
+    summary_path = next(artifact_dir.rglob("evidence-summary.json"), None)
+    if summary_path is None:
+        return {
+            "available": False,
+            "error": f"evidence-summary.json missing under artifact directory: {artifact_dir}",
+        }
+    return load_artifact_summary_file(summary_path)
+
+
+def build_current_run_record(
+    *,
+    run_id: int,
+    run_url: str,
+    event: str,
+    head_branch: str,
+    conclusion: str,
+    artifact_dir: Path,
+) -> RunRecord:
+    if run_id <= 0:
+        raise ReliabilityWindowError("current run id must be a positive integer")
+    if conclusion not in {"success", "failure", "cancelled", "skipped", "timed_out", "action_required"}:
+        raise ReliabilityWindowError("current run conclusion must be a completed workflow conclusion")
+    return {
+        "id": run_id,
+        "url": run_url,
+        "event": event,
+        "head_branch": head_branch,
+        "status": "completed",
+        "conclusion": conclusion,
+        "artifact_summary": collect_local_artifact_summary(artifact_dir),
+    }
+
+
+def merge_current_run_into_payload(payload: dict[str, Any], current_run: RunRecord) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ReliabilityWindowError("reliability window payload root must be an object")
+    raw_runs = list_field(payload, "runs", error_context="reliability window payload")
+
+    merged_runs: list[Any] = []
+    inserted = False
+    for run in raw_runs:
+        if isinstance(run, dict) and run.get("id") == current_run["id"]:
+            merged_runs.append(current_run)
+            inserted = True
+            continue
+        if not inserted and isinstance(run, dict) and run.get("status") != "completed":
+            merged_runs.append(run)
+            continue
+        if not inserted:
+            merged_runs.append(current_run)
+            inserted = True
+        merged_runs.append(run)
+    if not inserted:
+        merged_runs.append(current_run)
+    return {**payload, "runs": merged_runs}
+
+
 def list_live_runs(*, repo: str, workflow: str, limit: int) -> list[RunRecord]:
     current_limit = max(1, limit)
     while True:
@@ -554,6 +645,30 @@ def main() -> int:
                 artifact_name=args.artifact_name,
                 limit=args.limit,
             )
+        if args.current_run_id:
+            current_run = build_current_run_record(
+                run_id=args.current_run_id,
+                run_url=scalar_field({"run_url": args.current_run_url}, "run_url", error_context="current run"),
+                event=scalar_field({"event": args.current_run_event}, "event", error_context="current run"),
+                head_branch=scalar_field(
+                    {"head_branch": args.current_run_head_branch},
+                    "head_branch",
+                    error_context="current run",
+                ),
+                conclusion=scalar_field(
+                    {"conclusion": args.current_run_conclusion},
+                    "conclusion",
+                    error_context="current run",
+                ),
+                artifact_dir=Path(
+                    scalar_field(
+                        {"artifact_dir": args.current_artifact_dir},
+                        "artifact_dir",
+                        error_context="current run",
+                    )
+                ),
+            )
+            payload = merge_current_run_into_payload(payload, current_run)
         summary = build_summary(payload, generated_at=generated_at)
         write_outputs(
             summary=summary,
