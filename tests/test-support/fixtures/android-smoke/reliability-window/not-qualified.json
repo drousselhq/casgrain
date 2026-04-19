@@ -1,0 +1,295 @@
+{
+  "repo": "drousselhq/casgrain",
+  "workflow": "android-emulator-smoke.yml",
+  "artifact_name": "casgrain-android-smoke",
+  "runs": [
+    {
+      "id": 24618204373,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24618204373",
+      "title": "fix: keep Android UI-dump failures inside smoke contract",
+      "event": "pull_request",
+      "head_branch": "fix/issue-78-ui-dump-structured-failure-20260418231102",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24617196188,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24617196188",
+      "title": "ci: extend CVE watch beyond cargo-audit",
+      "event": "pull_request",
+      "head_branch": "ci/issue-75-non-cargo-cve-watch",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24617059675,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24617059675",
+      "title": "fix: keep Android UI-dump failures inside smoke contract",
+      "event": "pull_request",
+      "head_branch": "fix/issue-78-ui-dump-structured-failure-20260418231102",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24616667960,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24616667960",
+      "title": "test: add fixture compiler goldens",
+      "event": "pull_request",
+      "head_branch": "feat/issue-100-fixture-goldens",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24616350137,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24616350137",
+      "title": "fix: keep Android UI-dump failures inside smoke contract",
+      "event": "pull_request",
+      "head_branch": "fix/issue-78-ui-dump-structured-failure-20260418231102",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24615851800,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24615851800",
+      "title": "test: cover failure-path runner and CLI contracts",
+      "event": "pull_request",
+      "head_branch": "feat/issue-101-failure-contract-coverage-v2",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24615427654,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24615427654",
+      "title": "test: add fixture compiler goldens",
+      "event": "pull_request",
+      "head_branch": "feat/issue-100-fixture-goldens",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24615093728,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24615093728",
+      "title": "test: add fixture compiler goldens",
+      "event": "pull_request",
+      "head_branch": "feat/issue-100-fixture-goldens",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24614637987,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24614637987",
+      "title": "test: cover failure-path runner and CLI contracts",
+      "event": "pull_request",
+      "head_branch": "feat/issue-101-failure-contract-coverage-v2",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24614422916,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24614422916",
+      "title": "fix: classify Android smoke failure contracts",
+      "event": "pull_request",
+      "head_branch": "fix/issue-78-android-failure-classification",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24613978318,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24613978318",
+      "title": "fix: classify Android smoke failure contracts",
+      "event": "pull_request",
+      "head_branch": "fix/issue-78-android-failure-classification",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24613407568,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24613407568",
+      "title": "test: cover failure-path runner and CLI contracts",
+      "event": "pull_request",
+      "head_branch": "feat/issue-101-failure-contract-coverage-v2",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24612492515,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24612492515",
+      "title": "test: add fixture compiler goldens",
+      "event": "pull_request",
+      "head_branch": "feat/issue-100-fixture-goldens",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24612273688,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24612273688",
+      "title": "refactor: split compiler lib into focused modules",
+      "event": "pull_request",
+      "head_branch": "hermes/issue-94-compiler-split",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24611942851,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24611942851",
+      "title": "refactor: split compiler lib into focused modules",
+      "event": "pull_request",
+      "head_branch": "hermes/issue-94-compiler-split",
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "passed",
+            "failure_class": null
+          }
+        }
+      }
+    },
+    {
+      "id": 24611423606,
+      "url": "https://github.com/drousselhq/casgrain/actions/runs/24611423606",
+      "title": "fix: classify Android smoke failure contracts",
+      "event": "pull_request",
+      "head_branch": "fix/issue-78-android-failure-classification",
+      "status": "completed",
+      "conclusion": "failure",
+      "artifact_summary": {
+        "available": true,
+        "summary": {
+          "contract": {
+            "status": "failed",
+            "failure_class": "artifact-contract-breach"
+          }
+        }
+      }
+    }
+  ]
+}
