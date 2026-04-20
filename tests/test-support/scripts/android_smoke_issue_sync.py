@@ -493,7 +493,7 @@ def apply_sync_plan(*, repo: str, plan: dict[str, Any], client: IssueClientProto
         raise IssueSyncError(f"Unsupported blocker action '{blocker_action}'")
 
     # Retired tracker issues are left untouched once closed.
-    # That keeps this sync logic from reviving issue #132 or any future retired tracker.
+    # That keeps this sync logic from reviving a retired tracker.
     tracker = plan["tracker"]
     if tracker["current_state"] == "OPEN":
         tracker_body = render_tracker_body(plan, blocker_issue_number=blocker_issue_number)
