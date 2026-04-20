@@ -12,6 +12,12 @@ from typing import Any
 
 REPORT_MARKER = "<!-- cve-watch-report -->"
 MAX_RUN_LIMIT = 50
+EXPECTED_SOURCE_RULE_GROUPS = {
+    "runner-images": 143,
+    "android-java-gradle": 142,
+    "ios-xcode-simulator": 144,
+}
+ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required"}
 
 
 class RunnerHostWatchError(Exception):
@@ -24,6 +30,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--repo", required=True, help="GitHub repo in owner/name form")
     parser.add_argument("--baseline", required=True, help="Path to .github/runner-host-watch.json")
+    parser.add_argument(
+        "--source-rules",
+        default="",
+        help="Optional path to .github/runner-host-advisory-sources.json; defaults next to --baseline",
+    )
     parser.add_argument("--android-workflow", required=True, help="Android smoke workflow file name")
     parser.add_argument("--android-artifact", required=True, help="Android smoke artifact name")
     parser.add_argument("--ios-workflow", required=True, help="iOS smoke workflow file name")
@@ -77,6 +88,20 @@ def required_scalar_field(container: dict[str, Any], field_name: str, *, error_c
     if isinstance(value, (dict, list, tuple, set, bool)):
         raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be a scalar value")
     return str(value)
+
+
+def required_string_field(container: dict[str, Any], field_name: str, *, error_context: str) -> str:
+    value = container.get(field_name, ...)
+    if not isinstance(value, str) or value == "":
+        raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be a non-empty string")
+    return value
+
+
+def required_int_field(container: dict[str, Any], field_name: str, *, error_context: str) -> int:
+    value = container.get(field_name, ...)
+    if type(value) is not int:
+        raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be an integer")
+    return value
 
 
 def validate_host_environment_contract(
@@ -177,6 +202,142 @@ def normalize_baseline(data: Any) -> dict[str, Any]:
         "issue_title": required_scalar_field(data, "issue_title", error_context="runner-host baseline"),
         "scope": required_scalar_field(data, "scope", error_context="runner-host baseline"),
         "platforms": normalized_platforms,
+    }
+
+
+def build_baseline_fact_index(normalized_baseline: dict[str, Any]) -> dict[tuple[str, str], dict[str, str]]:
+    fact_index: dict[tuple[str, str], dict[str, str]] = {}
+    for platform_name, platform in normalized_baseline["platforms"].items():
+        for watched in platform["watched_facts"]:
+            fact_index[(platform_name, watched["path"])] = watched
+    return fact_index
+
+
+def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(data, dict):
+        raise RunnerHostWatchError("runner-host source rules JSON root must be an object")
+    groups = required_list_field(data, "groups", error_context="runner-host source rules")
+    fact_index = build_baseline_fact_index(normalized_baseline)
+    normalized_groups: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+    seen_fact_paths: set[tuple[str, str]] = set()
+
+    for index, entry in enumerate(groups):
+        if not isinstance(entry, dict):
+            raise RunnerHostWatchError(f"runner-host source rules groups[{index}] must be an object")
+        error_context = f"runner-host source rules groups[{index}]"
+        key = required_string_field(entry, "key", error_context=error_context)
+        if key not in EXPECTED_SOURCE_RULE_GROUPS:
+            raise RunnerHostWatchError(f"{error_context} field 'key' must be one of {sorted(EXPECTED_SOURCE_RULE_GROUPS)}")
+        if key in seen_keys:
+            raise RunnerHostWatchError(f"duplicate source-rule group key '{key}'")
+        seen_keys.add(key)
+
+        platforms_raw = required_list_field(entry, "platforms", error_context=error_context)
+        if not platforms_raw:
+            raise RunnerHostWatchError(f"{error_context} field 'platforms' must list at least one platform")
+        platforms: list[str] = []
+        for platform_index, platform_name in enumerate(platforms_raw):
+            if not isinstance(platform_name, str) or platform_name not in normalized_baseline["platforms"]:
+                raise RunnerHostWatchError(
+                    f"{error_context} platforms[{platform_index}] must be one of {sorted(normalized_baseline['platforms'])}"
+                )
+            platforms.append(platform_name)
+
+        rule_kind = required_string_field(entry, "rule_kind", error_context=error_context)
+        if rule_kind not in ALLOWED_SOURCE_RULE_KINDS:
+            raise RunnerHostWatchError(
+                f"{error_context} field 'rule_kind' must be one of {sorted(ALLOWED_SOURCE_RULE_KINDS)}"
+            )
+        rationale = required_string_field(entry, "rationale", error_context=error_context)
+        follow_up_issue = required_int_field(entry, "follow_up_issue", error_context=error_context)
+        expected_issue = EXPECTED_SOURCE_RULE_GROUPS[key]
+        if follow_up_issue != expected_issue:
+            raise RunnerHostWatchError(
+                f"{error_context} field 'follow_up_issue' must be {expected_issue} for source-rule group '{key}'"
+            )
+
+        watched_fact_paths = required_list_field(entry, "watched_fact_paths", error_context=error_context)
+        if not watched_fact_paths:
+            raise RunnerHostWatchError(f"{error_context} field 'watched_fact_paths' must include at least one path")
+        normalized_paths: list[dict[str, str]] = []
+        for path_index, path_entry in enumerate(watched_fact_paths):
+            if not isinstance(path_entry, dict):
+                raise RunnerHostWatchError(f"{error_context} watched_fact_paths[{path_index}] must be an object")
+            path_context = f"{error_context} watched_fact_paths[{path_index}]"
+            platform_name = required_string_field(path_entry, "platform", error_context=path_context)
+            if platform_name not in platforms:
+                raise RunnerHostWatchError(
+                    f"{path_context} platform '{platform_name}' must be declared in group platforms {platforms}"
+                )
+            path = required_string_field(path_entry, "path", error_context=path_context)
+            fact_key = (platform_name, path)
+            if fact_key not in fact_index:
+                raise RunnerHostWatchError(
+                    f"{path_context} watched fact path '{platform_name}.{path}' is not defined in .github/runner-host-watch.json"
+                )
+            if fact_key in seen_fact_paths:
+                raise RunnerHostWatchError(
+                    f"{path_context} watched fact path '{platform_name}.{path}' is owned by more than one source-rule group"
+                )
+            seen_fact_paths.add(fact_key)
+            normalized_paths.append(
+                {
+                    "platform": platform_name,
+                    "path": path,
+                    "label": fact_index[fact_key]["label"],
+                    "baseline": fact_index[fact_key]["baseline"],
+                }
+            )
+
+        normalized_groups.append(
+            {
+                "key": key,
+                "surface": required_string_field(entry, "surface", error_context=error_context),
+                "platforms": platforms,
+                "watched_fact_paths": normalized_paths,
+                "rule_kind": rule_kind,
+                "rationale": rationale,
+                "managed_issue_behavior": required_string_field(
+                    entry,
+                    "managed_issue_behavior",
+                    error_context=error_context,
+                ),
+                "follow_up_issue": follow_up_issue,
+                "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
+            }
+        )
+
+    if seen_keys != set(EXPECTED_SOURCE_RULE_GROUPS):
+        missing = sorted(set(EXPECTED_SOURCE_RULE_GROUPS) - seen_keys)
+        extra = sorted(seen_keys - set(EXPECTED_SOURCE_RULE_GROUPS))
+        raise RunnerHostWatchError(
+            f"runner-host source rules groups must define exactly {sorted(EXPECTED_SOURCE_RULE_GROUPS)}; missing={missing} extra={extra}"
+        )
+
+    uncovered_fact_paths = sorted(
+        f"{platform}.{path}" for (platform, path) in fact_index.keys() - seen_fact_paths
+    )
+    if uncovered_fact_paths:
+        raise RunnerHostWatchError(
+            "runner-host source rules must assign every watched fact path from .github/runner-host-watch.json; "
+            f"uncovered={uncovered_fact_paths}"
+        )
+
+    managed_issue_title = required_string_field(
+        data,
+        "managed_issue_title",
+        error_context="runner-host source rules",
+    )
+    if managed_issue_title != normalized_baseline["issue_title"]:
+        raise RunnerHostWatchError(
+            "runner-host source rules field 'managed_issue_title' must match the baseline issue_title "
+            f"{normalized_baseline['issue_title']!r}"
+        )
+
+    return {
+        "managed_issue_title": managed_issue_title,
+        "groups": normalized_groups,
     }
 
 
@@ -421,10 +582,12 @@ def build_summary(
     *,
     repo: str,
     baseline: dict[str, Any],
+    source_rules: dict[str, Any],
     observed_platforms: dict[str, Any],
     generated_at: str,
 ) -> dict[str, Any]:
     normalized_baseline = normalize_baseline(baseline)
+    normalized_source_rules = normalize_source_rules(source_rules, normalized_baseline=normalized_baseline)
     if not isinstance(observed_platforms, dict):
         raise RunnerHostWatchError("observed platforms payload must be an object")
 
@@ -463,6 +626,8 @@ def build_summary(
         "reason": reason,
         "verdict": "manual-review-required" if advisory_count > 0 else "no review-needed",
         "platforms": platforms_summary,
+        "source_rule_managed_issue_title": normalized_source_rules["managed_issue_title"],
+        "source_rule_groups": normalized_source_rules["groups"],
     }
 
 
@@ -482,7 +647,23 @@ def render_markdown(summary: dict[str, Any]) -> str:
         f"- Repo: `{summary['repo']}`",
         f"- Generated at: `{summary['generated_at']}`",
         "",
+        "## Source-rule status",
+        f"- Managed issue path for future actionable findings: `{summary['source_rule_managed_issue_title']}`",
     ]
+    for group in summary["source_rule_groups"]:
+        watched_fact_list = ", ".join(
+            f"{entry['platform']}:{entry['path']}" for entry in group["watched_fact_paths"]
+        )
+        lines.extend(
+            [
+                f"- `{group['key']}` — `{group['rule_kind']}` via #{group['follow_up_issue']}",
+                f"  - Surface: {group['surface']}",
+                f"  - Candidate source: {group['candidate_source']}",
+                f"  - Rationale: {group['rationale']}",
+                f"  - Watched facts: {watched_fact_list}",
+            ]
+        )
+    lines.append("")
     for platform_name in ("android", "ios"):
         platform = summary["platforms"][platform_name]
         lines.append(f"## {display_names[platform_name]}")
@@ -524,7 +705,10 @@ def write_outputs(*, summary: dict[str, Any], summary_out: Path, markdown_out: P
 def main() -> int:
     args = parse_args()
     try:
-        baseline = load_json_file(args.baseline)
+        baseline_path = Path(args.baseline)
+        source_rules_path = Path(args.source_rules) if args.source_rules else baseline_path.with_name("runner-host-advisory-sources.json")
+        baseline = load_json_file(baseline_path)
+        source_rules = load_json_file(source_rules_path)
         generated_at = args.generated_at or utc_now()
         if args.input:
             payload = load_json_file(args.input)
@@ -563,6 +747,7 @@ def main() -> int:
         summary = build_summary(
             repo=repo,
             baseline=baseline,
+            source_rules=source_rules,
             observed_platforms=observed_platforms,
             generated_at=generated_at,
         )

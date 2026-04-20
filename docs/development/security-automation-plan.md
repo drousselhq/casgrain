@@ -56,7 +56,8 @@ Scheduled watch expansion:
 - the workflow also evaluates the checked-in `.github/security-tooling-watch.json` inventory for repo-controlled security tooling installed by workflows outside Cargo.lock / Dependabot coverage
 - that security-tooling slice uses GitHub `securityVulnerabilities` GraphQL data for pinned Rust CLI packages (`cargo-audit`, `cargo-deny`) and renders `manual-review-required` for `gitleaks` until the repo adopts a trustworthy machine-readable advisory source for that downloaded release-tarball path
 - the workflow also evaluates the checked-in `.github/runner-host-watch.json` inventory against `host-environment.json` artifacts emitted by the Android and iOS smoke workflows, opening `security: runner-host review needed` only when the inventoried runner/toolchain facts drift or the required host evidence is missing/unreadable
-- those expansions intentionally stay scoped to dependency-graph-backed alerts, the explicit checked-in security-tooling inventory, and drift-triggered runner-host review rather than broad runner-image or generic downloaded-tool CVE scraping; any later source-backed advisory automation for runner hosts remains follow-up work in #129
+- `.github/runner-host-advisory-sources.json` is now the repo-owned contract for later source-backed promotion decisions across the current `runner-images`, `android-java-gradle`, and `ios-xcode-simulator` groups; all three stay `manual-review-required` on current `main`
+- those expansions intentionally stay scoped to dependency-graph-backed alerts, the explicit checked-in security-tooling inventory, and drift-triggered runner-host review rather than broad runner-image or generic downloaded-tool CVE scraping; later source-specific promotion work is split across #143, #142, and #144 while continuing to reuse the existing runner-host managed-issue lane
 
 ## 2. Committed secrets
 
