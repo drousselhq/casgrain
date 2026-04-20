@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #122`
 - Immediate follow-up after this slice lands: `#127` (`Android smoke reliability-window issue sync`)
-- The later live-evidence outcome remains advisory only; the repo does not use a separate qualification-tracker issue.
+- The later live-evidence outcome remains advisory only for merge gating, but the repo-owned reliability sync on current main still tracks qualification state through issue `#132`.
 
 ## Why this slice exists
 
@@ -32,7 +32,7 @@ This slice must:
 4. emit both machine-readable JSON and concise markdown output
 5. stay fully testable offline from saved fixtures
 
-This slice is **only** the reporter/tooling slice. The immediate follow-up is issue `#127`, which adds repo-owned issue sync around the report output. The later operational judgment remains advisory only and does not use a separate tracker issue.
+This slice is **only** the reporter/tooling slice. The immediate follow-up is issue `#127`, which adds repo-owned issue sync around the report output. The later operational judgment remains advisory only for merge gating, but the repo-owned sync path on current main still tracks qualification state through issue `#132`.
 
 ## Required implementation artifacts
 
@@ -172,5 +172,5 @@ The implementation PR for this spec should be able to close `#122` because it fi
 
 After that PR merges:
 - issue `#127` is the immediate follow-up that adds repo-owned issue sync around the reporter output
-- the repo does not create a separate qualification-tracker issue; any concrete blocker gets filed directly as a normal issue
+- the repo-owned live tracker issue `#132` stays the source of truth for the qualification state; any concrete blocker beyond the schedule-shortfall case is filed directly by the later sync slice
 - issues `#80` and `#79` stay blocked on the actual Android readiness work they represent, not on a future-run streak

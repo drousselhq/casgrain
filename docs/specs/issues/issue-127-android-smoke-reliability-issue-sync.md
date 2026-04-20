@@ -3,7 +3,7 @@
 - Issue: `#127`
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #127`
-- The later live-evidence outcome is advisory only; the repo does not use a separate qualification-tracker issue.
+- The later live-evidence outcome remains advisory only for merge gating, but the repo-owned sync path on current main keeps qualification state in issue `#132`.
 
 ## Why this slice exists
 
@@ -23,7 +23,7 @@ The original issue mixed:
 1. the immediate tooling gap — sync the existing report into GitHub issue state
 2. the later wall-clock outcome — wait for enough scheduled `main` runs to accumulate and then record the first qualified window
 
-This issue is now narrowed to **only** the first concern. The later live-evidence outcome remains advisory only and does not use a separate tracker issue.
+This issue is now narrowed to **only** the first concern. The later live-evidence outcome remains advisory only for merge gating, but current main still tracks it through issue `#132`.
 
 ## Scope of this slice
 
@@ -36,7 +36,7 @@ This slice must:
 4. open or update a bounded blocker issue when the synced report later surfaces a concrete new blocker beyond simple schedule shortfall
 5. stay testable offline from saved fixtures plus one honest dry-run against the live repo state
 
-This slice is **not** the later qualification judgment itself. The automation added here should make that later judgment durable and boring, but there is no separate qualification tracker issue.
+This slice is **not** the later qualification judgment itself. The automation added here should make that later judgment durable and boring, but the repo-owned live tracker issue `#132` remains the source of truth for qualification state.
 
 ## Required implementation artifacts
 
@@ -57,7 +57,7 @@ Implementation contract:
 - keep plan selection pure enough to unit-test without live GitHub access
 
 Required report behavior:
-- if the report is `not_qualified` **only** because `schedule_main_runs_below_threshold`, keep the reporter output advisory and do not open a separate tracker issue
+- if the report is `not_qualified` **only** because `schedule_main_runs_below_threshold`, keep the reporter output advisory, update issue `#132`, and do not open a blocker issue
 - if the report is `qualified`, record the qualifying run IDs/event counts in the report output and stop surfacing the advisory shortfall state
 - if the report is `not_qualified` and the report identifies a concrete blocker beyond plain schedule shortfall, update the report output with that blocker summary and link the blocker issue created/reused below
 
@@ -71,7 +71,7 @@ Required blocker rules:
   - be labeled `enhancement` and `devops`
   - include the blocker run ID, run URL, report verdict/reasons, and machine-readable `failure_class` when present
   - include a marker that lets later sync runs update the same blocker issue instead of churning duplicates
-- the current known state (`schedule_main_runs_below_threshold` with historical blocker run `24611423606`) must **not** open a blocker issue by itself; the tracker issue should simply stay open with the current report summary until a genuinely new blocker or a qualified window appears
+- the current known state (`schedule_main_runs_below_threshold` with historical blocker run `24611423606`) must **not** open a blocker issue by itself; issue `#132` should simply stay open with the current report summary until a genuinely new blocker or a qualified window appears
 
 A simple deterministic title shape is acceptable, for example:
 - `android-smoke: unblock reliability window after <failure_class>`
@@ -88,15 +88,15 @@ Required fixture cases:
   - `reasons=["schedule_main_runs_below_threshold"]`
   - run `24611423606`
   - `failure_class=artifact-contract-breach`
-  - expected plan: update/reopen tracker issue only; **no blocker issue**
+  - expected plan: update/reopen issue `#132` only; **no blocker issue**
 - `qualified.*` modeling a future valid window:
   - `verdict=qualified`
   - at least 10 successful runs
   - at least 3 `schedule` runs on `main`
   - at least 3 `pull_request` runs
-  - expected plan: update tracker issue and close it
+  - expected plan: update issue `#132` and close it
 - `blocker.*` modeling a future non-qualified state with a concrete new blocker:
-  - expected plan: update tracker issue and create/reopen one bounded blocker issue
+  - expected plan: update issue `#132` and create/reopen one bounded blocker issue
 
 The fixture format does **not** need to mirror raw GitHub API payloads. It should instead match the sync helper's normalized plan inputs so tests stay small and deterministic.
 
@@ -135,7 +135,7 @@ The later implementation PR must update:
 
 That doc update must explicitly state:
 - the Android smoke workflow now has a repo-owned reliability issue-sync path
-- the repo does not use a separate live tracker issue for qualification state
+- the repo-owned live tracker issue `#132` is the qualification-state surface the sync path updates on current main
 - the sync may create or reuse one bounded blocker issue when the report surfaces a concrete new blocker
 - this slice does **not** promote Android to a required merge gate and does **not** replace the broader docs/policy work under `#80`
 
@@ -186,12 +186,12 @@ python3 tests/test-support/scripts/android_smoke_issue_sync.py \
   --dry-run
 ```
 
-The current live dry-run should plan an **open/update tracker only** action because the report is still not qualified solely for `schedule_main_runs_below_threshold`.
+The current live dry-run should plan an **open/update tracker only** action on issue `#132` because the report is still not qualified solely for `schedule_main_runs_below_threshold`.
 
 ## Completion boundary
 
 The implementation PR for this spec should be able to close `#127` because it finishes the immediate repo-controlled sync/tooling slice.
 
 After that PR merges:
-- the live evidence outcome remains advisory only; any concrete blocker issue is linked directly from the report output
+- the live evidence outcome remains advisory only for merge gating; any concrete blocker issue is linked directly from the report output rather than replacing issue `#132`
 - issues `#80` and `#79` stay blocked on the actual Android readiness work they represent, not on a separate qualification tracker

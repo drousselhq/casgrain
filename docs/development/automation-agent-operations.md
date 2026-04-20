@@ -36,7 +36,14 @@ These labels are still the durable execution-state surface consumed by automatio
 
 Use GitHub-native issue relationships (`Blocked by`, parent/sub-issue links) when possible instead of encoding dependencies only in comments.
 
-## What this repo does not define
+## Android smoke reliability sync
+
+Casgrain's Android smoke reliability report/sync path on current `main` keeps issue `#132` as the repo-owned live tracker for qualification state.
+
+Operational rules:
+- if the synced report is `not_qualified` only because of `schedule_main_runs_below_threshold`, keep the tracker open/updateable and do not create a blocker issue
+- if the synced report later surfaces a concrete blocker beyond the schedule-shortfall case, create or reuse one bounded blocker issue and link it from the tracker
+- keep the wording repo-facing and operational; do not encode lane-internal orchestration details here
 
 Casgrain does **not** keep the following automation internals in-repo anymore:
 
