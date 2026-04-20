@@ -17,6 +17,7 @@ EXPECTED_SOURCE_RULE_GROUPS = {
     "android-java-gradle": 142,
     "ios-xcode-simulator": 144,
 }
+ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required"}
 
 
 class RunnerHostWatchError(Exception):
@@ -240,6 +241,10 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             platforms.append(platform_name)
 
         rule_kind = required_scalar_field(entry, "rule_kind", error_context=error_context)
+        if rule_kind not in ALLOWED_SOURCE_RULE_KINDS:
+            raise RunnerHostWatchError(
+                f"{error_context} field 'rule_kind' must be one of {sorted(ALLOWED_SOURCE_RULE_KINDS)}"
+            )
         rationale = required_scalar_field(entry, "rationale", error_context=error_context)
         follow_up_issue = required_int_field(entry, "follow_up_issue", error_context=error_context)
         expected_issue = EXPECTED_SOURCE_RULE_GROUPS[key]

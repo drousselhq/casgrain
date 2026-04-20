@@ -173,6 +173,22 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         self.assertIn("watched fact path", str(error.exception))
 
+    def test_build_summary_fails_closed_when_source_rule_uses_unsupported_rule_kind(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("invalid-rule-kind")
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertIn("rule_kind", str(error.exception))
+        self.assertIn("manual-review-required", str(error.exception))
+
     def test_build_summary_fails_closed_when_source_rule_omits_follow_up_issue(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("missing-follow-up")
