@@ -30,6 +30,10 @@ def load_source_rules_case(name: str) -> dict[str, object]:
     return json.loads((SOURCE_RULES_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
+def load_repo_source_rules() -> dict[str, object]:
+    return json.loads((REPO_ROOT / ".github" / "runner-host-advisory-sources.json").read_text(encoding="utf-8"))
+
+
 class RunnerHostReviewReportTests(unittest.TestCase):
     def test_collect_live_platform_reports_missing_successful_run_as_missing_evidence(self) -> None:
         with patch.object(
@@ -158,6 +162,33 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("runner-images", markdown)
         self.assertIn("#143", markdown)
 
+    def test_build_summary_accepts_checked_in_source_rules_manifest(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_repo_source_rules()
+
+        summary = MODULE.build_summary(
+            repo=str(fixture_input["repo"]),
+            baseline=baseline,
+            source_rules=source_rules,
+            observed_platforms=fixture_input["platforms"],
+            generated_at="2026-04-19T09:00:00Z",
+        )
+
+        android_group = next(group for group in summary["source_rule_groups"] if group["key"] == "android-java-gradle")
+        self.assertEqual(android_group["follow_up_issue"], 142)
+        self.assertIn(
+            {"platform": "android", "path": "emulator.api_level", "label": "Android API level", "baseline": "34"},
+            android_group["watched_fact_paths"],
+        )
+        self.assertIn(
+            {"platform": "android", "path": "emulator.device_name", "label": "emulator device", "baseline": "sdk_gphone64_x86_64"},
+            android_group["watched_fact_paths"],
+        )
+        self.assertIn(
+            {"platform": "android", "path": "emulator.os_version", "label": "Android runtime", "baseline": "14"},
+            android_group["watched_fact_paths"],
+        )
+
     def test_build_summary_fails_closed_when_source_rules_reference_unknown_watched_fact_path(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("unknown-path")
@@ -172,6 +203,24 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             )
 
         self.assertIn("watched fact path", str(error.exception))
+
+    def test_build_summary_fails_closed_when_source_rules_leave_watched_facts_unowned(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("incomplete-coverage")
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertIn("must assign every watched fact path", str(error.exception))
+        self.assertIn("android.emulator.api_level", str(error.exception))
+        self.assertIn("android.emulator.device_name", str(error.exception))
+        self.assertIn("android.emulator.os_version", str(error.exception))
 
     def test_build_summary_fails_closed_when_source_rule_uses_unsupported_rule_kind(self) -> None:
         baseline, fixture_input = load_case("baseline-match")

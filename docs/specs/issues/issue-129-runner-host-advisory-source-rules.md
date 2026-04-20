@@ -5,7 +5,7 @@
 - Expected implementation PR linkage: `Closes #129`
 - Follow-up source-specific slices after this contract lands:
   - `#143` — GitHub-hosted runner image surfaces
-  - `#142` — Android Java / Gradle host toolchain surfaces
+  - `#142` — Android Java / Gradle / emulator-runtime host surfaces
   - `#144` — iOS Xcode / simulator-runtime host surfaces
 
 ## Why this slice exists
@@ -28,7 +28,7 @@ That means the repo already owns the **drift / missing-evidence** slice honestly
 
 What still remains is narrower than the original umbrella issue wording. The original issue mixed three different future automation concerns that do **not** share one honest implementation seam:
 1. GitHub-hosted runner image sources
-2. Android Java / Gradle toolchain sources
+2. Android Java / Gradle / emulator-runtime sources
 3. iOS Xcode / simulator-runtime sources
 
 Current `main` has no checked-in source-rule contract that records, in repo-owned machine-readable form:
@@ -67,7 +67,7 @@ It must define exactly these three source groups:
 1. `runner-images`
    - covers the watched runner-image / OS facts that currently come from GitHub-hosted runner evidence for Android and iOS
 2. `android-java-gradle`
-   - covers the Android watched Java / Gradle host-toolchain facts
+   - covers the Android watched Java / Gradle host-toolchain facts plus the Android emulator runtime facts already inventoried in `.github/runner-host-watch.json`
 3. `ios-xcode-simulator`
    - covers the watched iOS Xcode / simulator-runtime host facts
 
@@ -170,7 +170,7 @@ Those docs updates must explicitly say:
 - **no** new managed-issue title or parallel issue-sync lane
 - **no** changes to `.github/runner-host-watch.json` watched-fact coverage beyond any tiny schema link needed for validation
 - **no** direct advisory implementation for GitHub-hosted runner images (`#143`)
-- **no** direct advisory implementation for Android Java / Gradle host-toolchain surfaces (`#142`)
+- **no** direct advisory implementation for Android Java / Gradle / emulator-runtime host surfaces (`#142`)
 - **no** direct advisory implementation for iOS Xcode / simulator-runtime surfaces (`#144`)
 - **no** broad scraping of hosted-runner package inventories or release-note text
 
@@ -212,6 +212,6 @@ The implementation PR for this spec should be able to close `#129` because it fi
 
 After that PR merges:
 - `#143` remains the bounded follow-up for any GitHub-hosted runner image source-backed automation
-- `#142` remains the bounded follow-up for any Android Java / Gradle source-backed automation
+- `#142` remains the bounded follow-up for any Android Java / Gradle / emulator-runtime source-backed automation
 - `#144` remains the bounded follow-up for any iOS Xcode / simulator-runtime source-backed automation
 - the shipped runner-host lane on `main` still remains drift-triggered review until one of those follow-up issues lands

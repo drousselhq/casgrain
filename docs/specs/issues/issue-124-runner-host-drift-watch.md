@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #124`
 - Follow-up contract that landed after this slice: `#129` (`Add source-rule contract for runner-host advisory evaluation`)
-- Remaining later source-specific automation is split across `#143` (runner images), `#142` (Android Java / Gradle), and `#144` (iOS Xcode / simulator runtime)
+- Remaining later source-specific automation is split across `#143` (runner images), `#142` (Android Java / Gradle / emulator runtime), and `#144` (iOS Xcode / simulator runtime)
 
 ## Why this slice exists
 

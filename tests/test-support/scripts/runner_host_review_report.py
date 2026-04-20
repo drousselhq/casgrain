@@ -311,6 +311,15 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             f"runner-host source rules groups must define exactly {sorted(EXPECTED_SOURCE_RULE_GROUPS)}; missing={missing} extra={extra}"
         )
 
+    uncovered_fact_paths = sorted(
+        f"{platform}.{path}" for (platform, path) in fact_index.keys() - seen_fact_paths
+    )
+    if uncovered_fact_paths:
+        raise RunnerHostWatchError(
+            "runner-host source rules must assign every watched fact path from .github/runner-host-watch.json; "
+            f"uncovered={uncovered_fact_paths}"
+        )
+
     return {
         "managed_issue_title": required_scalar_field(
             data,
