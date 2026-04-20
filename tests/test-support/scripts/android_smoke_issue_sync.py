@@ -492,20 +492,18 @@ def apply_sync_plan(*, repo: str, plan: dict[str, Any], client: IssueClientProto
     elif blocker_action != "noop":
         raise IssueSyncError(f"Unsupported blocker action '{blocker_action}'")
 
-    tracker_body = render_tracker_body(plan, blocker_issue_number=blocker_issue_number)
+    # Retired tracker issues are left untouched once closed.
+    # That keeps this sync logic from reviving issue #132 or any future retired tracker.
     tracker = plan["tracker"]
-    if tracker["current_state"] == "CLOSED" and tracker["desired_state"] == "OPEN":
-        client.reopen_issue(repo=repo, number=tracker["issue"])
-        client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
-    elif tracker["desired_state"] == "OPEN":
-        client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
-    elif tracker["current_state"] == "OPEN" and tracker["desired_state"] == "CLOSED":
-        client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
-        client.close_issue(repo=repo, number=tracker["issue"], reason="completed")
-    elif tracker["desired_state"] == "CLOSED":
-        client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
-    else:
-        raise IssueSyncError("Unsupported tracker transition")
+    if tracker["current_state"] == "OPEN":
+        tracker_body = render_tracker_body(plan, blocker_issue_number=blocker_issue_number)
+        if tracker["desired_state"] == "OPEN":
+            client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
+        elif tracker["desired_state"] == "CLOSED":
+            client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
+            client.close_issue(repo=repo, number=tracker["issue"], reason="completed")
+        else:
+            raise IssueSyncError("Unsupported tracker transition")
 
     return {
         "tracker_issue": tracker["issue"],
