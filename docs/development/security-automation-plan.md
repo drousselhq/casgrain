@@ -164,9 +164,9 @@ Implementation baseline:
 - vulnerability alert PRs are labeled `devops` and `security-review-needed` so security-sensitive upgrade work enters the existing workflow state machine honestly
 
 Operational note:
-- the config alone does not execute; a maintainer still needs to install/enable the Renovate GitHub app (or equivalent approved Renovate runner) for `drousselhq/casgrain`
-- that app-install step is settings-side and should be handled explicitly rather than implied by the config merge
-- until that maintainer-owned settings action happens, treat Renovate activation as external follow-up work rather than assuming the merged config is already live
+- the Renovate lane is now live for `drousselhq/casgrain`, evidenced by the Dependency Dashboard and bot-authored update PRs
+- the GitHub app (or equivalent approved Renovate runner) is still a settings-side dependency for keeping that lane alive
+- if update PRs stop appearing, verify the dashboard state and app installation before assuming the in-repo config regressed
 
 Review expectations for Renovate PRs:
 - treat Renovate PRs as DevOps-lane maintenance work

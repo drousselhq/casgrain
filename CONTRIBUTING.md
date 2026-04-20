@@ -130,7 +130,7 @@ Current policy:
 - Renovate PRs should stay in the DevOps lane and keep the `devops` label
 - workflow-action or security-sensitive upgrade PRs should keep `security-review-needed` until explicitly cleared
 
-Because app installation is a GitHub settings step, merging the config alone does not activate Renovate. If update PRs do not appear after the config lands, check that the Renovate app is installed for `drousselhq/casgrain` before assuming the config is broken; until then, treat activation as maintainer-owned external follow-up rather than completed in-repo work.
+Casgrain's Renovate lane is currently live. If update PRs stop appearing, first verify the Dependency Dashboard and that the Renovate app remains installed for `drousselhq/casgrain` before assuming the in-repo config regressed.
 
 If your change adds fixtures, traces, sample configs, or other content that can resemble credentials, run `gitleaks dir .` locally before opening the PR.
 Casgrain keeps the repo policy in `.gitleaks.toml`; prefer a narrow path- or rule-scoped allowlist there instead of weakening the scanner globally.
