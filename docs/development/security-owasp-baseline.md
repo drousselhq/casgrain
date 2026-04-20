@@ -63,17 +63,14 @@ Required baseline:
 - downloaded security tooling should use explicit versions and integrity verification where practical
 
 Current repo status:
-- **partially meets baseline**
+- **meets baseline** for the current workflow surface
 
 Evidence:
 - repository default workflow permissions are `read`
 - `security.yml` declares explicit top-level permissions and uses `persist-credentials: false`
 - the `gitleaks` install path verifies the release tarball SHA-256 before execution
 - CodeQL workflow actions are SHA-pinned
-- several other workflows still use mutable action tags such as `actions/checkout@v6`, `actions/setup-java@v4`, `Swatinem/rust-cache@v2`, and `actions/upload-artifact@v4`
-
-Tracked gap:
-- follow-up issue #82 tracks SHA pinning of the remaining workflow action references so the repo's baseline is consistent across the workflow fleet
+- the current workflow fleet pins checkout, toolchain, cache, artifact, and helper actions to immutable commit SHAs under `.github/workflows/`
 
 ### 3. Secret and sensitive-data exposure controls
 
@@ -96,7 +93,7 @@ Evidence:
 - `docs/development/security-automation-plan.md` and `CONTRIBUTING.md` already document the repo-scoped allowlist policy
 
 Note:
-- `secret_scanning_non_provider_patterns` and `secret_scanning_validity_checks` are currently disabled in repository settings. They are visible in the audit evidence, but they are not yet treated as a blocking baseline gap because the current repo-specific committed-secret controls are already in place and the first missing high-value follow-up is better spent on workflow SHA pinning and CVE monitoring.
+- `secret_scanning_non_provider_patterns` and `secret_scanning_validity_checks` are currently disabled in repository settings. They are visible in the audit evidence, but they are not yet treated as a blocking baseline gap because the current repo-specific committed-secret controls are already in place and the next higher-value follow-up is source-backed advisory coverage for the remaining manually reviewed security surfaces.
 
 ### 4. Dependency and supply-chain exposure
 
@@ -111,16 +108,13 @@ Required baseline:
 - security updates from GitHub's native advisory system should remain enabled
 
 Current repo status:
-- **mostly meets baseline**, with one important settings-side follow-up still open
+- **meets baseline** for the current repository surface
 
 Evidence:
 - `cargo audit` is a required CI signal for Rust dependency vulnerabilities
 - `cargo deny check licenses sources` is a required CI signal for license/source policy
 - GitHub reports `dependabot_security_updates` as enabled
-- issue #73 and PR #76 define the Renovate operating lane for routine dependency updates
-
-Tracked gap:
-- issue #73 remains `waiting-on-human` because the in-repo Renovate configuration is ready, but a maintainer still needs to install/enable the Renovate app (or an approved equivalent runner) before the update lane is live
+- the repo now has a live Renovate operating lane via the Dependency Dashboard and bot-authored update PRs for routine dependency churn
 
 ### 5. Static analysis and workflow scanning
 
@@ -186,9 +180,7 @@ Tracked gap:
 
 ## Known gaps and tracked follow-up
 
-- #73 — activate the Renovate lane by enabling the app/runner outside the repo
 - #129 — evaluate whether the runner-host drift watch should later grow into source-backed advisory automation
-- #82 — pin remaining mutable GitHub Actions references to immutable commit SHAs
 
 ## Triage rules for security findings
 
