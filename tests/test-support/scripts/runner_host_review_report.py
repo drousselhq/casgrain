@@ -90,6 +90,13 @@ def required_scalar_field(container: dict[str, Any], field_name: str, *, error_c
     return str(value)
 
 
+def required_string_field(container: dict[str, Any], field_name: str, *, error_context: str) -> str:
+    value = container.get(field_name, ...)
+    if not isinstance(value, str) or value == "":
+        raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be a non-empty string")
+    return value
+
+
 def required_int_field(container: dict[str, Any], field_name: str, *, error_context: str) -> int:
     value = container.get(field_name, ...)
     if type(value) is not int:
@@ -219,7 +226,7 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
         if not isinstance(entry, dict):
             raise RunnerHostWatchError(f"runner-host source rules groups[{index}] must be an object")
         error_context = f"runner-host source rules groups[{index}]"
-        key = required_scalar_field(entry, "key", error_context=error_context)
+        key = required_string_field(entry, "key", error_context=error_context)
         if key not in EXPECTED_SOURCE_RULE_GROUPS:
             raise RunnerHostWatchError(f"{error_context} field 'key' must be one of {sorted(EXPECTED_SOURCE_RULE_GROUPS)}")
         if key in seen_keys:
@@ -237,12 +244,12 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                 )
             platforms.append(platform_name)
 
-        rule_kind = required_scalar_field(entry, "rule_kind", error_context=error_context)
+        rule_kind = required_string_field(entry, "rule_kind", error_context=error_context)
         if rule_kind not in ALLOWED_SOURCE_RULE_KINDS:
             raise RunnerHostWatchError(
                 f"{error_context} field 'rule_kind' must be one of {sorted(ALLOWED_SOURCE_RULE_KINDS)}"
             )
-        rationale = required_scalar_field(entry, "rationale", error_context=error_context)
+        rationale = required_string_field(entry, "rationale", error_context=error_context)
         follow_up_issue = required_int_field(entry, "follow_up_issue", error_context=error_context)
         expected_issue = EXPECTED_SOURCE_RULE_GROUPS[key]
         if follow_up_issue != expected_issue:
@@ -258,12 +265,12 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             if not isinstance(path_entry, dict):
                 raise RunnerHostWatchError(f"{error_context} watched_fact_paths[{path_index}] must be an object")
             path_context = f"{error_context} watched_fact_paths[{path_index}]"
-            platform_name = required_scalar_field(path_entry, "platform", error_context=path_context)
+            platform_name = required_string_field(path_entry, "platform", error_context=path_context)
             if platform_name not in platforms:
                 raise RunnerHostWatchError(
                     f"{path_context} platform '{platform_name}' must be declared in group platforms {platforms}"
                 )
-            path = required_scalar_field(path_entry, "path", error_context=path_context)
+            path = required_string_field(path_entry, "path", error_context=path_context)
             fact_key = (platform_name, path)
             if fact_key not in fact_index:
                 raise RunnerHostWatchError(
@@ -286,18 +293,18 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
         normalized_groups.append(
             {
                 "key": key,
-                "surface": required_scalar_field(entry, "surface", error_context=error_context),
+                "surface": required_string_field(entry, "surface", error_context=error_context),
                 "platforms": platforms,
                 "watched_fact_paths": normalized_paths,
                 "rule_kind": rule_kind,
                 "rationale": rationale,
-                "managed_issue_behavior": required_scalar_field(
+                "managed_issue_behavior": required_string_field(
                     entry,
                     "managed_issue_behavior",
                     error_context=error_context,
                 ),
                 "follow_up_issue": follow_up_issue,
-                "candidate_source": required_scalar_field(entry, "candidate_source", error_context=error_context),
+                "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
             }
         )
 
@@ -317,7 +324,7 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             f"uncovered={uncovered_fact_paths}"
         )
 
-    managed_issue_title = required_scalar_field(
+    managed_issue_title = required_string_field(
         data,
         "managed_issue_title",
         error_context="runner-host source rules",

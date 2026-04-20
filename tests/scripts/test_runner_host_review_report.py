@@ -304,6 +304,25 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("managed_issue_title", str(error.exception))
         self.assertIn("baseline issue_title", str(error.exception))
 
+    def test_build_summary_fails_closed_when_source_rule_text_metadata_is_not_a_string(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        for field_name in ("surface", "rationale", "managed_issue_behavior", "candidate_source"):
+            with self.subTest(field_name=field_name):
+                source_rules = load_source_rules_case("valid")
+                source_rules["groups"][0][field_name] = 123
+
+                with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+                    MODULE.build_summary(
+                        repo=str(fixture_input["repo"]),
+                        baseline=baseline,
+                        source_rules=source_rules,
+                        observed_platforms=fixture_input["platforms"],
+                        generated_at="2026-04-19T09:00:00Z",
+                    )
+
+                self.assertIn(field_name, str(error.exception))
+                self.assertIn("must be a non-empty string", str(error.exception))
+
     def test_build_summary_fails_closed_when_manual_review_source_rule_omits_rationale(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("missing-rationale")
