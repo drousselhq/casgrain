@@ -92,12 +92,9 @@ def required_scalar_field(container: dict[str, Any], field_name: str, *, error_c
 
 def required_int_field(container: dict[str, Any], field_name: str, *, error_context: str) -> int:
     value = container.get(field_name, ...)
-    if isinstance(value, bool) or value in (..., None, ""):
+    if type(value) is not int:
         raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be an integer")
-    try:
-        return int(value)
-    except (TypeError, ValueError) as exc:
-        raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be an integer") from exc
+    return value
 
 
 def validate_host_environment_contract(
@@ -320,12 +317,19 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             f"uncovered={uncovered_fact_paths}"
         )
 
+    managed_issue_title = required_scalar_field(
+        data,
+        "managed_issue_title",
+        error_context="runner-host source rules",
+    )
+    if managed_issue_title != normalized_baseline["issue_title"]:
+        raise RunnerHostWatchError(
+            "runner-host source rules field 'managed_issue_title' must match the baseline issue_title "
+            f"{normalized_baseline['issue_title']!r}"
+        )
+
     return {
-        "managed_issue_title": required_scalar_field(
-            data,
-            "managed_issue_title",
-            error_context="runner-host source rules",
-        ),
+        "managed_issue_title": managed_issue_title,
         "groups": normalized_groups,
     }
 
