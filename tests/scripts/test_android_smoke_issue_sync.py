@@ -179,7 +179,7 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         self.assertIn('"action": "create"', dry_run)
         self.assertIn('"issue": 132', dry_run)
 
-    def test_apply_sync_plan_reopens_tracker_and_updates_blocker_without_live_github(self) -> None:
+    def test_apply_sync_plan_does_not_reopen_a_retired_tracker_without_live_github(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("blocker"),
             markdown=load_markdown("blocker"),
@@ -192,9 +192,7 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
 
         self.assertEqual(result["blocker_issue_number"], 900)
         self.assertEqual(client.operations[0][0], "create")
-        self.assertEqual(client.operations[1], ("reopen", "drousselhq/casgrain", 132))
-        self.assertEqual(client.operations[2][0], "edit")
-        self.assertIn("#900", client.operations[2][3])
+        self.assertEqual(len(client.operations), 1)
 
     def test_apply_sync_plan_closes_tracker_when_qualified_without_live_github(self) -> None:
         plan = MODULE.build_sync_plan(
