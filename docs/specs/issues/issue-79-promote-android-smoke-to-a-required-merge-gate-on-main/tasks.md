@@ -67,8 +67,8 @@ PY`
 ## 5. Run the bounded validation set and hand back with honest closure semantics
 - [x] 5.1 Run `git diff --check` and the workflow-trigger regression tests.
 - [x] 5.2 Re-read the final Android workflow YAML and confirm the required-check-safe trigger plus stable `android-smoke` job name still hold.
-- [ ] 5.3 In the PR summary/comment, say the implementation PR is `Part of #79` and state whether the live ruleset update has already been applied or is still the remaining close-out step.
-- [ ] 5.4 Hand the PR back to QA with the exact validation evidence and any truthful docs lane note.
+- [x] 5.3 In the PR summary/comment, say the implementation PR is `Part of #79` and state whether the live ruleset update has already been applied or is still the remaining close-out step.
+- [x] 5.4 Hand the PR back to QA with the exact validation evidence and any truthful docs lane note.
 - Goal: Leave QA and later merge work with one honest picture of what changed and what still remains to close `#79`.
 - Validation: `git diff --check && python3 -m unittest tests/scripts/test_mobile_smoke_workflow_triggers.py`
 - Non-goals: No silent issue closure before the live ruleset verification is complete.
