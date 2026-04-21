@@ -23,20 +23,45 @@
       "candidate_source": "GitHub-hosted runner image release metadata"
     },
     {
-      "key": "android-java-gradle",
-      "surface": "Android Java and Gradle host toolchain facts",
+      "key": "android-java",
+      "surface": "Android Java host version facts",
       "platforms": ["android"],
       "watched_fact_paths": [
         {"platform": "android", "path": "java.configured_major"},
-        {"platform": "android", "path": "java.resolved_version"},
+        {"platform": "android", "path": "java.resolved_version"}
+      ],
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main captures Android Java host version facts from smoke evidence only; it does not yet evaluate authoritative source metadata for those versions.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "follow_up_issue": 154,
+      "candidate_source": "Authoritative Java release/support metadata for the configured and resolved runtime version facts"
+    },
+    {
+      "key": "android-gradle",
+      "surface": "Android Gradle host version facts",
+      "platforms": ["android"],
+      "watched_fact_paths": [
         {"platform": "android", "path": "gradle.configured_version"},
         {"platform": "android", "path": "gradle.resolved_version"}
       ],
       "rule_kind": "manual-review-required",
-      "rationale": "Current main captures Java and Gradle versions from smoke evidence only; it does not yet query authoritative source feeds for those host toolchain versions.",
+      "rationale": "Current main captures Android Gradle host version facts from smoke evidence only; it does not yet evaluate authoritative source metadata for those versions.",
       "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
-      "follow_up_issue": 142,
-      "candidate_source": "Authoritative Java and Gradle release metadata"
+      "follow_up_issue": 155,
+      "candidate_source": "Authoritative Gradle release/support metadata for the configured and resolved version facts"
+    },
+    {
+      "key": "android-emulator-runtime",
+      "surface": "Android emulator runtime host facts",
+      "platforms": ["android"],
+      "watched_fact_paths": [
+        {"platform": "android", "path": "emulator.api_level"}
+      ],
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main captures Android emulator runtime facts from smoke evidence only; it does not yet evaluate authoritative source metadata for those runtime surfaces.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "follow_up_issue": 156,
+      "candidate_source": "Authoritative Android emulator / system-image / runtime metadata for the watched emulator facts"
     },
     {
       "key": "ios-xcode-simulator",

@@ -150,9 +150,16 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(summary["verdict"], "no review-needed")
         self.assertEqual(summary["platforms"]["android"]["status"], "no review-needed")
         self.assertEqual(summary["platforms"]["ios"]["status"], "no review-needed")
-        self.assertEqual(summary["source_rule_groups"][0]["key"], "runner-images")
-        self.assertEqual(summary["source_rule_groups"][0]["rule_kind"], "manual-review-required")
-        self.assertEqual(summary["source_rule_groups"][0]["follow_up_issue"], 143)
+        key_map = {group["key"]: group for group in summary["source_rule_groups"]}
+        self.assertEqual(
+            set(key_map),
+            {"runner-images", "android-java", "android-gradle", "android-emulator-runtime", "ios-xcode-simulator"},
+        )
+        self.assertEqual(key_map["runner-images"]["rule_kind"], "manual-review-required")
+        self.assertEqual(key_map["runner-images"]["follow_up_issue"], 143)
+        self.assertEqual(key_map["android-java"]["follow_up_issue"], 154)
+        self.assertEqual(key_map["android-gradle"]["follow_up_issue"], 155)
+        self.assertEqual(key_map["android-emulator-runtime"]["follow_up_issue"], 156)
 
         markdown = MODULE.render_markdown(summary)
         self.assertIn("<!-- cve-watch-report -->", markdown)
@@ -160,7 +167,12 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("drift-triggered manual review", markdown)
         self.assertIn("Source-rule status", markdown)
         self.assertIn("runner-images", markdown)
-        self.assertIn("#143", markdown)
+        self.assertIn("android-java", markdown)
+        self.assertIn("android-gradle", markdown)
+        self.assertIn("android-emulator-runtime", markdown)
+        self.assertIn("#154", markdown)
+        self.assertIn("#155", markdown)
+        self.assertIn("#156", markdown)
 
     def test_build_summary_accepts_checked_in_source_rules_manifest(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
@@ -174,19 +186,76 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             generated_at="2026-04-19T09:00:00Z",
         )
 
-        android_group = next(group for group in summary["source_rule_groups"] if group["key"] == "android-java-gradle")
-        self.assertEqual(android_group["follow_up_issue"], 142)
-        self.assertIn(
-            {"platform": "android", "path": "emulator.api_level", "label": "Android API level", "baseline": "34"},
-            android_group["watched_fact_paths"],
+        source_rule_groups = {group["key"]: group for group in summary["source_rule_groups"]}
+        self.assertEqual(
+            set(source_rule_groups),
+            {"runner-images", "android-java", "android-gradle", "android-emulator-runtime", "ios-xcode-simulator"},
         )
-        self.assertIn(
-            {"platform": "android", "path": "emulator.device_name", "label": "emulator device", "baseline": "sdk_gphone64_x86_64"},
-            android_group["watched_fact_paths"],
+
+        android_java = source_rule_groups["android-java"]
+        self.assertEqual(android_java["follow_up_issue"], 154)
+        self.assertEqual(
+            android_java["watched_fact_paths"],
+            [
+                {
+                    "platform": "android",
+                    "path": "java.configured_major",
+                    "label": "configured Java major",
+                    "baseline": "17",
+                },
+                {
+                    "platform": "android",
+                    "path": "java.resolved_version",
+                    "label": "resolved Java version",
+                    "baseline": "17.0.18+8",
+                },
+            ],
         )
-        self.assertIn(
-            {"platform": "android", "path": "emulator.os_version", "label": "Android runtime", "baseline": "14"},
-            android_group["watched_fact_paths"],
+
+        android_gradle = source_rule_groups["android-gradle"]
+        self.assertEqual(android_gradle["follow_up_issue"], 155)
+        self.assertEqual(
+            android_gradle["watched_fact_paths"],
+            [
+                {
+                    "platform": "android",
+                    "path": "gradle.configured_version",
+                    "label": "configured Gradle version",
+                    "baseline": "8.7",
+                },
+                {
+                    "platform": "android",
+                    "path": "gradle.resolved_version",
+                    "label": "resolved Gradle version",
+                    "baseline": "8.7",
+                },
+            ],
+        )
+
+        android_emulator = source_rule_groups["android-emulator-runtime"]
+        self.assertEqual(android_emulator["follow_up_issue"], 156)
+        self.assertEqual(
+            android_emulator["watched_fact_paths"],
+            [
+                {
+                    "platform": "android",
+                    "path": "emulator.api_level",
+                    "label": "Android API level",
+                    "baseline": "34",
+                },
+                {
+                    "platform": "android",
+                    "path": "emulator.device_name",
+                    "label": "emulator device",
+                    "baseline": "sdk_gphone64_x86_64",
+                },
+                {
+                    "platform": "android",
+                    "path": "emulator.os_version",
+                    "label": "Android runtime",
+                    "baseline": "14",
+                },
+            ],
         )
 
     def test_build_summary_fails_closed_when_source_rules_reference_unknown_watched_fact_path(self) -> None:
@@ -218,7 +287,6 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             )
 
         self.assertIn("must assign every watched fact path", str(error.exception))
-        self.assertIn("android.emulator.api_level", str(error.exception))
         self.assertIn("android.emulator.device_name", str(error.exception))
         self.assertIn("android.emulator.os_version", str(error.exception))
 
@@ -252,6 +320,28 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             )
 
         self.assertIn("follow_up_issue", str(error.exception))
+
+    def test_build_summary_fails_closed_when_split_android_group_uses_wrong_follow_up_issue(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("valid")
+        for group in source_rules["groups"]:
+            if group["key"] == "android-java":
+                group["follow_up_issue"] = 999
+                break
+        else:
+            self.fail("android-java source rule missing from valid fixture")
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertIn("follow_up_issue", str(error.exception))
+        self.assertIn("must be 154", str(error.exception))
 
     def test_build_summary_fails_closed_when_source_rule_follow_up_issue_is_string(self) -> None:
         baseline, fixture_input = load_case("baseline-match")

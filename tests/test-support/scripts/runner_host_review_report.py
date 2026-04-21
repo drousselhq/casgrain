@@ -14,7 +14,9 @@ REPORT_MARKER = "<!-- cve-watch-report -->"
 MAX_RUN_LIMIT = 50
 EXPECTED_SOURCE_RULE_GROUPS = {
     "runner-images": 143,
-    "android-java-gradle": 142,
+    "android-java": 154,
+    "android-gradle": 155,
+    "android-emulator-runtime": 156,
     "ios-xcode-simulator": 144,
 }
 ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required"}
