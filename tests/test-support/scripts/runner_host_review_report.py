@@ -19,6 +19,40 @@ EXPECTED_SOURCE_RULE_GROUPS = {
     "android-emulator-runtime": 156,
     "ios-xcode-simulator": 144,
 }
+EXPECTED_SOURCE_RULE_FACT_PATHS = {
+    "runner-images": {
+        ("android", "runner.label"),
+        ("android", "runner.image_name"),
+        ("android", "runner.image_version"),
+        ("android", "runner.os_version"),
+        ("ios", "runner.label"),
+        ("ios", "runner.image_name"),
+        ("ios", "runner.image_version"),
+        ("ios", "runner.os_version"),
+        ("ios", "runner.os_build"),
+    },
+    "android-java": {
+        ("android", "java.configured_major"),
+        ("android", "java.resolved_version"),
+    },
+    "android-gradle": {
+        ("android", "gradle.configured_version"),
+        ("android", "gradle.resolved_version"),
+    },
+    "android-emulator-runtime": {
+        ("android", "emulator.api_level"),
+        ("android", "emulator.device_name"),
+        ("android", "emulator.os_version"),
+    },
+    "ios-xcode-simulator": {
+        ("ios", "xcode.app_path"),
+        ("ios", "xcode.version"),
+        ("ios", "xcode.simulator_sdk_version"),
+        ("ios", "simulator.runtime_identifier"),
+        ("ios", "simulator.runtime_name"),
+        ("ios", "simulator.device_name"),
+    },
+}
 ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required"}
 
 
@@ -263,6 +297,7 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
         if not watched_fact_paths:
             raise RunnerHostWatchError(f"{error_context} field 'watched_fact_paths' must include at least one path")
         normalized_paths: list[dict[str, str]] = []
+        group_fact_paths: set[tuple[str, str]] = set()
         for path_index, path_entry in enumerate(watched_fact_paths):
             if not isinstance(path_entry, dict):
                 raise RunnerHostWatchError(f"{error_context} watched_fact_paths[{path_index}] must be an object")
@@ -283,6 +318,7 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                     f"{path_context} watched fact path '{platform_name}.{path}' is owned by more than one source-rule group"
                 )
             seen_fact_paths.add(fact_key)
+            group_fact_paths.add(fact_key)
             normalized_paths.append(
                 {
                     "platform": platform_name,
@@ -290,6 +326,15 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                     "label": fact_index[fact_key]["label"],
                     "baseline": fact_index[fact_key]["baseline"],
                 }
+            )
+
+        expected_fact_paths = EXPECTED_SOURCE_RULE_FACT_PATHS[key]
+        if group_fact_paths != expected_fact_paths:
+            missing = sorted(f"{platform}.{path}" for (platform, path) in expected_fact_paths - group_fact_paths)
+            unexpected = sorted(f"{platform}.{path}" for (platform, path) in group_fact_paths - expected_fact_paths)
+            raise RunnerHostWatchError(
+                f"{error_context} field 'watched_fact_paths' must match expected paths for source-rule group '{key}'; "
+                f"missing={missing} unexpected={unexpected}"
             )
 
         normalized_groups.append(

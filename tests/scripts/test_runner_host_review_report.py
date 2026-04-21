@@ -286,7 +286,8 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                 generated_at="2026-04-19T09:00:00Z",
             )
 
-        self.assertIn("must assign every watched fact path", str(error.exception))
+        self.assertIn("watched_fact_paths", str(error.exception))
+        self.assertIn("android-emulator-runtime", str(error.exception))
         self.assertIn("android.emulator.device_name", str(error.exception))
         self.assertIn("android.emulator.os_version", str(error.exception))
 
@@ -342,6 +343,32 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         self.assertIn("follow_up_issue", str(error.exception))
         self.assertIn("must be 154", str(error.exception))
+
+    def test_build_summary_fails_closed_when_split_android_group_owns_wrong_watched_fact_paths(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("valid")
+        key_map = {group["key"]: group for group in source_rules["groups"]}
+        key_map["android-java"]["watched_fact_paths"] = [
+            {"platform": "android", "path": "java.configured_major"},
+            {"platform": "android", "path": "emulator.api_level"},
+        ]
+        key_map["android-emulator-runtime"]["watched_fact_paths"] = [
+            {"platform": "android", "path": "java.resolved_version"},
+            {"platform": "android", "path": "emulator.device_name"},
+            {"platform": "android", "path": "emulator.os_version"},
+        ]
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertIn("android-java", str(error.exception))
+        self.assertIn("watched_fact_paths", str(error.exception))
 
     def test_build_summary_fails_closed_when_source_rule_follow_up_issue_is_string(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
