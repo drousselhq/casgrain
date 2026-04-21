@@ -62,6 +62,11 @@ class FakeIssueClient:
         self.operations.append(("close", repo, number, reason))
 
 
+class FailingCreateIssueClient(FakeIssueClient):
+    def create_issue(self, *, repo: str, title: str, body: str, labels: list[str]) -> int:
+        raise RuntimeError("create failed")
+
+
 class AndroidSmokeIssueSyncTests(unittest.TestCase):
     def test_build_sync_plan_keeps_schedule_shortfall_tracker_free_without_blocker(self) -> None:
         plan = MODULE.build_sync_plan(
@@ -185,6 +190,17 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         )
         self.assertEqual(plan["blocker"]["labels"], ["enhancement", "devops"])
 
+    def test_build_sync_plan_closes_cross_class_open_blocker_before_creating_new_one(self) -> None:
+        plan = MODULE.build_sync_plan(
+            summary=load_summary("blocker"),
+            markdown=load_markdown("blocker"),
+            existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
+        )
+
+        self.assertEqual(plan["report_kind"], "managed_blocker")
+        self.assertEqual(plan["blocker"]["action"], "create")
+        self.assertEqual(plan["blocker"]["close_numbers"], [220])
+
     def test_select_managed_issue_ignores_plain_title_without_marker(self) -> None:
         issue = MODULE.select_managed_issue(
             issues=[
@@ -239,6 +255,33 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         self.assertEqual(result["blocker_issue_number"], 220)
         self.assertEqual(result["blocker_action"], "close")
         self.assertEqual(client.operations, [("close", "drousselhq/casgrain", 220, "completed")])
+
+    def test_apply_sync_plan_closes_cross_class_open_blocker_before_creating_new_one(self) -> None:
+        plan = MODULE.build_sync_plan(
+            summary=load_summary("blocker"),
+            markdown=load_markdown("blocker"),
+            existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
+        )
+
+        client = FakeIssueClient()
+        result = MODULE.apply_sync_plan(repo="drousselhq/casgrain", plan=plan, client=client)
+
+        self.assertEqual(result["blocker_issue_number"], 900)
+        self.assertEqual(client.operations[0][0], "create")
+        self.assertEqual(client.operations[1], ("close", "drousselhq/casgrain", 220, "completed"))
+
+    def test_apply_sync_plan_keeps_existing_cross_class_open_blocker_if_create_fails(self) -> None:
+        plan = MODULE.build_sync_plan(
+            summary=load_summary("blocker"),
+            markdown=load_markdown("blocker"),
+            existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
+        )
+
+        client = FailingCreateIssueClient()
+        with self.assertRaisesRegex(RuntimeError, "create failed"):
+            MODULE.apply_sync_plan(repo="drousselhq/casgrain", plan=plan, client=client)
+
+        self.assertEqual(client.operations, [])
 
 
 if __name__ == "__main__":

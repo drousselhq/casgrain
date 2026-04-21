@@ -298,17 +298,15 @@ def find_matching_managed_blocker(summary: dict[str, Any], existing_issues: list
     return select_managed_issue(existing_issues, expected_title=title, marker=marker)
 
 
-def find_open_managed_blocker(existing_issues: list[dict[str, Any]]) -> dict[str, Any] | None:
+def find_open_managed_blockers(existing_issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
     managed_issues = [
         normalize_issue(issue)
         for issue in existing_issues
         if BLOCKER_MARKER_PREFIX in str(issue.get("body") or "")
     ]
     open_managed = [issue for issue in managed_issues if issue["state"] == "OPEN"]
-    if not open_managed:
-        return None
     open_managed.sort(key=lambda issue: issue["number"])
-    return open_managed[0]
+    return open_managed
 
 
 def build_sync_plan(
@@ -324,21 +322,25 @@ def build_sync_plan(
     report_kind = "tracking_only"
     blocker_plan: dict[str, Any] = {"action": "noop"}
     existing_blocker = find_matching_managed_blocker(normalized_summary, existing_issues)
-    existing_open_blocker = find_open_managed_blocker(existing_issues)
+    existing_open_blockers = find_open_managed_blockers(existing_issues)
     if normalized_summary["verdict"] == "qualified":
         report_kind = "qualified"
-        if existing_open_blocker is not None:
+        if existing_open_blockers:
             blocker_plan = {
                 "action": "close",
-                "number": existing_open_blocker["number"],
+                "number": existing_open_blockers[0]["number"],
             }
+            if len(existing_open_blockers) > 1:
+                blocker_plan["close_numbers"] = [issue["number"] for issue in existing_open_blockers[1:]]
     elif is_threshold_shortfall_only(normalized_summary):
         report_kind = "schedule_shortfall_only" if is_schedule_shortfall_only(normalized_summary) else "tracking_only"
-        if existing_open_blocker is not None:
+        if existing_open_blockers:
             blocker_plan = {
                 "action": "close",
-                "number": existing_open_blocker["number"],
+                "number": existing_open_blockers[0]["number"],
             }
+            if len(existing_open_blockers) > 1:
+                blocker_plan["close_numbers"] = [issue["number"] for issue in existing_open_blockers[1:]]
     elif needs_managed_blocker(normalized_summary):
         report_kind = "managed_blocker"
         title = build_blocker_title(normalized_summary)
@@ -369,6 +371,14 @@ def build_sync_plan(
                 "marker": marker,
                 "failure_class": normalized_summary["blocker"]["failure_class"],
             }
+
+        close_numbers = [
+            issue["number"]
+            for issue in existing_open_blockers
+            if existing_blocker is None or issue["number"] != existing_blocker["number"]
+        ]
+        if close_numbers:
+            blocker_plan["close_numbers"] = close_numbers
 
     return {
         "report_kind": report_kind,
@@ -415,6 +425,17 @@ def render_dry_run(plan: dict[str, Any]) -> str:
 def apply_sync_plan(*, repo: str, plan: dict[str, Any], client: IssueClientProtocol) -> dict[str, Any]:
     blocker_issue_number = plan["blocker"].get("number")
     blocker_action = plan["blocker"]["action"]
+    closed_blocker_issue_numbers: list[int] = []
+
+    close_numbers: list[int] = []
+    primary_close_number = plan["blocker"].get("number") if blocker_action == "close" else None
+    if isinstance(primary_close_number, int):
+        close_numbers.append(primary_close_number)
+    close_numbers.extend(
+        number for number in plan["blocker"].get("close_numbers", []) if isinstance(number, int)
+    )
+    unique_close_numbers = list(dict.fromkeys(close_numbers))
+
     if blocker_action == "create":
         blocker_issue_number = client.create_issue(
             repo=repo,
@@ -438,14 +459,22 @@ def apply_sync_plan(*, repo: str, plan: dict[str, Any], client: IssueClientProto
             add_labels=plan["blocker"]["labels"],
         )
     elif blocker_action == "close":
-        client.close_issue(repo=repo, number=plan["blocker"]["number"], reason="completed")
+        for number in unique_close_numbers:
+            client.close_issue(repo=repo, number=number, reason="completed")
+            closed_blocker_issue_numbers.append(number)
     elif blocker_action != "noop":
         raise IssueSyncError(f"Unsupported blocker action '{blocker_action}'")
+
+    if blocker_action in {"create", "update", "reopen"}:
+        for number in unique_close_numbers:
+            client.close_issue(repo=repo, number=number, reason="completed")
+            closed_blocker_issue_numbers.append(number)
 
     return {
         "report_kind": plan["report_kind"],
         "blocker_action": blocker_action,
         "blocker_issue_number": blocker_issue_number,
+        "closed_blocker_issue_numbers": closed_blocker_issue_numbers,
     }
 
 
