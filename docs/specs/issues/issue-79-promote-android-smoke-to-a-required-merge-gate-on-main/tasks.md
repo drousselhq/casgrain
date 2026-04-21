@@ -57,8 +57,8 @@ PY`
 
 ## 4. Promote the live `main` ruleset once the workflow head is safe to enforce
 - [x] 4.1 Record the current `main-protection-ruleset` required status-check list before editing it.
-- [x] 4.2 Add `android-smoke` to the live required-check list without removing any existing contexts or relaxing strict/review/history rules.
-- [x] 4.3 Verify the live ruleset state through `gh api` after the update and keep `#79` open until that verification is true on `main`.
+- [ ] 4.2 Add `android-smoke` to the live required-check list without removing any existing contexts or relaxing strict/review/history rules, but only after the always-reporting workflow has landed on `main`.
+- [ ] 4.3 Verify the live ruleset state through `gh api` after that post-merge update and keep `#79` open until that verification is true on `main`.
 - Goal: Make the live GitHub protection state match the promoted repo contract.
 - Validation: `RULESET_ID=$(gh api repos/drousselhq/casgrain/rulesets --jq '.[] | select(.name == "main-protection-ruleset") | .id') && gh api repos/drousselhq/casgrain/rulesets/$RULESET_ID --jq '.rules[] | select(.type == "required_status_checks").parameters.required_status_checks[].context' | grep -Fx 'android-smoke'`
 - Non-goals: No relaxation of branch protection, no bypass-policy changes, no new required contexts beyond `android-smoke`.

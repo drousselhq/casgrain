@@ -14,7 +14,7 @@ Already delivered on `main`:
 - PR #123 kept empty/malformed `uiautomator` dumps inside the structured `ui-dump-failure` path.
 - PR #134 added the repo-owned Android smoke reliability report plus issue-sync flow.
 - PR #152 stopped `android_smoke_issue_sync.py` from reopening retired tracker issue `#132` once that tracker was intentionally closed.
-- `docs/validation.md`, `docs/development/merge-and-validation-policy.md`, `docs/development/automation-agent-operations.md`, and the earlier issue specs for `#122` / `#127` already describe Android smoke as advisory today and do **not** require a separate live qualification tracker issue.
+- at the time `#80` was shaped, `docs/validation.md`, `docs/development/merge-and-validation-policy.md`, `docs/development/automation-agent-operations.md`, and the earlier issue specs for `#122` / `#127` described Android smoke as advisory on `main` and did **not** require a separate live qualification tracker issue.
 
 Live baseline at analyst handoff (`2026-04-21` UTC):
 - `python3 tests/test-support/scripts/android_smoke_reliability_window.py ...` still reports `verdict=not_qualified`

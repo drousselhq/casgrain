@@ -9,8 +9,9 @@ It pairs with `docs/development/test-pyramid-and-runtime-contracts.md`, which ex
 Before merging work, run the required checks below unless the PR is explicitly scoped as a narrowly exempted docs-only or governance-only change and the reviewer accepts the exception.
 
 Repository reality today:
-- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, `ios-smoke`, and `android-smoke` status checks
-- both mobile smoke workflows now run on every PR, but self-skip unless the change touches their owned platform or shared runtime surfaces; this keeps the required `ios-smoke` and `android-smoke` checks present without paying the full simulator/emulator cost on unrelated work
+- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke` status checks
+- this branch makes `android-smoke` the remaining required merge gate promotion for `#79`: the workflow now reports on every PR and self-skips unaffected diffs, and the post-merge close-out step is to add `android-smoke` to the live `main` ruleset once that always-reporting workflow is on `main`
+- both mobile smoke workflows now run on every PR on the candidate head, but self-skip unless the change touches their owned platform or shared runtime surfaces; this keeps the required `ios-smoke` context present today and makes `android-smoke` safe to require without paying the full simulator/emulator cost on unrelated work
 - both mobile smoke workflows also run on qualifying pushes to `main` plus a nightly schedule so `cve-watch` can consume fresh `main` host evidence after runner-host changes land
 - CodeQL participates in the required merge gate through `analyze (actions)` and `analyze (rust)` while also remaining the always-on static-analysis baseline for workflow logic and Rust code
 - the `coverage` job still enforces the same 75% workspace line-coverage floor, publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts, and on pull requests it also checks that overall line coverage does not regress below the latest successful `main` coverage artifact when that baseline is available
