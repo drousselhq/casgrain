@@ -186,7 +186,7 @@ python3 tests/test-support/scripts/android_smoke_issue_sync.py \
   --dry-run
 ```
 
-The current live dry-run should plan an **open/update tracker only** action because the report is still not qualified solely for `schedule_main_runs_below_threshold`.
+The current live dry-run should plan a **tracker-free no-op** action (`report_kind=tracking_only`, `blocker.action=noop`) because the report is still not qualified solely for `schedule_main_runs_below_threshold`.
 
 ## Completion boundary
 
