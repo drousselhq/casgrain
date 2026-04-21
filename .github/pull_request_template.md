@@ -3,8 +3,8 @@
 - PRD source: GitHub issue body / Project item
 
 ## Repo spec artifacts
-- Spec path: `docs/specs/issues/issue-<number>-<slug>/spec.md`
-- Tasks path: `docs/specs/issues/issue-<number>-<slug>/tasks.md`
+- Spec path: `docs/specs/issues/issue-<number>-<slug>/spec.md` or legacy `docs/specs/issues/issue-<number>-<slug>.md`
+- Tasks path: `docs/specs/issues/issue-<number>-<slug>/tasks.md` or `n/a (legacy single-file issue spec already on main)`
 - Spec mode: `behavior` | `technical`
 
 ## Change type
