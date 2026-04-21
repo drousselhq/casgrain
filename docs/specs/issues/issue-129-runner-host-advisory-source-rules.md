@@ -5,7 +5,10 @@
 - Expected implementation PR linkage: `Closes #129`
 - Follow-up source-specific slices after this contract lands:
   - `#143` — GitHub-hosted runner image surfaces
-  - `#142` — Android Java / Gradle / emulator-runtime host surfaces
+  - `#142` — Android source-rule split contract that narrows the original Android umbrella into `#154`, `#155`, and `#156`
+  - `#154` — Android Java host version facts
+  - `#155` — Android Gradle host version facts
+  - `#156` — Android emulator-runtime host facts
   - `#144` — iOS Xcode / simulator-runtime host surfaces
 
 ## Why this slice exists
@@ -87,7 +90,7 @@ Current-slice rule requirement:
 - the rationale must explain why the repo is not yet claiming trustworthy source-backed evaluation for that group on current `main`
 - the manifest must point to:
   - `#143` for `runner-images`
-  - `#142` for `android-java-gradle`
+  - `#142` for the initial combined `android-java-gradle` group in this slice; the later narrowing contract in `#142` then splits that Android ownership into `#154`, `#155`, and `#156`
   - `#144` for `ios-xcode-simulator`
 
 Validation rule:
@@ -147,7 +150,7 @@ Those docs updates must explicitly say:
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
 - the current source groups remain `manual-review-required` on `main` after this slice unless a later follow-up lands
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
-- later source-specific promotion work is split across `#143`, `#142`, and `#144`
+- later source-specific promotion work is split across `#143`, `#154`, `#155`, `#156`, and `#144` after the narrowing contract in `#142` lands
 
 ## Acceptance criteria
 
@@ -170,7 +173,7 @@ Those docs updates must explicitly say:
 - **no** new managed-issue title or parallel issue-sync lane
 - **no** changes to `.github/runner-host-watch.json` watched-fact coverage beyond any tiny schema link needed for validation
 - **no** direct advisory implementation for GitHub-hosted runner images (`#143`)
-- **no** direct advisory implementation for Android Java / Gradle / emulator-runtime host surfaces (`#142`)
+- **no** direct advisory implementation for Android host surfaces in this slice; the later narrowing contract in `#142` splits those source-backed follow-ups into `#154`, `#155`, and `#156`
 - **no** direct advisory implementation for iOS Xcode / simulator-runtime surfaces (`#144`)
 - **no** broad scraping of hosted-runner package inventories or release-note text
 
@@ -212,6 +215,9 @@ The implementation PR for this spec should be able to close `#129` because it fi
 
 After that PR merges:
 - `#143` remains the bounded follow-up for any GitHub-hosted runner image source-backed automation
-- `#142` remains the bounded follow-up for any Android Java / Gradle / emulator-runtime source-backed automation
+- `#142` initially owns the Android umbrella follow-up, and the later narrowing contract in `#142` then splits that Android work into `#154`, `#155`, and `#156`
+- `#154` remains the bounded follow-up for Android Java host version source-backed automation after that narrowing lands
+- `#155` remains the bounded follow-up for Android Gradle host version source-backed automation after that narrowing lands
+- `#156` remains the bounded follow-up for Android emulator-runtime source-backed automation after that narrowing lands
 - `#144` remains the bounded follow-up for any iOS Xcode / simulator-runtime source-backed automation
 - the shipped runner-host lane on `main` still remains drift-triggered review until one of those follow-up issues lands
