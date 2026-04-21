@@ -19,6 +19,13 @@ EXPECTED_SOURCE_RULE_GROUPS = {
     "android-emulator-runtime": 156,
     "ios-xcode-simulator": 144,
 }
+EXPECTED_SOURCE_RULE_PLATFORMS = {
+    "runner-images": ["android", "ios"],
+    "android-java": ["android"],
+    "android-gradle": ["android"],
+    "android-emulator-runtime": ["android"],
+    "ios-xcode-simulator": ["ios"],
+}
 EXPECTED_SOURCE_RULE_FACT_PATHS = {
     "runner-images": {
         ("android", "runner.label"),
@@ -279,6 +286,12 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                     f"{error_context} platforms[{platform_index}] must be one of {sorted(normalized_baseline['platforms'])}"
                 )
             platforms.append(platform_name)
+        expected_platforms = EXPECTED_SOURCE_RULE_PLATFORMS[key]
+        if platforms != expected_platforms:
+            raise RunnerHostWatchError(
+                f"{error_context} field 'platforms' must match expected platforms for source-rule group '{key}'; "
+                f"expected={expected_platforms} actual={platforms}"
+            )
 
         rule_kind = required_string_field(entry, "rule_kind", error_context=error_context)
         if rule_kind not in ALLOWED_SOURCE_RULE_KINDS:
