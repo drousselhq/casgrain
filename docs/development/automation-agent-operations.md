@@ -61,6 +61,7 @@ Use GitHub-native issue relationships (`Blocked by`, parent/sub-issue links) whe
 
 Casgrain does **not** keep the following automation internals in-repo anymore:
 
+Do not keep a separate issue open solely to wait for future evidence unless that issue is itself a concrete tracked slice of work; if there is no slice to implement, keep the condition in automation/docs and file real defects directly when they appear.
 - agent role diagrams
 - lane/state-machine diagrams
 - cron schedules

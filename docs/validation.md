@@ -11,7 +11,7 @@ Before merging work, run the required checks below unless the PR is explicitly s
 Repository reality today:
 - `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke` status checks
 - `ios-simulator-smoke` now runs on every PR, but self-skips unless the change touches iOS-smoke-impacting files; this keeps the required `ios-smoke` check present without paying the full simulator cost on unrelated work
-- `android-emulator-smoke` runs automatically on PRs only when Android/shared-runtime paths change, and both mobile smoke workflows also run on a nightly schedule to catch environment drift
+- `android-emulator-smoke` runs automatically on PRs only when Android/shared-runtime paths change; both mobile smoke workflows also run on qualifying pushes to `main` plus a nightly schedule so `cve-watch` can consume fresh `main` host evidence after runner-host changes land
 - CodeQL participates in the required merge gate through `analyze (actions)` and `analyze (rust)` while also remaining the always-on static-analysis baseline for workflow logic and Rust code
 - the `coverage` job still enforces the same 75% workspace line-coverage floor, publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts, and on pull requests it also checks that overall line coverage does not regress below the latest successful `main` coverage artifact when that baseline is available
 - PR authors and mergers must still avoid bypassing the merge gate just because an admin path exists
@@ -92,8 +92,9 @@ First iOS vertical-slice note:
 ## Mobile smoke workflow policy
 
 - `ios-simulator-smoke` is a required PR check because the first product-true vertical slice is currently iOS.
-- The iOS workflow always reports a status on PRs so branch protection can enforce it safely, but it only runs the expensive simulator path when the PR touches iOS or shared execution surfaces.
-- `android-emulator-smoke` is advisory for now: it auto-runs for Android/shared-runtime changes and on the nightly drift-catching schedule, but it is not yet a required branch-protection gate.
+- The iOS workflow always reports a status on PRs so branch protection can enforce it safely, but it only runs the expensive simulator path when the PR touches iOS or shared execution surfaces; qualifying pushes to `main` also run the simulator path so fresh host evidence exists after runner-host changes merge.
+- `android-emulator-smoke` is advisory for now: it auto-runs for Android/shared-runtime changes, qualifying pushes to `main`, and the nightly drift-catching schedule, but it is not yet a required branch-protection gate.
+- There is no separate reliability-qualification tracker or future-run streak requirement for Android smoke; if it exposes a concrete defect, file that defect directly.
 - The Android workflow must still validate and archive an explicit artifact contract: `trace.json` plus stable sibling artifacts on success, or `failure.json` plus referenced diagnostics for runner-managed failure paths, with `failure_class`/`evidence-summary.json` capturing the machine-readable outcome. Empty, malformed, or failed `uiautomator` dump capture should stay inside that runner-managed contract as `ui-dump-failure`, preserving `ui-last.xml` (empty when the dump yielded no bytes) plus any truthful foreground diagnostics when available. If the workflow cannot produce either bundle, it should fail explicitly as an `artifact-contract-breach`.
 - Changes limited to docs, governance, labels, or other non-runtime surfaces should not pay the full mobile smoke cost.
 - Shared execution surfaces (`casgrain`, `compiler`, `runner`, `domain`, `application`, root Cargo manifests) should trigger both mobile smoke workflows because they can regress either platform.

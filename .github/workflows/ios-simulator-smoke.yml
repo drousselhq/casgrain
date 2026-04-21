@@ -1,6 +1,23 @@
 name: ios-simulator-smoke
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - crates/application/**
+      - crates/casgrain/**
+      - crates/compiler/**
+      - crates/domain/**
+      - crates/runner/**
+      - crates/ios/**
+      - tests/test-support/fixtures/ios-smoke/**
+      - tests/test-support/scripts/ios_smoke.sh
+      - tests/test-support/scripts/ios_smoke_run_plan.py
+      - .github/workflows/ios-simulator-smoke.yml
+      - .github/runner-host-watch.json
   workflow_dispatch:
     inputs:
       reason:
@@ -113,7 +130,25 @@ jobs:
           test -f "$ARTIFACT_DIR/plan.json"
           test -f "$ARTIFACT_DIR/xcodebuild.log"
           test -f "$ARTIFACT_DIR/simulator.json"
+          test -f "$ARTIFACT_DIR/host-environment.json"
           test -d "$ARTIFACT_DIR/CasgrainSmoke.xcresult"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import importlib.util
+
+          module_path = Path("tests/test-support/scripts/ios_smoke_run_plan.py")
+          spec = importlib.util.spec_from_file_location("ios_smoke_run_plan", module_path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          host_environment = json.loads(
+              Path(os.environ["ARTIFACT_DIR"]).joinpath("host-environment.json").read_text(encoding="utf-8")
+          )
+          module.validate_ios_host_environment(host_environment)
+          print("IOS_HOST_ENVIRONMENT_OK")
+          PY
           ls -R "$ARTIFACT_DIR"
 
       - name: Skip iOS smoke for unaffected changes
@@ -124,7 +159,7 @@ jobs:
 
       - name: Upload smoke artifacts
         if: steps.changes.outputs.should_run == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: casgrain-ios-smoke
           path: ${{ github.workspace }}/artifacts/ios-smoke
