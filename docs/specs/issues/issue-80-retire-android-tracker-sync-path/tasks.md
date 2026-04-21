@@ -34,8 +34,9 @@ PY`
 
 ## 4. Reconcile only the remaining repo-owned contract artifacts
 - [ ] 4.1 Update any repo-owned docs/spec files that still describe tracker issue `#132` as part of the live Android contract after the code/workflow change.
-- [ ] 4.2 Make the legacy issue-80 artifact a pointer or otherwise non-contradictory if it remains in the tree.
-- [ ] 4.3 Run a targeted search for stale tracker wording before handoff.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-127-android-smoke-reliability-issue-sync.md` so its `schedule-shortfall` / `qualified` expectations no longer preserve tracker-managed issue `#132` behavior.
+- [ ] 4.3 Make the legacy issue-80 artifact a pointer or otherwise non-contradictory if it remains in the tree.
+- [ ] 4.4 Run a targeted search for stale tracker wording before handoff.
 - Goal: Leave one truthful contract on `main` instead of a tracker-era and post-tracker-era story living side by side.
 - Validation: `python3 - <<'PY'
 from pathlib import Path

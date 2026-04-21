@@ -81,6 +81,7 @@ Update only the repo-owned files that still contradict the tracker-retirement co
 
 Minimum required reconciliation:
 - the legacy issue-80 artifact must not remain a stale competing contract on `main`
+- `docs/specs/issues/issue-127-android-smoke-reliability-issue-sync.md` must be reconciled because it still describes the `schedule-shortfall` and `qualified` paths as tracker-managed state transitions for issue `#132`
 - no repo-owned doc/spec on `main` may still tell implementers that Android reliability currently depends on live tracker issue `#132`
 
 Do **not** broaden this into another repo-wide Android docs sweep. The canonical validation / merge-policy docs are already mostly on the correct side of the contract and should change only if the implementation reveals one remaining false claim.
