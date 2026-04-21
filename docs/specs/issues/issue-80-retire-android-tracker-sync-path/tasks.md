@@ -54,7 +54,7 @@ PY`
 - [x] 5.1 Run `git diff --check`.
 - [x] 5.2 Re-run the local issue-sync unit tests.
 - [x] 5.3 Rebuild the live Android reliability summary and confirm the dry-run stays advisory-only for the current `schedule_main_runs_below_threshold` state.
-- [ ] 5.4 In the PR handoff comment, state that `#80` is now the tracker-retirement cleanup slice and whether any doc files remained in scope.
+- [x] 5.4 In the PR handoff comment, state that `#80` is now the tracker-retirement cleanup slice and whether any doc files remained in scope.
 - Goal: Prove the refreshed head matches current live repo state before QA reviews it.
 - Validation: `git diff --check && python3 -m unittest tests/scripts/test_android_smoke_issue_sync.py && python3 tests/test-support/scripts/android_smoke_reliability_window.py --repo drousselhq/casgrain --workflow android-emulator-smoke.yml --artifact-name casgrain-android-smoke --summary-out /tmp/android-smoke-reliability-window.json --markdown-out /tmp/android-smoke-reliability-window.md && python3 tests/test-support/scripts/android_smoke_issue_sync.py --repo drousselhq/casgrain --summary-json /tmp/android-smoke-reliability-window.json --markdown-file /tmp/android-smoke-reliability-window.md --dry-run`
 - Non-goals: No manual GitHub issue editing beyond the bounded automation behavior under test.
