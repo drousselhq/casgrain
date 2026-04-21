@@ -16,14 +16,14 @@ It does **not** claim that every desired control is fully enforced in-repo today
 ## Evidence snapshot
 
 Current repository evidence checked for this baseline:
-- `main` branch protection requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke`
+- `main` branch protection requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, `ios-smoke`, and `android-smoke`
 - `main` enforces strict up-to-date checks, linear history, admin enforcement, and resolved review conversations
 - force pushes and branch deletions are disabled on `main`
 - repository default workflow token permissions are `read`
 - `.github/workflows/security.yml` uses job-scoped least-privilege permissions and disables checkout credential persistence
 - repository security settings currently report `secret_scanning`, `secret_scanning_push_protection`, and `dependabot_security_updates` as enabled
 - repository security settings currently report `secret_scanning_non_provider_patterns` and `secret_scanning_validity_checks` as disabled
-- required PR-visible security checks today are `gitleaks`, `cargo-audit`, `cargo-deny-policy`, and advisory CodeQL analysis
+- required PR-visible security checks today are `gitleaks`, `cargo-audit`, `cargo-deny-policy`, advisory CodeQL analysis, and the required mobile smoke gates (`ios-smoke`, `android-smoke`)
 
 ## Baseline areas
 
