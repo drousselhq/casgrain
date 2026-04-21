@@ -32,24 +32,6 @@ on:
   schedule:
     - cron: '45 7 * * *'
   pull_request:
-    paths:
-      - Cargo.toml
-      - Cargo.lock
-      - crates/application/**
-      - crates/casgrain/**
-      - crates/compiler/**
-      - crates/domain/**
-      - crates/runner/**
-      - crates/android/**
-      - tests/test-support/fixtures/android-smoke/**
-      - tests/test-support/fixtures/android-smoke/reliability-issue-sync/**
-      - tests/test-support/scripts/android_smoke_run_plan.py
-      - tests/test-support/scripts/android_smoke_reliability_window.py
-      - tests/test-support/scripts/android_smoke_issue_sync.py
-      - tests/test-support/scripts/validate_android_smoke_artifacts.py
-      - tests/scripts/test_android_smoke_reliability_window.py
-      - tests/scripts/test_android_smoke_issue_sync.py
-      - .github/workflows/android-emulator-smoke.yml
 
 permissions:
   contents: read
@@ -69,27 +51,86 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Decide whether Android smoke is required
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
+          cat /tmp/changed-files.txt
+
+          python3 - <<'PY'
+          import fnmatch
+          from pathlib import Path
+
+          changed = [line.strip() for line in Path('/tmp/changed-files.txt').read_text().splitlines() if line.strip()]
+          patterns = [
+              'Cargo.toml',
+              'Cargo.lock',
+              'crates/application/**',
+              'crates/casgrain/**',
+              'crates/compiler/**',
+              'crates/domain/**',
+              'crates/runner/**',
+              'crates/android/**',
+              'tests/test-support/fixtures/android-smoke/**',
+              'tests/test-support/fixtures/android-smoke/reliability-issue-sync/**',
+              'tests/test-support/scripts/android_smoke_run_plan.py',
+              'tests/test-support/scripts/android_smoke_reliability_window.py',
+              'tests/test-support/scripts/android_smoke_issue_sync.py',
+              'tests/test-support/scripts/validate_android_smoke_artifacts.py',
+              'tests/scripts/test_android_smoke_reliability_window.py',
+              'tests/scripts/test_android_smoke_issue_sync.py',
+              '.github/workflows/android-emulator-smoke.yml',
+          ]
+
+          def matches(path: str) -> bool:
+              return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
+
+          should_run = any(matches(path) for path in changed)
+          Path('/tmp/android-should-run.txt').write_text('true' if should_run else 'false')
+          PY
+
+          echo "should_run=$(cat /tmp/android-should-run.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java
+        if: steps.changes.outputs.should_run == 'true'
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Install Rust toolchain
+        if: steps.changes.outputs.should_run == 'true'
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.85.0
 
       - name: Cache cargo
+        if: steps.changes.outputs.should_run == 'true'
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Set up Gradle
+        if: steps.changes.outputs.should_run == 'true'
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6
         with:
           gradle-version: '8.7'
 
       - name: Enable KVM acceleration for Android emulator
+        if: steps.changes.outputs.should_run == 'true'
         run: |
           set -euxo pipefail
           if [ -e /dev/kvm ]; then
@@ -102,6 +143,7 @@ jobs:
           fi
 
       - name: Build Android smoke fixture APK
+        if: steps.changes.outputs.should_run == 'true'
         run: |
           set -euxo pipefail
           mkdir -p "$ARTIFACT_DIR"
@@ -129,6 +171,7 @@ jobs:
           printf 'CASGRAIN_ANDROID_SMOKE_APK=%s\n' "$APK_PATH" >> "$GITHUB_ENV"
 
       - name: Run generated-plan Android smoke path
+        if: steps.changes.outputs.should_run == 'true'
         uses: ReactiveCircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2
         with:
           api-level: 34
@@ -140,14 +183,20 @@ jobs:
           script: bash -euxo pipefail -c 'adb devices; TRACE_TMP="$(mktemp "$RUNNER_TEMP/android-smoke-trace.XXXXXX.json")"; if cargo run -p casgrain -- run-android-smoke tests/test-support/fixtures/android-smoke/features/tap_counter.feature --trace-json > "$TRACE_TMP"; then mv "$TRACE_TMP" "$ARTIFACT_DIR/trace.json"; else rm -f "$TRACE_TMP"; exit 1; fi'
 
       - name: Validate Android smoke artifact contract
-        if: always()
+        if: always() && steps.changes.outputs.should_run == 'true'
         run: |
           set -euxo pipefail
           python3 tests/test-support/scripts/validate_android_smoke_artifacts.py --artifact-dir "$ARTIFACT_DIR"
           ls -R "$ARTIFACT_DIR"
 
+      - name: Skip Android smoke for unaffected changes
+        if: steps.changes.outputs.should_run != 'true'
+        run: |
+          set -euxo pipefail
+          echo "No Android-smoke-impacting files changed on this PR; reporting success without running the emulator path."
+
       - name: Upload Android smoke artifacts
-        if: always()
+        if: always() && steps.changes.outputs.should_run == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: casgrain-android-smoke
