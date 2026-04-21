@@ -88,6 +88,17 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         self.assertEqual(plan["blocker"]["action"], "close")
         self.assertEqual(plan["blocker"]["number"], 220)
 
+    def test_build_sync_plan_closes_cross_class_open_blocker_when_downgrading_to_schedule_shortfall(self) -> None:
+        plan = MODULE.build_sync_plan(
+            summary=load_summary("schedule-shortfall"),
+            markdown=load_markdown("schedule-shortfall"),
+            existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
+        )
+
+        self.assertEqual(plan["report_kind"], "schedule_shortfall_only")
+        self.assertEqual(plan["blocker"]["action"], "close")
+        self.assertEqual(plan["blocker"]["number"], 220)
+
     def test_build_sync_plan_keeps_total_threshold_shortfall_tracker_free(self) -> None:
         summary = load_summary("schedule-shortfall")
         summary["reasons"] = ["total_runs_below_threshold"]
@@ -108,11 +119,51 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         self.assertNotIn("tracker", plan)
         self.assertEqual(plan["blocker"]["action"], "noop")
 
+    def test_build_sync_plan_closes_open_blocker_when_threshold_shortfall_summary_has_no_blocker(self) -> None:
+        summary = load_summary("schedule-shortfall")
+        summary["reasons"] = ["total_runs_below_threshold"]
+        summary["blocker"] = None
+
+        plan = MODULE.build_sync_plan(
+            summary=summary,
+            markdown=load_markdown("schedule-shortfall"),
+            existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
+        )
+
+        self.assertEqual(plan["report_kind"], "tracking_only")
+        self.assertEqual(plan["blocker"]["action"], "close")
+        self.assertEqual(plan["blocker"]["number"], 220)
+
     def test_build_sync_plan_closes_matching_open_blocker_when_qualified(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("qualified"),
             markdown=load_markdown("qualified"),
             existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
+        )
+
+        self.assertEqual(plan["report_kind"], "qualified")
+        self.assertEqual(plan["blocker"]["action"], "close")
+        self.assertEqual(plan["blocker"]["number"], 220)
+
+    def test_build_sync_plan_closes_cross_class_open_blocker_when_qualified(self) -> None:
+        plan = MODULE.build_sync_plan(
+            summary=load_summary("qualified"),
+            markdown=load_markdown("qualified"),
+            existing_issues=[managed_blocker_issue()],
+        )
+
+        self.assertEqual(plan["report_kind"], "qualified")
+        self.assertEqual(plan["blocker"]["action"], "close")
+        self.assertEqual(plan["blocker"]["number"], 220)
+
+    def test_build_sync_plan_closes_open_blocker_when_qualified_summary_has_no_blocker(self) -> None:
+        summary = load_summary("qualified")
+        summary["blocker"] = None
+
+        plan = MODULE.build_sync_plan(
+            summary=summary,
+            markdown=load_markdown("qualified"),
+            existing_issues=[managed_blocker_issue()],
         )
 
         self.assertEqual(plan["report_kind"], "qualified")

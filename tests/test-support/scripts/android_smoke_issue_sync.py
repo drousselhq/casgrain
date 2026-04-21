@@ -298,6 +298,19 @@ def find_matching_managed_blocker(summary: dict[str, Any], existing_issues: list
     return select_managed_issue(existing_issues, expected_title=title, marker=marker)
 
 
+def find_open_managed_blocker(existing_issues: list[dict[str, Any]]) -> dict[str, Any] | None:
+    managed_issues = [
+        normalize_issue(issue)
+        for issue in existing_issues
+        if BLOCKER_MARKER_PREFIX in str(issue.get("body") or "")
+    ]
+    open_managed = [issue for issue in managed_issues if issue["state"] == "OPEN"]
+    if not open_managed:
+        return None
+    open_managed.sort(key=lambda issue: issue["number"])
+    return open_managed[0]
+
+
 def build_sync_plan(
     *,
     summary: dict[str, Any],
@@ -311,21 +324,20 @@ def build_sync_plan(
     report_kind = "tracking_only"
     blocker_plan: dict[str, Any] = {"action": "noop"}
     existing_blocker = find_matching_managed_blocker(normalized_summary, existing_issues)
+    existing_open_blocker = find_open_managed_blocker(existing_issues)
     if normalized_summary["verdict"] == "qualified":
         report_kind = "qualified"
-        if existing_blocker is not None and existing_blocker["state"] == "OPEN":
+        if existing_open_blocker is not None:
             blocker_plan = {
                 "action": "close",
-                "number": existing_blocker["number"],
-                "failure_class": normalized_summary["blocker"]["failure_class"],
+                "number": existing_open_blocker["number"],
             }
     elif is_threshold_shortfall_only(normalized_summary):
         report_kind = "schedule_shortfall_only" if is_schedule_shortfall_only(normalized_summary) else "tracking_only"
-        if existing_blocker is not None and existing_blocker["state"] == "OPEN":
+        if existing_open_blocker is not None:
             blocker_plan = {
                 "action": "close",
-                "number": existing_blocker["number"],
-                "failure_class": normalized_summary["blocker"]["failure_class"],
+                "number": existing_open_blocker["number"],
             }
     elif needs_managed_blocker(normalized_summary):
         report_kind = "managed_blocker"
