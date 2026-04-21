@@ -18,29 +18,33 @@
   - a clean `runner-images` source-backed match
   - an actionable Android runner-image finding
   - an actionable iOS runner-image finding
-  - a source retrieval / parsing / matching failure that must fail closed
-- [ ] 2.3 Update `tests/test-support/fixtures/runner-host-watch/source-rules/` so the checked-in manifest expectations prove only `runner-images` was promoted and the other four groups stayed `manual-review-required`.
-- [ ] 2.4 Verify the new tests fail on the pre-change implementation before editing production code.
+  - a source retrieval / parsing / normalization / matching failure that must fail closed
+- [ ] 2.3 Add or update manifest fixtures so the promoted `runner-images` entry must use the exact literal `rule_kind=runner-image-release-metadata`, the exact `source_streams` selectors, and the exact source-compared fact boundaries from `spec.md`.
+- [ ] 2.4 Make the tests assert the exact promoted-rule strings before production edits:
+  - top-level `reason` values `runner-images-source-drift` and `runner-images-source-error`
+  - group-level `status` values `no review-needed` / `manual-review-required`
+  - group-level `outcome` values `source-match` / `source-drift` / `source-error`
+- [ ] 2.5 Verify the new tests fail on the pre-change implementation before editing production code.
 - Goal: Lock the expected clean, actionable, and fail-closed `runner-images` behavior in place before any evaluator logic changes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No production report logic changes yet, no workflow YAML edits yet.
-- Hand back if: The failing tests show the current summary shape or managed issue title cannot support a `runner-images` promotion without redesigning the whole runner-host lane.
+- Hand back if: The failing tests show the current summary shape or managed issue title cannot support the exact promoted-rule fields from `spec.md` without redesigning the whole runner-host lane.
 
 ## 3. Promote only the `runner-images` source rule and implement its evaluator
-- [ ] 3.1 Update `.github/runner-host-advisory-sources.json` so only `runner-images` is promoted away from `manual-review-required`.
-- [ ] 3.2 Keep `runner-images` scoped to the existing watched facts only:
-  - Android: `runner.label`, `runner.image_name`, `runner.image_version`, `runner.os_version`
-  - iOS: `runner.label`, `runner.image_name`, `runner.image_version`, `runner.os_version`, `runner.os_build`
-- [ ] 3.3 Update `tests/test-support/scripts/runner_host_review_report.py` with exactly one `runner-images`-specific source-backed evaluation path.
-- [ ] 3.4 Keep the existing drift / missing-evidence platform summary logic authoritative for watched-fact drift and keep the existing managed issue title intact.
-- [ ] 3.5 Make source retrieval / parsing / matching failures fail closed into explicit review-needed output rather than a silent clean pass.
+- [ ] 3.1 Update `.github/runner-host-advisory-sources.json` so only `runner-images` is promoted from `manual-review-required` to `runner-image-release-metadata`.
+- [ ] 3.2 Add the exact `source_streams` contract from `spec.md` and keep `runner.label` plus `runner.image_name` limited to selector / drift-context use in this slice.
+- [ ] 3.3 Keep source-backed comparisons scoped to the exact normalized fields from `spec.md` only:
+  - Android: `runner.image_version`, `runner.os_version`
+  - iOS: `runner.image_version`, `runner.os_version`, `runner.os_build`
+- [ ] 3.4 Update `tests/test-support/scripts/runner_host_review_report.py` so the `runner-images` group emits the exact promoted-rule fields `status`, `outcome`, and `platform_results` while the four non-promoted groups remain manifest-only follow-up entries.
+- [ ] 3.5 Make source retrieval / parsing / normalization / matching failures fail closed into `reason=runner-images-source-error` rather than a silent clean pass.
 - Goal: Land the smallest production change that makes `runner-images` source-backed while leaving the rest of the runner-host watch alone.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No Android Java/Gradle/emulator source work, no iOS Xcode/simulator source work, no generic source-rule framework for every future runner-host group.
-- Hand back if: Promoting `runner-images` would require widening `.github/runner-host-watch.json`, adding a second managed issue lane, or inventing cross-group source logic that `spec.md` explicitly excludes.
+- Hand back if: Promoting `runner-images` would require widening `.github/runner-host-watch.json`, adding a second managed issue lane, or inventing promoted-rule fields or reason strings beyond the exact contract frozen in `spec.md`.
 
 ## 4. Keep the workflow/reporting contract truthful and reconcile docs
-- [ ] 4.1 Update the runner-host markdown / summary output so it clearly distinguishes promoted `runner-images` behavior from the still-manual-review-only follow-up groups.
+- [ ] 4.1 Update the runner-host markdown / summary output so it clearly distinguishes the existing drift / missing-evidence path from the promoted runner-images source-backed `source-match`, `source-drift`, and `source-error` outcomes.
 - [ ] 4.2 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that only `runner-images` is source-backed after this slice.
 - [ ] 4.3 Touch `.github/workflows/cve-watch.yml` only if a minimal wording or already-available env/input adjustment is required for the promoted evaluator.
 - [ ] 4.4 Confirm the implementation still reuses `security: runner-host review needed` rather than inventing another title or sync step.
@@ -55,6 +59,7 @@ for rel in [
     text = Path(rel).read_text(encoding='utf-8')
     assert '#143' in text, rel
     assert 'runner-images' in text, rel
+    assert 'source-drift' in text or 'source-error' in text, rel
 print('runner-images docs updated')
 PY`
 - Non-goals: No repo-wide documentation sweep beyond the runner-host security contract.
@@ -63,8 +68,8 @@ PY`
 ## 5. Run bounded validation and prepare the QA handoff
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run Python compile and unit-test coverage for the runner-host report path.
-- [ ] 5.3 Re-run the live runner-host report to confirm the summary still carries the same managed issue title and all five source groups, with the four non-`runner-images` groups still `manual-review-required`.
-- [ ] 5.4 In the PR handoff comment, state that `#143` promotes only `runner-images`, list the exact validation commands, and call out that `#154`, `#155`, `#156`, and `#144` remain future work.
+- [ ] 5.3 Re-run the live runner-host report and assert that the summary still carries the same managed issue title, all five source groups, the exact promoted runner-images fields, and the four non-`runner-images` groups still `manual-review-required`.
+- [ ] 5.4 In the PR handoff comment, state that `#143` promotes only `runner-images`, list the exact validation commands, note that docs still need review because the spec/reporting contract changed, and call out that `#154`, `#155`, `#156`, and `#144` remain future work.
 - Goal: Hand QA a bounded PR with deterministic test evidence and an honest live render smoke, not a speculative framework change.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No manual GitHub issue surgery outside the existing managed runner-host review lane.

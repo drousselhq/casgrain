@@ -47,18 +47,28 @@ Update:
 - `.github/runner-host-advisory-sources.json`
 
 Contract requirements:
-- promote only the `runner-images` entry away from `manual-review-required`
-- keep these existing fields unchanged for `runner-images` unless the promoted rule must add minimal new fields:
+- promote only the `runner-images` entry from `manual-review-required` to the exact literal `rule_kind=runner-image-release-metadata`
+- keep these existing fields unchanged for `runner-images` unless this spec names the additional field explicitly:
   - `key=runner-images`
+  - `surface=GitHub-hosted runner images and OS facts`
   - `platforms=["android", "ios"]`
   - `follow_up_issue=143`
+  - `managed_issue_behavior` continues to reuse `security: runner-host review needed`
   - the current watched fact paths from `.github/runner-host-watch.json`
+- keep `candidate_source` explicit as `GitHub-hosted runner image release metadata`; do not broaden this slice into generic package/CVE scraping or a new source family
+- add an exact `source_streams` object on `runner-images` with only these platform selectors and source-compared facts:
+  - `android` → `runner_label=ubuntu-latest`, `image_name=ubuntu-24.04`, `compared_facts=[runner.image_version, runner.os_version]`
+  - `ios` → `runner_label=macos-15`, `image_name=macos-15-arm64`, `compared_facts=[runner.image_version, runner.os_version, runner.os_build]`
+- `runner.label` and `runner.image_name` remain part of the checked-in watched inventory and the emitted context, but this slice treats them as source-stream selectors / drift-only facts rather than as source-backed changed-fact assertions
 - leave the four non-`runner-images` groups on current `main` as `manual-review-required`
 - do not widen the watched inventory beyond the current runner-image / OS facts already owned by `runner-images`
 - do not repurpose `#143` into a generic runner-host source-rule framework
 
 The promoted rule must stay fail-closed:
-- if the authoritative runner-image source data cannot be fetched, parsed, or matched to the current watched facts, the evaluator must surface an explicit review-needed outcome instead of silently returning clean
+- the evaluator must normalize the authoritative source into per-platform records with exact source-backed fields:
+  - Android: `image_version`, `os_version`
+  - iOS: `image_version`, `os_version`, `os_build`
+- if the authoritative runner-image source data cannot be fetched, parsed, normalized into those exact fields, or matched to the selected `source_streams` contract for the current watched runner facts, the evaluator must surface an explicit review-needed outcome instead of silently returning clean
 
 ### 2. Add one bounded runner-images evaluator to the runner-host report
 
@@ -66,19 +76,40 @@ Update:
 - `tests/test-support/scripts/runner_host_review_report.py`
 
 Implementation contract:
-- add exactly one runner-images-specific promoted rule path for the `runner-images` group
-- keep the existing drift / missing-evidence platform summary logic authoritative for watched-fact drift
-- evaluate the currently watched runner-image facts only:
-  - Android: `runner.label`, `runner.image_name`, `runner.image_version`, `runner.os_version`
-  - iOS: `runner.label`, `runner.image_name`, `runner.image_version`, `runner.os_version`, `runner.os_build`
-- include machine-readable source-backed outcome details for `runner-images` in the emitted summary JSON and markdown
+- add exactly one runner-images-specific promoted rule path for `rule_kind=runner-image-release-metadata`
+- keep the existing drift / missing-evidence platform summary logic authoritative for the full watched-fact inventory in `.github/runner-host-watch.json`
+- treat `runner.label` and `runner.image_name` as stream-selection / drift-context inputs for this slice, not as new source-backed changed-fact comparisons
+- evaluate source-backed runner-images facts only through the exact normalized per-platform field sets named above:
+  - Android: `runner.image_version`, `runner.os_version`
+  - iOS: `runner.image_version`, `runner.os_version`, `runner.os_build`
+- include machine-readable runner-images outcome details for `runner-images` in the emitted summary JSON and markdown without inventing a second top-level report family
 - keep the existing top-level fields and managed issue title intact so `cve_watch_issue_sync.py` can keep reusing the same issue lane
 - do not generalize this slice into shared promotion logic for the Android or iOS host-toolchain groups that still belong to later issues
 
+Required emitted summary contract:
+- top-level `verdict` values remain exactly `no review-needed` or `manual-review-required`
+- top-level `reason` continues to use `baseline-match`, `baseline-drift`, and `missing-evidence` for the existing drift/evidence paths; add only these exact runner-images-specific reasons when the promoted rule drives the verdict:
+  - `runner-images-source-drift`
+  - `runner-images-source-error`
+- the `runner-images` entry inside `summary['source_rule_groups']` must include these exact new fields:
+  - `status` → `no review-needed` or `manual-review-required`
+  - `outcome` → `source-match`, `source-drift`, or `source-error`
+  - `platform_results` → one entry for `android` and one entry for `ios`
+- each `platform_results` entry for `runner-images` must include exactly these machine-readable fields:
+  - `platform`
+  - `status`
+  - `outcome`
+  - `observed`
+  - `source`
+  - `changed_facts`
+  - `source_error`
+- `observed` and `source` must carry only the exact source-backed facts for that platform from this slice; `changed_facts` must identify only those same compared fact paths
+- the four non-`runner-images` groups remain manifest-only `manual-review-required` follow-up entries; this slice must not require them to emit promoted-rule-only fields
+
 Required outcome model for `runner-images`:
-- clean source-backed match → may still yield overall `no review-needed`
-- actionable runner-image finding → must reuse the existing `security: runner-host review needed` lane
-- source retrieval / parsing / matching failure → must fail closed into explicit review-needed reporting, not a silent clean pass
+- clean source-backed match → `outcome=source-match`, `status=no review-needed`, and overall `verdict` may remain `no review-needed`
+- actionable runner-image finding → `outcome=source-drift`, `status=manual-review-required`, `reason=runner-images-source-drift`, and reuse the existing `security: runner-host review needed` lane
+- source retrieval / parsing / normalization / matching failure → `outcome=source-error`, `status=manual-review-required`, `reason=runner-images-source-error`, and fail closed rather than silently returning clean
 
 ### 3. Deterministic fixtures and tests
 
@@ -114,13 +145,15 @@ Workflow touch is allowed only if narrowly necessary:
 
 ## Acceptance criteria
 
-1. `.github/runner-host-advisory-sources.json` promotes only `runner-images`; the other four runner-host groups remain `manual-review-required`.
-2. `runner_host_review_report.py` can emit source-backed `runner-images` outcome details without breaking the existing top-level summary shape used by `cve_watch_issue_sync.py`.
-3. A clean deterministic source-backed `runner-images` fixture can still render `no review-needed`.
-4. Actionable deterministic runner-image findings reopen or update the existing `security: runner-host review needed` path rather than inventing a new managed issue title.
-5. Source retrieval or parsing failure for the promoted `runner-images` rule fails closed into review-needed reporting instead of a silent clean result.
-6. Drift / missing-evidence behavior for the rest of the runner-host watch remains intact on current `main`.
-7. The implementation PR for this slice can honestly say `Closes #143` because it finishes the bounded `runner-images` promotion work, while the Android and iOS host-toolchain follow-ups remain open under their existing issue numbers.
+1. `.github/runner-host-advisory-sources.json` promotes only `runner-images`, uses the exact literal `rule_kind=runner-image-release-metadata`, and keeps the other four runner-host groups `manual-review-required`.
+2. The promoted `runner-images` manifest entry freezes the exact `source_streams` selectors and compared-fact boundaries for Android and iOS without widening `.github/runner-host-watch.json`.
+3. `runner_host_review_report.py` keeps the existing top-level summary shape intact and uses only the exact runner-images-specific reason values `runner-images-source-drift` and `runner-images-source-error` when the promoted rule drives the verdict.
+4. The `runner-images` entry inside `summary['source_rule_groups']` emits the exact promoted-rule fields `status`, `outcome`, and `platform_results`, and each platform result emits `platform`, `status`, `outcome`, `observed`, `source`, `changed_facts`, and `source_error`.
+5. A clean deterministic source-backed `runner-images` fixture can still render `no review-needed` with `outcome=source-match`.
+6. Actionable deterministic runner-image findings reuse the existing `security: runner-host review needed` path with `outcome=source-drift` rather than inventing a new managed issue title.
+7. Source retrieval, parsing, normalization, or matching failure for the promoted `runner-images` rule fails closed into `reason=runner-images-source-error` rather than a silent clean result.
+8. Drift / missing-evidence behavior for the rest of the runner-host watch remains intact on current `main`.
+9. The implementation PR for this slice can honestly say `Closes #143` because it finishes the bounded `runner-images` promotion work, while the Android and iOS host-toolchain follow-ups remain open under their existing issue numbers.
 
 ## Behavior-spec scenario coverage
 
