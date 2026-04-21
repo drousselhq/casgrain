@@ -2,8 +2,9 @@
 - Issue: #<issue-number>
 - PRD source: GitHub issue body / Project item
 
-## Repo spec artifact
-- Spec path: `docs/specs/issues/issue-<number>-<slug>.md`
+## Repo spec artifacts
+- Spec path: `docs/specs/issues/issue-<number>-<slug>/spec.md`
+- Tasks path: `docs/specs/issues/issue-<number>-<slug>/tasks.md`
 - Spec mode: `behavior` | `technical`
 
 ## Change type
