@@ -2,40 +2,73 @@ name: Feature request
 description: Propose a feature or improvement for Casgrain
 title: "feat: "
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template as the backlog PRD for a new Casgrain slice. This issue body is expected to become the Jira-like Project/issue artifact that Analyst turns into a repo spec.
   - type: textarea
     id: problem
     attributes:
-      label: Problem
-      description: What user or developer problem does this solve?
+      label: Problem / opportunity
+      description: What user, team, or platform problem does this address?
     validations:
       required: true
   - type: textarea
-    id: proposal
+    id: goal
     attributes:
-      label: Proposed solution
+      label: Goal
+      description: What should be true when this work is successful?
     validations:
       required: true
   - type: textarea
-    id: alternatives
+    id: user_value
     attributes:
-      label: Alternatives considered
-  - type: dropdown
-    id: impact
-    attributes:
-      label: Impact area
-      options:
-        - developer experience
-        - deterministic execution
-        - agent workflows
-        - ci/cd
-        - iOS support
-        - Android support
-        - docs/process
-        - other
+      label: User value
+      description: Why is this worth doing now?
     validations:
       required: true
   - type: textarea
-    id: validation
+    id: in_scope
     attributes:
-      label: Validation idea
-      description: How should we know this feature works when implemented?
+      label: In scope
+      description: List the bounded scope for this backlog slice.
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: Call out what this issue is not meant to cover.
+    validations:
+      required: true
+  - type: textarea
+    id: functional_requirements
+    attributes:
+      label: Functional requirements
+      description: Concrete required outcomes or capabilities.
+    validations:
+      required: true
+  - type: textarea
+    id: non_functional_requirements
+    attributes:
+      label: Non-functional / quality requirements
+      description: Reliability, determinism, ergonomics, security, performance, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_boundaries
+    attributes:
+      label: Acceptance boundaries
+      description: What would make this issue honestly done versus still partial?
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / constraints
+      description: Known blockers, prerequisites, platform constraints, or sequencing constraints.
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / open questions
+      description: Unknowns, tradeoffs, or decisions that still need resolving.

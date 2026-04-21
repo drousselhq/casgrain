@@ -1,39 +1,36 @@
-## Summary
-- 
-- 
-- 
+## Linked issue
+- Issue: #<issue-number>
+- PRD source: GitHub issue body / Project item
+
+## Repo spec artifacts
+- Spec path: `docs/specs/issues/issue-<number>-<slug>/spec.md` or legacy `docs/specs/issues/issue-<number>-<slug>.md`
+- Tasks path: `docs/specs/issues/issue-<number>-<slug>/tasks.md` or `n/a (legacy single-file issue spec already on main)`
+- Spec mode: `behavior` | `technical`
 
 ## Change type
-- [ ] docs
-- [ ] ci / automation
-- [ ] refactor
-- [ ] domain / compiler / runner behavior
-- [ ] adapter / integration work
-- [ ] governance / process
+- [ ] analyst-spec entry PR
+- [ ] implementation
+- [ ] bugfix
+- [ ] refactor / internal-only
+- [ ] workflow / infrastructure
+- [ ] docs-only
+
+## Summary
+- ...
 
 ## Validation
-- [ ] `cargo fmt --all --check`
-- [ ] `cargo test --workspace`
-- [ ] `cargo clippy --workspace --all-targets -- -D warnings`
-- [ ] `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`
-- [ ] `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
-- [ ] `cargo audit`
-- [ ] `gitleaks dir .`
-- [ ] `cargo deny check licenses sources`
-- [ ] other validation noted below
+- ...
 
-## Merge gate acknowledgement
-- [ ] I confirmed this PR should not merge until the required checks above are green or an explicitly documented docs/governance exception applies.
-- [ ] I recorded any exception, skipped check, or path-scoped extra validation below.
-- [ ] I confirmed whether `ios-simulator-smoke` is required for this diff.
+## Docs assessment
+- [ ] docs-needed
+- [ ] no extra docs gate needed
 
-## Notes for reviewers
-- risk level:
-- expected follow-up work:
-- current plan item or issue:
-- relevant issues:
+Explain briefly:
+- ...
 
-## Additional validation details
-```text
-Paste useful command output, screenshots, traces, or notes here.
-```
+## Closure semantics
+- [ ] `Closes #...`
+- [ ] `Part of #...`
+
+Explain briefly if needed:
+- ...

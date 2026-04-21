@@ -6,8 +6,10 @@ This repository intentionally keeps only the minimum local contract needed for c
 
 ## Local source-of-truth split
 
-- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and prioritization source of truth.
-- `docs/specs/casgrain-product-spec.md` is the canonical behavior/spec source of truth.
+- GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and PRD source of truth.
+- `docs/specs/casgrain-product-spec.md` is the canonical product-level behavior source of truth.
+- `docs/specs/issues/` holds issue-level repo implementation artifacts created by Analyst before Dev/DevOps starts: `spec.md` as the delivery contract and `tasks.md` as the ordered execution list.
+- `docs/development/backlog-and-spec-workflow.md` defines the backlog -> Analyst spec-only PR -> implementation chain.
 - `docs/validation.md` is the canonical validation gate.
 - `docs/development/merge-and-validation-policy.md` defines local merge discipline.
 
@@ -15,6 +17,8 @@ This repository intentionally keeps only the minimum local contract needed for c
 
 These labels are still the durable execution-state surface consumed by automation:
 
+- `needs-analyst`
+- `spec-in-review`
 - `ready-for-dev`
 - `devops`
 - `in-dev`
@@ -33,6 +37,23 @@ These labels are still the durable execution-state surface consumed by automatio
 - `docs-needed`
 - `docs-approved`
 - `docs-blocked`
+- `analyst-spec` (PR classification label for analyst-created spec-entry PRs)
+
+### Human-review handoff rule
+
+When automation needs Daniel or another human to act on a PR, it must not rely on a bare GitHub review request.
+
+Minimum required handoff:
+- add `waiting-on-human` to the PR so lane selectors stop treating it as actively automatable
+- preserve the truthful return-path label when one exists (for example `needs-qa`, `needs-security`, `needs-po`, `needs-merge`, or a docs/security gate label)
+- if the PR links an open issue, mark that issue `waiting-on-human` too so the backlog state also shows the hold
+- leave a structured PR comment that says:
+  - why the human is needed
+  - exactly what action is requested
+  - how the human sends it back to automation
+  - the next owner after release
+
+A PR must never be handed to a human with only a review request and no explicit workflow hold/comment.
 
 Use GitHub-native issue relationships (`Blocked by`, parent/sub-issue links) when possible instead of encoding dependencies only in comments.
 
