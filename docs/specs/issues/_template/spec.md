@@ -5,7 +5,7 @@
 
 ## Summary
 
-<What this slice is shaping.>
+<What this bounded slice is shaping.>
 
 ## Scope
 

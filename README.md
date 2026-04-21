@@ -269,7 +269,7 @@ Important files and directories:
 - `CONTRIBUTING.md` — how to get set up and contribute
 - `AGENTS.md` — guidance for coding agents and contributors using agentic tools
 - `CODEOWNERS` — default review ownership
-- `.github/pull_request_template.md` — PR checklist and merge notes
+- `.github/PULL_REQUEST_TEMPLATE.md` — PR checklist and merge notes
 - `.github/ISSUE_TEMPLATE/` — bug and feature intake
 - `docs/architecture/` — architecture and governance documents
 - `docs/development/automation-agent-operations.md` — minimal repository-local note about external `agent-team-orchestrator` integration

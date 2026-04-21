@@ -108,7 +108,7 @@ A good PR should include:
 - an explicit statement of which merge-gate checks ran and whether any documented exception applies
 
 Before opening a PR, review:
-- `.github/pull_request_template.md`
+- `.github/PULL_REQUEST_TEMPLATE.md`
 - `docs/development/rust-coding-guide.md` when the change touches Rust code, crate boundaries, or lint/formatting expectations
 - `docs/development/automation-agent-operations.md` when the work involves autonomous maintenance or repo-operations roles
 - `docs/development/bug-reproduction-evidence-contract.md` when the work involves bug intake, reproduction, or evidence collection

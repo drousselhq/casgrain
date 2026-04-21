@@ -8,7 +8,7 @@ This repository intentionally keeps only the minimum local contract needed for c
 
 - GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and PRD source of truth.
 - `docs/specs/casgrain-product-spec.md` is the canonical product-level behavior source of truth.
-- `docs/specs/issues/` holds issue-level repo spec artifacts created by Analyst before Dev/DevOps starts.
+- `docs/specs/issues/` holds issue-level repo implementation artifacts created by Analyst before Dev/DevOps starts: `spec.md` as the delivery contract and `tasks.md` as the ordered execution list.
 - `docs/development/backlog-and-spec-workflow.md` defines the backlog -> Analyst spec-only PR -> implementation chain.
 - `docs/validation.md` is the canonical validation gate.
 - `docs/development/merge-and-validation-policy.md` defines local merge discipline.

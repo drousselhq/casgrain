@@ -16,14 +16,14 @@ Primary goals:
 - Repo docs are canonical for shipped behavior and contributor expectations.
 - GitHub Issues and the Casgrain GitHub Project v2 board are the backlog and PRD source of truth.
 - `docs/specs/casgrain-product-spec.md` is the canonical product behavior spec.
-- `docs/specs/issues/` holds bounded issue-level repo spec artifacts authored by Analyst before Dev starts.
+- `docs/specs/issues/` holds bounded issue-level repo implementation artifacts (`spec.md` contract + `tasks.md` ordered execution list) authored by Analyst before Dev starts.
 - Pull Requests are the review and merge unit.
 
 ## 3. Standard workflow
 
 For non-trivial work:
 1. Shape the request in the backlog PRD
-2. Analyst writes or updates the repo spec artifact
+2. Analyst writes or updates the issue-scoped repo artifacts (`spec.md` + `tasks.md`)
 3. Merge the spec-only PR
 4. Execute one bounded implementation slice
 5. Validate
@@ -56,7 +56,7 @@ Required:
 - `AGENTS.md`
 - project backlog PRD in the GitHub issue / Project item
 - product behavior spec (`docs/specs/casgrain-product-spec.md`)
-- issue-level repo spec artifacts under `docs/specs/issues/`
+- issue-level repo implementation artifacts (`spec.md` + `tasks.md`) under `docs/specs/issues/`
 - architecture notes / ADRs
 - `docs/validation.md`
 
