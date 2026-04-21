@@ -34,7 +34,7 @@ PY`
 
 ## 3. Reconcile the canonical repo contract from advisory to required gate
 - [ ] 3.1 Update `docs/validation.md` so it states `android-smoke` is a required merge gate and explains the always-reporting/self-skip model.
-- [ ] 3.2 Update `docs/specs/casgrain-product-spec.md` and `docs/development/test-pyramid-and-runtime-contracts.md` so they no longer describe Android as advisory-only or iOS as the sole required mobile gate.
+- [ ] 3.2 Update `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/merge-and-validation-policy.md` so they no longer describe Android as advisory-only or iOS as the sole required mobile gate.
 - [ ] 3.3 Update `docs/development/security-owasp-baseline.md` so the protected-branch evidence snapshot matches the promoted live gate once the ruleset change is applied.
 - Goal: Leave one truthful repo-owned policy/spec story after Android becomes a required merge gate.
 - Validation: `python3 - <<'PY'
@@ -43,6 +43,7 @@ needles = {
     'docs/validation.md': ['android-smoke', 'required merge gate'],
     'docs/specs/casgrain-product-spec.md': ['android-smoke'],
     'docs/development/test-pyramid-and-runtime-contracts.md': ['android-smoke'],
+    'docs/development/merge-and-validation-policy.md': ['android-smoke'],
     'docs/development/security-owasp-baseline.md': ['android-smoke'],
 }
 for rel, expected in needles.items():
@@ -59,18 +60,7 @@ PY`
 - [ ] 4.2 Add `android-smoke` to the live required-check list without removing any existing contexts or relaxing strict/review/history rules.
 - [ ] 4.3 Verify the live ruleset state through `gh api` after the update and keep `#79` open until that verification is true on `main`.
 - Goal: Make the live GitHub protection state match the promoted repo contract.
-- Validation: `gh api repos/drousselhq/casgrain/rulesets | python3 - <<'PY'
-import json, sys
-rulesets = json.load(sys.stdin)
-rule = next(r for r in rulesets if r['name'] == 'main-protection-ruleset')
-contexts = []
-for entry in rule.get('rules', []):
-    if entry.get('type') == 'required_status_checks':
-        contexts = [check['context'] for check in entry['parameters']['required_status_checks']]
-        break
-assert 'android-smoke' in contexts, contexts
-print('android-smoke is required in main-protection-ruleset')
-PY`
+- Validation: `RULESET_ID=$(gh api repos/drousselhq/casgrain/rulesets --jq '.[] | select(.name == "main-protection-ruleset") | .id') && gh api repos/drousselhq/casgrain/rulesets/$RULESET_ID --jq '.rules[] | select(.type == "required_status_checks").parameters.required_status_checks[].context' | grep -Fx 'android-smoke'`
 - Non-goals: No relaxation of branch protection, no bypass-policy changes, no new required contexts beyond `android-smoke`.
 - Hand back if: The authenticated actor cannot modify rulesets or repo governance requires a separate human-owned settings change.
 

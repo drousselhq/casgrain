@@ -19,7 +19,7 @@ Live baseline at analyst handoff (`2026-04-21` UTC):
 - the active branch ruleset named `main-protection-ruleset` still requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke`, but it does **not** require `android-smoke`
 - `.github/workflows/android-emulator-smoke.yml` still uses `pull_request.paths`, so unrelated PRs produce no `android-smoke` status context at all
 - `.github/workflows/ios-simulator-smoke.yml` already follows the required-check-safe pattern: it runs on every PR, self-decides whether the expensive simulator path is needed, and still reports `ios-smoke`
-- canonical repo docs still describe Android as advisory rather than required, including `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/security-owasp-baseline.md`
+- canonical repo docs still describe Android as advisory rather than required, including `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/merge-and-validation-policy.md`, and `docs/development/security-owasp-baseline.md`
 
 The honest remaining gap is therefore no longer Android reliability plumbing. The repo already has a real emulator-backed Android lane with stable artifact/report contracts; what remains is promoting that existing lane into a branch-protection-safe required merge gate.
 
@@ -55,12 +55,13 @@ Update:
 - `docs/validation.md`
 - `docs/specs/casgrain-product-spec.md`
 - `docs/development/test-pyramid-and-runtime-contracts.md`
+- `docs/development/merge-and-validation-policy.md`
 - `docs/development/security-owasp-baseline.md`
 
 Contract:
 - state that both `ios-smoke` and `android-smoke` are required merge gates on `main`
 - explain that both mobile smoke workflows always report a PR status context but self-skip the expensive device work when the PR does not touch their owned surface area
-- remove stale wording that says Android is advisory, non-required, or only a debugging lane
+- remove stale wording that says Android is advisory, non-required, or only a debugging lane, including the current advisory language in `docs/development/merge-and-validation-policy.md`
 - preserve the already-landed truth that Android no longer uses a separate reliability tracker issue; concrete Android defects should still be tracked directly as bounded issues
 
 ### 3. Live ruleset promotion
@@ -79,7 +80,7 @@ Ruleset contract:
 2. PRs that do **not** touch Android/shared-runtime surfaces report a successful `android-smoke` result without booting an emulator or building/uploading Android smoke artifacts.
 3. PRs that **do** touch Android/shared-runtime surfaces still run the real emulator-backed Android smoke lane and preserve the current artifact/report contract.
 4. The active `main-protection-ruleset` requires `android-smoke` alongside the existing required contexts.
-5. `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/security-owasp-baseline.md` no longer describe Android smoke as advisory-only.
+5. `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/merge-and-validation-policy.md`, and `docs/development/security-owasp-baseline.md` no longer describe Android smoke as advisory-only.
 6. `#79` can close once the merged workflow changes and the live ruleset update are both complete.
 
 ## Explicit non-goals
@@ -113,18 +114,9 @@ PY
 Post-merge verification required before closing `#79`:
 
 ```bash
-gh api repos/drousselhq/casgrain/rulesets | python3 - <<'PY'
-import json, sys
-rulesets = json.load(sys.stdin)
-rule = next(r for r in rulesets if r['name'] == 'main-protection-ruleset')
-contexts = []
-for entry in rule.get('rules', []):
-    if entry.get('type') == 'required_status_checks':
-        contexts = [check['context'] for check in entry['parameters']['required_status_checks']]
-        break
-assert 'android-smoke' in contexts, contexts
-print('android-smoke is required in main-protection-ruleset')
-PY
+RULESET_ID=$(gh api repos/drousselhq/casgrain/rulesets --jq '.[] | select(.name == "main-protection-ruleset") | .id')
+gh api repos/drousselhq/casgrain/rulesets/$RULESET_ID --jq '.rules[] | select(.type == "required_status_checks").parameters.required_status_checks[].context' \
+  | grep -Fx 'android-smoke'
 ```
 
 ## Completion boundary
