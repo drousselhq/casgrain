@@ -92,8 +92,9 @@ First iOS vertical-slice note:
 
 ## Mobile smoke workflow policy
 
-- `ios-simulator-smoke` and `android-emulator-smoke` are required PR checks for Casgrain's current product-true mobile merge gate.
-- Both mobile smoke workflows always report a PR status so branch protection can enforce them safely, but each workflow only runs the expensive simulator/emulator path when the PR touches its owned platform or shared execution surfaces; qualifying pushes to `main` also run the device path so fresh host evidence exists after runner-host changes merge.
+- Casgrain's target product-true mobile merge gate is both `ios-simulator-smoke` and `android-emulator-smoke`.
+- `ios-simulator-smoke` is already a required PR check on `main`, and issue `#79` makes `android-emulator-smoke` always report on pull requests so it can become the matching required check immediately after that workflow lands on `main`.
+- On the `#79` candidate head both mobile smoke workflows always report a PR status so branch protection can enforce them safely, but each workflow only runs the expensive simulator/emulator path when the PR touches its owned platform or shared execution surfaces; qualifying pushes to `main` also run the device path so fresh host evidence exists after runner-host changes merge.
 - There is no separate reliability-qualification tracker or future-run streak requirement for Android smoke; if it exposes a concrete defect, file that defect directly.
 - The Android workflow must still validate and archive an explicit artifact contract: `trace.json` plus stable sibling artifacts on success, or `failure.json` plus referenced diagnostics for runner-managed failure paths, with `failure_class`/`evidence-summary.json` capturing the machine-readable outcome. Empty, malformed, or failed `uiautomator` dump capture should stay inside that runner-managed contract as `ui-dump-failure`, preserving `ui-last.xml` (empty when the dump yielded no bytes) plus any truthful foreground diagnostics when available. If the workflow cannot produce either bundle, it should fail explicitly as an `artifact-contract-breach`.
 - Changes limited to docs, governance, labels, or other non-runtime surfaces should not pay the full mobile smoke cost.

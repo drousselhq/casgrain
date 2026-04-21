@@ -32,11 +32,11 @@ PY`
 - Non-goals: No Android runtime/fixture redesign, no artifact-contract semantics changes, no ruleset relaxation.
 - Hand back if: Required-check-safe PR behavior would require splitting the Android smoke lane into a second workflow or otherwise changing the repo’s workflow topology beyond this bounded slice.
 
-## 3. Reconcile the canonical repo contract from advisory to required gate
-- [x] 3.1 Update `docs/validation.md` so it states `android-smoke` is a required merge gate and explains the always-reporting/self-skip model.
-- [x] 3.2 Update `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/merge-and-validation-policy.md` so they no longer describe Android as advisory-only or iOS as the sole required mobile gate.
-- [x] 3.3 Update `docs/development/security-owasp-baseline.md` so the protected-branch evidence snapshot matches the promoted live gate once the ruleset change is applied.
-- Goal: Leave one truthful repo-owned policy/spec story after Android becomes a required merge gate.
+## 3. Reconcile the canonical repo contract for the `#79` rollout state
+- [x] 3.1 Update `docs/validation.md` so it describes the target Android merge-gate promotion, explains the always-reporting/self-skip model, and keeps the live `main` ruleset flip as a post-merge close-out step.
+- [x] 3.2 Update `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/merge-and-validation-policy.md` so they no longer describe Android as advisory-only or iOS as the sole mobile gate, while still separating the `#79` candidate-head behavior from the not-yet-applied live ruleset change.
+- [x] 3.3 Update `docs/development/security-owasp-baseline.md` so the protected-branch evidence snapshot stays truthful while `android-smoke` remains the pending companion gate tracked by `#79`.
+- Goal: Leave one truthful repo-owned policy/spec story for the `#79` rollout while the live `android-smoke` ruleset flip is still pending.
 - Validation: `python3 - <<'PY'
 from pathlib import Path
 needles = {

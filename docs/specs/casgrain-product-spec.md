@@ -14,8 +14,8 @@ Current product framing:
 - Casgrain should also support discovery-oriented workflows that observe an app and generate candidate Gherkin from evidence.
 - LLMs may assist authoring, exploration, repair, and summarization, but are not part of the deterministic execution path.
 - The first product-true vertical slice is intentionally minimal: one fixture-specific iOS scenario compiled from `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature` and executed through `casgrain run-ios-smoke`.
-- That first slice remains iOS-first, but both `ios-smoke` and `android-smoke` are required merge gates because they are the repo's user-facing simulator/emulator-backed proof that shared runtime changes still satisfy the deterministic mobile execution contract.
-- The Android fixture smoke path is now a parallel emulator-backed evidence contract for the same deterministic runtime model: it must preserve machine-readable success traces and runner-managed machine-readable failure diagnostics, and on pull requests it must always report the required `android-smoke` context while self-skipping the expensive emulator path for unaffected diffs.
+- That first slice remains iOS-first. Today `ios-smoke` is the live required gate on `main`, and issue `#79` promotes `android-smoke` from a parallel emulator-backed evidence lane to the matching required gate once the always-reporting workflow lands on `main`.
+- The Android fixture smoke path is now a parallel emulator-backed evidence contract for the same deterministic runtime model: it must preserve machine-readable success traces and runner-managed machine-readable failure diagnostics, and on the `#79` candidate head it always reports the `android-smoke` context on pull requests while self-skipping the expensive emulator path for unaffected diffs so the live ruleset can add it honestly after merge.
 - The mock runner and handwritten XCTest harness are still useful development infrastructure, but they are not the canonical proof for this first user-facing slice.
 
 ```gherkin

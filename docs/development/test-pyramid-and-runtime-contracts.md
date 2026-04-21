@@ -152,7 +152,7 @@ Current strategy:
 - keep one tiny iOS fixture app as the first honest integration target
 - prove launch, one visible tap, one visible assertion, and one screenshot artifact before broadening scope
 - keep simulator/emulator coverage as a narrow Layer 4 proof on top of cheaper workspace validation
-- keep iOS as the first product-true slice while treating both `ios-smoke` and `android-smoke` as required merge gates that always report status and self-skip expensive device work on unaffected PRs
+- keep iOS as the first product-true slice while converging on both `ios-smoke` and `android-smoke` as the mobile merge gate: `ios-smoke` is already live-required on `main`, and the `#79` candidate head makes `android-smoke` always report so it can be promoted next without forcing device work on unaffected PRs
 
 Current target scope:
 - one iOS fixture-app smoke path
