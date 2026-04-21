@@ -106,6 +106,42 @@ class MobileSmokeWorkflowTriggerTests(unittest.TestCase):
                 continue
             self.assertIn(pattern, run_script)
 
+    def test_android_smoke_failure_path_still_uploads_artifacts_for_reliability_report(self) -> None:
+        workflow = self.load_workflow(".github/workflows/android-emulator-smoke.yml")
+        smoke_steps = self.job_steps(workflow, "smoke")
+        upload_step = self.step_named(smoke_steps, "Upload Android smoke artifacts")
+        self.assertEqual(
+            upload_step.get("if"),
+            "always() && steps.changes.outputs.should_run == 'true'",
+        )
+        self.assertEqual(
+            upload_step.get("with"),
+            {
+                "name": "casgrain-android-smoke",
+                "path": "${{ github.workspace }}/artifacts/android-smoke",
+                "if-no-files-found": "error",
+            },
+        )
+
+        jobs = workflow.get("jobs")
+        self.assertIsInstance(jobs, dict)
+        reliability_report = jobs.get("reliability_report")
+        self.assertIsInstance(reliability_report, dict)
+        self.assertEqual(
+            reliability_report.get("if"),
+            "always() && github.event_name != 'pull_request'",
+        )
+        report_steps = reliability_report.get("steps")
+        self.assertIsInstance(report_steps, list)
+        download_step = self.step_named(report_steps, "Download current Android smoke artifact")
+        self.assertEqual(
+            download_step.get("with"),
+            {
+                "name": "casgrain-android-smoke",
+                "path": "${{ runner.temp }}/current-android-smoke",
+            },
+        )
+
     def test_ios_smoke_push_trigger_bootstraps_main_runner_host_evidence(self) -> None:
         workflow = self.load_workflow(".github/workflows/ios-simulator-smoke.yml")
         push = self.workflow_on_block(workflow).get("push")

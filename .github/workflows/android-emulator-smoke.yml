@@ -196,7 +196,7 @@ jobs:
           echo "No Android-smoke-impacting files changed on this PR; reporting success without running the emulator path."
 
       - name: Upload Android smoke artifacts
-        if: steps.changes.outputs.should_run == 'true'
+        if: always() && steps.changes.outputs.should_run == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: casgrain-android-smoke
