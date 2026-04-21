@@ -66,12 +66,12 @@ Required report behavior:
 The sync helper must also support a bounded blocker path.
 
 Required blocker rules:
-- when the synced report later surfaces a concrete new blocker beyond simple schedule shortfall, create or reopen **one** bounded blocker issue for that blocker class instead of silently leaving the tracker ambiguous
+- when the synced report later surfaces a concrete new blocker beyond simple schedule shortfall, create or reopen **one** bounded blocker issue for that blocker class instead of silently leaving GitHub issue state ambiguous
 - the blocker issue must:
   - be labeled `enhancement` and `devops`
   - include the blocker run ID, run URL, report verdict/reasons, and machine-readable `failure_class` when present
   - include a marker that lets later sync runs update the same blocker issue instead of churning duplicates
-- the current known state (`schedule_main_runs_below_threshold` with historical blocker run `24611423606`) must **not** open a blocker issue by itself; the tracker issue should simply stay open with the current report summary until a genuinely new blocker or a qualified window appears
+- the current known state (`schedule_main_runs_below_threshold` with historical blocker run `24611423606`) must **not** open a blocker issue by itself; it should stay advisory-only unless a previously managed blocker issue needs to close because the report no longer justifies keeping it open
 
 A simple deterministic title shape is acceptable, for example:
 - `android-smoke: unblock reliability window after <failure_class>`
@@ -88,15 +88,15 @@ Required fixture cases:
   - `reasons=["schedule_main_runs_below_threshold"]`
   - run `24611423606`
   - `failure_class=artifact-contract-breach`
-  - expected plan: update/reopen tracker issue only; **no blocker issue**
+  - expected plan: tracker-free advisory no-op when no managed blocker issue exists, or close the matching managed blocker issue if one is still open
 - `qualified.*` modeling a future valid window:
   - `verdict=qualified`
   - at least 10 successful runs
   - at least 3 `schedule` runs on `main`
   - at least 3 `pull_request` runs
-  - expected plan: update tracker issue and close it
+  - expected plan: remain tracker-free and close any matching managed blocker issue that is still open
 - `blocker.*` modeling a future non-qualified state with a concrete new blocker:
-  - expected plan: update tracker issue and create/reopen one bounded blocker issue
+  - expected plan: create/reopen/update exactly one bounded blocker issue for that blocker class
 
 The fixture format does **not** need to mirror raw GitHub API payloads. It should instead match the sync helper's normalized plan inputs so tests stay small and deterministic.
 

@@ -10,7 +10,6 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-TRACKER_MARKER = "<!-- android-smoke-reliability-tracker -->"
 BLOCKER_MARKER_PREFIX = "<!-- android-smoke-reliability-blocker:"
 MANAGED_BLOCKER_LABELS = ["enhancement", "devops"]
 SCHEDULE_SHORTFALL_REASON = "schedule_main_runs_below_threshold"
@@ -122,10 +121,9 @@ class GhIssueClient(IssueClientProtocol):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Synchronize Android smoke reliability tracker and blocker issues from the reporter summary."
+        description="Synchronize Android smoke reliability blocker issues from the reporter summary."
     )
     parser.add_argument("--repo", required=True, help="owner/repo for gh issue operations")
-    parser.add_argument("--tracker-issue", type=int, required=True, help="Tracker issue number to synchronize")
     parser.add_argument("--summary-json", required=True, help="Path to reporter summary JSON")
     parser.add_argument("--markdown-file", required=True, help="Path to reporter markdown output")
     parser.add_argument("--dry-run", action="store_true", help="Print the planned action without mutating GitHub")
@@ -175,14 +173,6 @@ def select_managed_issue(
         return None
     marker_matches.sort(key=lambda issue: (issue["state"] != "OPEN", issue["number"]))
     return marker_matches[0]
-
-
-def find_issue_by_number(issues: list[dict[str, Any]], *, issue_number: int) -> dict[str, Any]:
-    for issue in issues:
-        normalized = normalize_issue(issue)
-        if normalized["number"] == issue_number:
-            return normalized
-    raise IssueSyncError(f"GitHub issue #{issue_number} was not found in repository search results")
 
 
 def scalar_field(container: dict[str, Any], field_name: str, *, error_context: str) -> str:
@@ -299,30 +289,49 @@ def build_blocker_title(summary: dict[str, Any]) -> str:
     return f"android-smoke: unblock reliability window after {blocker['failure_class']}"
 
 
+def find_matching_managed_blocker(summary: dict[str, Any], existing_issues: list[dict[str, Any]]) -> dict[str, Any] | None:
+    blocker = summary.get("blocker")
+    if not isinstance(blocker, dict):
+        return None
+    title = build_blocker_title(summary)
+    marker = blocker_marker(blocker["failure_class"])
+    return select_managed_issue(existing_issues, expected_title=title, marker=marker)
+
+
 def build_sync_plan(
     *,
     summary: dict[str, Any],
     markdown: str,
-    tracker_issue: dict[str, Any],
     existing_issues: list[dict[str, Any]],
 ) -> dict[str, Any]:
     normalized_summary = normalize_summary(summary)
-    normalized_tracker = normalize_issue(tracker_issue)
     if not isinstance(markdown, str) or not markdown.strip():
         raise IssueSyncError("Reporter markdown must be a non-empty string")
 
     report_kind = "tracking_only"
     blocker_plan: dict[str, Any] = {"action": "noop"}
+    existing_blocker = find_matching_managed_blocker(normalized_summary, existing_issues)
     if normalized_summary["verdict"] == "qualified":
         report_kind = "qualified"
+        if existing_blocker is not None and existing_blocker["state"] == "OPEN":
+            blocker_plan = {
+                "action": "close",
+                "number": existing_blocker["number"],
+                "failure_class": normalized_summary["blocker"]["failure_class"],
+            }
     elif is_threshold_shortfall_only(normalized_summary):
         report_kind = "schedule_shortfall_only" if is_schedule_shortfall_only(normalized_summary) else "tracking_only"
+        if existing_blocker is not None and existing_blocker["state"] == "OPEN":
+            blocker_plan = {
+                "action": "close",
+                "number": existing_blocker["number"],
+                "failure_class": normalized_summary["blocker"]["failure_class"],
+            }
     elif needs_managed_blocker(normalized_summary):
         report_kind = "managed_blocker"
         title = build_blocker_title(normalized_summary)
         marker = blocker_marker(normalized_summary["blocker"]["failure_class"])
-        existing = select_managed_issue(existing_issues, expected_title=title, marker=marker)
-        if existing is None:
+        if existing_blocker is None:
             blocker_plan = {
                 "action": "create",
                 "title": title,
@@ -330,10 +339,10 @@ def build_sync_plan(
                 "marker": marker,
                 "failure_class": normalized_summary["blocker"]["failure_class"],
             }
-        elif existing["state"] == "OPEN":
+        elif existing_blocker["state"] == "OPEN":
             blocker_plan = {
                 "action": "update",
-                "number": existing["number"],
+                "number": existing_blocker["number"],
                 "title": title,
                 "labels": MANAGED_BLOCKER_LABELS,
                 "marker": marker,
@@ -342,86 +351,19 @@ def build_sync_plan(
         else:
             blocker_plan = {
                 "action": "reopen",
-                "number": existing["number"],
+                "number": existing_blocker["number"],
                 "title": title,
                 "labels": MANAGED_BLOCKER_LABELS,
                 "marker": marker,
                 "failure_class": normalized_summary["blocker"]["failure_class"],
             }
 
-    desired_state = "CLOSED" if normalized_summary["verdict"] == "qualified" else "OPEN"
     return {
         "report_kind": report_kind,
         "summary": normalized_summary,
         "markdown": markdown.strip() + "\n",
-        "tracker": {
-            "issue": normalized_tracker["number"],
-            "title": normalized_tracker["title"],
-            "current_state": normalized_tracker["state"],
-            "desired_state": desired_state,
-        },
         "blocker": blocker_plan,
     }
-
-
-def render_tracker_body(plan: dict[str, Any], blocker_issue_number: int | None) -> str:
-    summary = plan["summary"]
-    tracker = plan["tracker"]
-    streak = summary["streak"]
-    lines = [
-        TRACKER_MARKER,
-        "# Android smoke qualification tracker",
-        "",
-        f"This issue is automation-managed by `{TRACKER_SCRIPT_PATH}`.",
-        "",
-        f"- Tracker issue: `#{tracker['issue']}`",
-        f"- Repo: `{summary['repo']}`",
-        f"- Workflow: `{summary['workflow']}`",
-        f"- Generated at: `{summary['generated_at']}`",
-        f"- Verdict: `{summary['verdict']}`",
-    ]
-    if summary["reasons"]:
-        lines.append("- Reasons: `" + "`, `".join(summary["reasons"]) + "`")
-    else:
-        lines.append("- Reasons: none")
-    lines.extend(
-        [
-            "",
-            "## Current streak counts",
-            f"- `successful_run_count`, `{streak['successful_run_count']}`",
-            f"- `schedule_main_success_count`, `{streak['schedule_main_success_count']}`",
-            f"- `pull_request_success_count`, `{streak['pull_request_success_count']}`",
-            "- `run_ids`, `" + ", ".join(str(run_id) for run_id in streak["run_ids"]) + "`",
-            "",
-        ]
-    )
-    if plan["report_kind"] == "qualified":
-        lines.extend(
-            [
-                "## Qualification status",
-                "- Qualified window recorded. Closing this tracker as completed.",
-                "- No blocker issue is required.",
-            ]
-        )
-    elif blocker_issue_number is not None:
-        blocker = summary["blocker"]
-        lines.extend(
-            [
-                "## Managed blocker",
-                f"- Managed blocker issue: #{blocker_issue_number}",
-                f"- Failure class: `{blocker['failure_class']}`",
-                f"- Blocker run: [{blocker['run_id']}]({blocker['url']})",
-            ]
-        )
-    else:
-        lines.extend(
-            [
-                "## Managed blocker",
-                "- No blocker issue is required yet.",
-            ]
-        )
-    lines.extend(["", "## Reporter markdown", "", plan["markdown"].rstrip()])
-    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_blocker_body(plan: dict[str, Any]) -> str:
@@ -434,7 +376,6 @@ def render_blocker_body(plan: dict[str, Any]) -> str:
         "",
         f"This issue is automation-managed by `{TRACKER_SCRIPT_PATH}`.",
         "",
-        f"- Tracker issue: `#{plan['tracker']['issue']}`",
         f"- Repo: `{summary['repo']}`",
         f"- Workflow: `{summary['workflow']}`",
         f"- Generated at: `{summary['generated_at']}`",
@@ -454,11 +395,6 @@ def render_blocker_body(plan: dict[str, Any]) -> str:
 def render_dry_run(plan: dict[str, Any]) -> str:
     summary = {
         "report_kind": plan["report_kind"],
-        "tracker": {
-            "issue": plan["tracker"]["issue"],
-            "current_state": plan["tracker"]["current_state"],
-            "desired_state": plan["tracker"]["desired_state"],
-        },
         "blocker": plan["blocker"],
     }
     return json.dumps(summary, indent=2, sort_keys=True) + "\n"
@@ -489,25 +425,13 @@ def apply_sync_plan(*, repo: str, plan: dict[str, Any], client: IssueClientProto
             body=render_blocker_body(plan),
             add_labels=plan["blocker"]["labels"],
         )
+    elif blocker_action == "close":
+        client.close_issue(repo=repo, number=plan["blocker"]["number"], reason="completed")
     elif blocker_action != "noop":
         raise IssueSyncError(f"Unsupported blocker action '{blocker_action}'")
 
-    # Retired tracker issues are left untouched once closed.
-    # That keeps this sync logic from reviving a retired tracker.
-    tracker = plan["tracker"]
-    if tracker["current_state"] == "OPEN":
-        tracker_body = render_tracker_body(plan, blocker_issue_number=blocker_issue_number)
-        if tracker["desired_state"] == "OPEN":
-            client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
-        elif tracker["desired_state"] == "CLOSED":
-            client.edit_issue(repo=repo, number=tracker["issue"], body=tracker_body)
-            client.close_issue(repo=repo, number=tracker["issue"], reason="completed")
-        else:
-            raise IssueSyncError("Unsupported tracker transition")
-
     return {
-        "tracker_issue": tracker["issue"],
-        "tracker_desired_state": tracker["desired_state"],
+        "report_kind": plan["report_kind"],
         "blocker_action": blocker_action,
         "blocker_issue_number": blocker_issue_number,
     }
@@ -548,11 +472,9 @@ def main() -> int:
         )
         if not isinstance(issues, list):
             raise IssueSyncError("GitHub issue search did not return a list")
-        tracker_issue = find_issue_by_number(issues, issue_number=args.tracker_issue)
         plan = build_sync_plan(
             summary=summary,
             markdown=markdown,
-            tracker_issue=tracker_issue,
             existing_issues=issues,
         )
         if args.dry_run:

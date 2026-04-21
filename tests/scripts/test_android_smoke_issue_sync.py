@@ -27,6 +27,20 @@ def load_markdown(name: str) -> str:
     return (FIXTURE_DIR / f"{name}.markdown.md").read_text(encoding="utf-8")
 
 
+def managed_blocker_issue(
+    *,
+    number: int = 220,
+    failure_class: str = "artifact-contract-breach",
+    state: str = "OPEN",
+) -> dict[str, object]:
+    return {
+        "number": number,
+        "title": f"android-smoke: unblock reliability window after {failure_class}",
+        "body": f"{MODULE.blocker_marker(failure_class)}\nmanaged blocker\n",
+        "state": state,
+    }
+
+
 class FakeIssueClient:
     def __init__(self) -> None:
         self.operations: list[tuple] = []
@@ -49,24 +63,32 @@ class FakeIssueClient:
 
 
 class AndroidSmokeIssueSyncTests(unittest.TestCase):
-    def test_build_sync_plan_keeps_tracker_open_without_blocker_for_schedule_shortfall(self) -> None:
+    def test_build_sync_plan_keeps_schedule_shortfall_tracker_free_without_blocker(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("schedule-shortfall"),
             markdown=load_markdown("schedule-shortfall"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
             existing_issues=[],
         )
 
         self.assertEqual(plan["report_kind"], "schedule_shortfall_only")
-        self.assertEqual(plan["tracker"]["current_state"], "OPEN")
-        self.assertEqual(plan["tracker"]["desired_state"], "OPEN")
+        self.assertNotIn("tracker", plan)
         self.assertEqual(plan["blocker"]["action"], "noop")
-        tracker_body = MODULE.render_tracker_body(plan, blocker_issue_number=None)
-        self.assertIn(MODULE.TRACKER_MARKER, tracker_body)
-        self.assertIn("No blocker issue is required yet", tracker_body)
-        self.assertIn("schedule_main_runs_below_threshold", tracker_body)
+        dry_run = MODULE.render_dry_run(plan)
+        self.assertNotIn('"tracker"', dry_run)
+        self.assertNotIn('132', dry_run)
 
-    def test_build_sync_plan_keeps_tracker_open_without_blocker_for_total_threshold_shortfall(self) -> None:
+    def test_build_sync_plan_closes_matching_open_blocker_when_downgrading_to_schedule_shortfall(self) -> None:
+        plan = MODULE.build_sync_plan(
+            summary=load_summary("schedule-shortfall"),
+            markdown=load_markdown("schedule-shortfall"),
+            existing_issues=[managed_blocker_issue()],
+        )
+
+        self.assertEqual(plan["report_kind"], "schedule_shortfall_only")
+        self.assertEqual(plan["blocker"]["action"], "close")
+        self.assertEqual(plan["blocker"]["number"], 220)
+
+    def test_build_sync_plan_keeps_total_threshold_shortfall_tracker_free(self) -> None:
         summary = load_summary("schedule-shortfall")
         summary["reasons"] = ["total_runs_below_threshold"]
         summary["streak"] = {
@@ -79,43 +101,32 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         plan = MODULE.build_sync_plan(
             summary=summary,
             markdown=load_markdown("schedule-shortfall"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
             existing_issues=[],
         )
 
         self.assertEqual(plan["report_kind"], "tracking_only")
-        self.assertEqual(plan["tracker"]["desired_state"], "OPEN")
+        self.assertNotIn("tracker", plan)
         self.assertEqual(plan["blocker"]["action"], "noop")
-        tracker_body = MODULE.render_tracker_body(plan, blocker_issue_number=None)
-        self.assertIn("No blocker issue is required yet", tracker_body)
-        self.assertIn("total_runs_below_threshold", tracker_body)
 
-    def test_build_sync_plan_closes_tracker_when_qualified(self) -> None:
+    def test_build_sync_plan_closes_matching_open_blocker_when_qualified(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("qualified"),
             markdown=load_markdown("qualified"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
-            existing_issues=[],
+            existing_issues=[managed_blocker_issue(failure_class="selector-timeout")],
         )
 
         self.assertEqual(plan["report_kind"], "qualified")
-        self.assertEqual(plan["tracker"]["desired_state"], "CLOSED")
-        self.assertEqual(plan["blocker"]["action"], "noop")
-        tracker_body = MODULE.render_tracker_body(plan, blocker_issue_number=None)
-        self.assertIn("Qualified window recorded", tracker_body)
-        self.assertIn("300010", tracker_body)
-        self.assertIn("schedule_main_success_count`, `3`", tracker_body)
+        self.assertEqual(plan["blocker"]["action"], "close")
+        self.assertEqual(plan["blocker"]["number"], 220)
 
     def test_build_sync_plan_creates_blocker_issue_for_concrete_blocker(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("blocker"),
             markdown=load_markdown("blocker"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
             existing_issues=[],
         )
 
         self.assertEqual(plan["report_kind"], "managed_blocker")
-        self.assertEqual(plan["tracker"]["desired_state"], "OPEN")
         self.assertEqual(plan["blocker"]["action"], "create")
         self.assertEqual(
             plan["blocker"]["title"],
@@ -132,12 +143,7 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
                     "body": "human-created issue without the managed marker",
                     "state": "OPEN",
                 },
-                {
-                    "number": 76,
-                    "title": "android-smoke: unblock reliability window after artifact-contract-breach",
-                    "body": f"{MODULE.blocker_marker('artifact-contract-breach')}\nautomated blocker\n",
-                    "state": "CLOSED",
-                },
+                managed_blocker_issue(number=76, state="CLOSED"),
             ],
             expected_title="android-smoke: unblock reliability window after artifact-contract-breach",
             marker=MODULE.blocker_marker("artifact-contract-breach"),
@@ -150,63 +156,38 @@ class AndroidSmokeIssueSyncTests(unittest.TestCase):
         plan = MODULE.build_sync_plan(
             summary=load_summary("blocker"),
             markdown=load_markdown("blocker"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "CLOSED"},
-            existing_issues=[
-                {
-                    "number": 220,
-                    "title": "android-smoke: unblock reliability window after artifact-contract-breach",
-                    "body": f"{MODULE.blocker_marker('artifact-contract-breach')}\nold blocker\n",
-                    "state": "CLOSED",
-                }
-            ],
+            existing_issues=[managed_blocker_issue(state="CLOSED")],
         )
 
-        self.assertEqual(plan["tracker"]["current_state"], "CLOSED")
-        self.assertEqual(plan["tracker"]["desired_state"], "OPEN")
         self.assertEqual(plan["blocker"]["action"], "reopen")
         self.assertEqual(plan["blocker"]["number"], 220)
 
-    def test_render_dry_run_reports_actions_for_blocker_case(self) -> None:
+    def test_render_dry_run_reports_actions_for_blocker_case_without_tracker(self) -> None:
         plan = MODULE.build_sync_plan(
             summary=load_summary("blocker"),
             markdown=load_markdown("blocker"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
             existing_issues=[],
         )
 
         dry_run = MODULE.render_dry_run(plan)
         self.assertIn('"report_kind": "managed_blocker"', dry_run)
         self.assertIn('"action": "create"', dry_run)
-        self.assertIn('"issue": 132', dry_run)
+        self.assertNotIn('132', dry_run)
+        self.assertNotIn('"tracker"', dry_run)
 
-    def test_apply_sync_plan_does_not_reopen_a_retired_tracker_without_live_github(self) -> None:
+    def test_apply_sync_plan_closes_matching_open_blocker_without_live_github(self) -> None:
         plan = MODULE.build_sync_plan(
-            summary=load_summary("blocker"),
-            markdown=load_markdown("blocker"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "CLOSED"},
-            existing_issues=[],
+            summary=load_summary("schedule-shortfall"),
+            markdown=load_markdown("schedule-shortfall"),
+            existing_issues=[managed_blocker_issue()],
         )
 
         client = FakeIssueClient()
         result = MODULE.apply_sync_plan(repo="drousselhq/casgrain", plan=plan, client=client)
 
-        self.assertEqual(result["blocker_issue_number"], 900)
-        self.assertEqual(client.operations[0][0], "create")
-        self.assertEqual(len(client.operations), 1)
-
-    def test_apply_sync_plan_closes_tracker_when_qualified_without_live_github(self) -> None:
-        plan = MODULE.build_sync_plan(
-            summary=load_summary("qualified"),
-            markdown=load_markdown("qualified"),
-            tracker_issue={"number": 132, "title": "Track Android smoke qualification after reliability sync lands", "body": "old", "state": "OPEN"},
-            existing_issues=[],
-        )
-
-        client = FakeIssueClient()
-        MODULE.apply_sync_plan(repo="drousselhq/casgrain", plan=plan, client=client)
-
-        self.assertEqual(client.operations[0][0], "edit")
-        self.assertEqual(client.operations[1], ("close", "drousselhq/casgrain", 132, "completed"))
+        self.assertEqual(result["blocker_issue_number"], 220)
+        self.assertEqual(result["blocker_action"], "close")
+        self.assertEqual(client.operations, [("close", "drousselhq/casgrain", 220, "completed")])
 
 
 if __name__ == "__main__":
