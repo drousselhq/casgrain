@@ -19,16 +19,20 @@
 - [ ] 2.3 Keep `runner-images`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-up groups.
 - [ ] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `java.distribution` or any other new Java fact.
 - Goal: Make the repo-owned manifest describe one bounded active Java source rule without reopening the other runner-host follow-up scopes.
-- Validation: `python3 - <<'PY'
-import json
-from pathlib import Path
-manifest = json.loads(Path('.github/runner-host-advisory-sources.json').read_text(encoding='utf-8'))
-groups = {group['key']: group for group in manifest['source_rule_groups']}
-assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
-for key in ['runner-images', 'android-gradle', 'android-emulator-runtime', 'ios-xcode-simulator']:
-    assert groups[key]['rule_kind'] == 'manual-review-required', (key, groups[key])
-print('android-java is the only promoted rule in the checked-in manifest at this checkpoint')
-PY`
+- Validation:
+
+  ```bash
+  python3 - <<'PY'
+  import json
+  from pathlib import Path
+  manifest = json.loads(Path('.github/runner-host-advisory-sources.json').read_text(encoding='utf-8'))
+  groups = {group['key']: group for group in manifest['source_rule_groups']}
+  assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
+  for key in ['runner-images', 'android-gradle', 'android-emulator-runtime', 'ios-xcode-simulator']:
+      assert groups[key]['rule_kind'] == 'manual-review-required', (key, groups[key])
+  print('android-java is the only promoted rule in the checked-in manifest at this checkpoint')
+  PY
+  ```
 - Non-goals: No Gradle/emulator/iOS/runner-image source activation, no new managed issue title.
 - Hand back if: The Java slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the non-Java groups too.
 
@@ -49,22 +53,26 @@ PY`
 - [ ] 4.3 Keep `java.distribution` explicitly out of scope in every touched doc/spec artifact unless a later issue adds it to `.github/runner-host-watch.json`.
 - [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group is manual-only on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Java-source-backed story colliding with older drift-only wording.
-- Validation: `python3 - <<'PY'
-from pathlib import Path
-checks = {
-    'docs/development/cve-watch-operations.md': ['android-java', 'source-backed'],
-    'docs/development/security-automation-plan.md': ['android-java', 'source-backed'],
-    'docs/development/security-owasp-baseline.md': ['android-java', 'source-backed'],
-    'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-java'],
-    'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-java'],
-    'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-java'],
-}
-for rel, needles in checks.items():
-    text = Path(rel).read_text(encoding='utf-8').lower()
-    for needle in needles:
-        assert needle in text, (rel, needle)
-print('runner-host docs/specs reflect the android-java source-backed contract')
-PY`
+- Validation:
+
+  ```bash
+  python3 - <<'PY'
+  from pathlib import Path
+  checks = {
+      'docs/development/cve-watch-operations.md': ['android-java', 'source-backed'],
+      'docs/development/security-automation-plan.md': ['android-java', 'source-backed'],
+      'docs/development/security-owasp-baseline.md': ['android-java', 'source-backed'],
+      'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-java'],
+      'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-java'],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-java'],
+  }
+  for rel, needles in checks.items():
+      text = Path(rel).read_text(encoding='utf-8').lower()
+      for needle in needles:
+          assert needle in text, (rel, needle)
+  print('runner-host docs/specs reflect the android-java source-backed contract')
+  PY
+  ```
 - Non-goals: No repo-wide security-doc rewrite beyond the named contradictory files.
 - Hand back if: Another canonical contract file becomes false only because it encodes a separate policy decision that this Java-only slice cannot honestly change.
 
