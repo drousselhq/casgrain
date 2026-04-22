@@ -17,6 +17,7 @@ SPEC.loader.exec_module(MODULE)
 
 FIXTURES_DIR = REPO_ROOT / "tests" / "test-support" / "fixtures" / "runner-host-watch"
 SOURCE_RULES_FIXTURES_DIR = FIXTURES_DIR / "source-rules"
+RUNNER_IMAGE_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "runner-image-source"
 
 
 def load_case(name: str) -> tuple[dict[str, object], dict[str, object]]:
@@ -28,6 +29,10 @@ def load_case(name: str) -> tuple[dict[str, object], dict[str, object]]:
 
 def load_source_rules_case(name: str) -> dict[str, object]:
     return json.loads((SOURCE_RULES_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
+
+
+def load_runner_image_source_case(name: str) -> dict[str, object]:
+    return json.loads((RUNNER_IMAGE_SOURCE_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
 def load_repo_source_rules() -> dict[str, object]:
@@ -164,7 +169,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         markdown = MODULE.render_markdown(summary)
         self.assertIn("<!-- cve-watch-report -->", markdown)
         self.assertIn("Verdict: **no review-needed**", markdown)
-        self.assertIn("drift-triggered manual review", markdown)
+        self.assertIn("baseline drift/missing-evidence checks are clean", markdown)
         self.assertIn("Source-rule status", markdown)
         self.assertIn("runner-images", markdown)
         self.assertIn("android-java", markdown)
@@ -178,22 +183,32 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_repo_source_rules()
 
-        summary = MODULE.build_summary(
-            repo=str(fixture_input["repo"]),
-            baseline=baseline,
-            source_rules=source_rules,
-            observed_platforms=fixture_input["platforms"],
-            generated_at="2026-04-19T09:00:00Z",
-        )
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
 
         source_rule_groups = {group["key"]: group for group in summary["source_rule_groups"]}
         self.assertEqual(
             set(source_rule_groups),
             {"runner-images", "android-java", "android-gradle", "android-emulator-runtime", "ios-xcode-simulator"},
         )
+        self.assertEqual(source_rule_groups["runner-images"]["rule_kind"], "runner-image-release-metadata")
+        self.assertEqual(source_rule_groups["runner-images"]["status"], "no review-needed")
+        self.assertEqual(source_rule_groups["runner-images"]["outcome"], "source-match")
 
         android_java = source_rule_groups["android-java"]
         self.assertEqual(android_java["follow_up_issue"], 154)
+        self.assertEqual(android_java["rule_kind"], "manual-review-required")
         self.assertEqual(
             android_java["watched_fact_paths"],
             [
@@ -214,6 +229,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         android_gradle = source_rule_groups["android-gradle"]
         self.assertEqual(android_gradle["follow_up_issue"], 155)
+        self.assertEqual(android_gradle["rule_kind"], "manual-review-required")
         self.assertEqual(
             android_gradle["watched_fact_paths"],
             [
@@ -234,6 +250,7 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         android_emulator = source_rule_groups["android-emulator-runtime"]
         self.assertEqual(android_emulator["follow_up_issue"], 156)
+        self.assertEqual(android_emulator["rule_kind"], "manual-review-required")
         self.assertEqual(
             android_emulator["watched_fact_paths"],
             [
@@ -257,6 +274,197 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                 },
             ],
         )
+
+    def test_build_summary_promotes_runner_images_with_clean_source_match(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("runner-images-promoted")
+        runner_image_source = load_runner_image_source_case("clean")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=runner_image_source,
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertFalse(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["reason"], "baseline-match")
+        self.assertEqual(summary["verdict"], "no review-needed")
+
+        runner_images = {group["key"]: group for group in summary["source_rule_groups"]}["runner-images"]
+        self.assertEqual(runner_images["rule_kind"], "runner-image-release-metadata")
+        self.assertEqual(runner_images["status"], "no review-needed")
+        self.assertEqual(runner_images["outcome"], "source-match")
+        self.assertEqual(
+            [result["platform"] for result in runner_images["platform_results"]],
+            ["android", "ios"],
+        )
+        self.assertEqual(
+            runner_images["platform_results"][0]["observed"],
+            {
+                "runner.image_version": "20260413.86.1",
+                "runner.os_version": "24.04.4",
+            },
+        )
+        self.assertEqual(
+            runner_images["platform_results"][1]["source"],
+            {
+                "runner.image_version": "20260414.0270.1",
+                "runner.os_version": "15.7.4",
+                "runner.os_build": "24G517",
+            },
+        )
+
+        markdown = MODULE.render_markdown(summary)
+        self.assertIn("source-match", markdown)
+        self.assertIn("runner-images", markdown)
+
+    def test_build_summary_flags_runner_images_android_source_drift(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("runner-images-promoted")
+        runner_image_source = load_runner_image_source_case("android-actionable")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=runner_image_source,
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "runner-images-source-drift")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        runner_images = {group["key"]: group for group in summary["source_rule_groups"]}["runner-images"]
+        self.assertEqual(runner_images["status"], "manual-review-required")
+        self.assertEqual(runner_images["outcome"], "source-drift")
+        android_result = next(result for result in runner_images["platform_results"] if result["platform"] == "android")
+        self.assertEqual(android_result["status"], "manual-review-required")
+        self.assertEqual(android_result["outcome"], "source-drift")
+        self.assertEqual(
+            android_result["changed_facts"],
+            [
+                {
+                    "path": "runner.image_version",
+                    "observed": "20260413.86.1",
+                    "source": "20260420.95.1",
+                },
+                {
+                    "path": "runner.os_version",
+                    "observed": "24.04.4",
+                    "source": "24.04.5",
+                },
+            ],
+        )
+
+    def test_build_summary_flags_runner_images_ios_source_drift(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("runner-images-promoted")
+        runner_image_source = load_runner_image_source_case("ios-actionable")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=runner_image_source,
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "runner-images-source-drift")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        runner_images = {group["key"]: group for group in summary["source_rule_groups"]}["runner-images"]
+        ios_result = next(result for result in runner_images["platform_results"] if result["platform"] == "ios")
+        self.assertEqual(ios_result["status"], "manual-review-required")
+        self.assertEqual(ios_result["outcome"], "source-drift")
+        self.assertEqual(
+            ios_result["changed_facts"],
+            [
+                {
+                    "path": "runner.image_version",
+                    "observed": "20260414.0270.1",
+                    "source": "20260421.0007.1",
+                },
+                {
+                    "path": "runner.os_version",
+                    "observed": "15.7.4",
+                    "source": "15.7.5",
+                },
+                {
+                    "path": "runner.os_build",
+                    "observed": "24G517",
+                    "source": "24G520",
+                },
+            ],
+        )
+
+    def test_build_summary_fails_closed_when_runner_image_source_errors(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("runner-images-promoted")
+        error_payload = load_runner_image_source_case("source-error")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            side_effect=MODULE.RunnerHostWatchError(str(error_payload["error"])),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "runner-images-source-error")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        runner_images = {group["key"]: group for group in summary["source_rule_groups"]}["runner-images"]
+        self.assertEqual(runner_images["status"], "manual-review-required")
+        self.assertEqual(runner_images["outcome"], "source-error")
+        for result in runner_images["platform_results"]:
+            self.assertEqual(result["status"], "manual-review-required")
+            self.assertEqual(result["outcome"], "source-error")
+            self.assertEqual(result["source_error"], str(error_payload["error"]))
+            self.assertEqual(result["changed_facts"], [])
+
+    def test_build_summary_fails_closed_when_promoted_runner_images_source_streams_drift(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("runner-images-promoted")
+        source_rules["groups"][0]["source_streams"]["android"]["runner_label"] = "ubuntu-22.04"
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertIn("source_streams", str(error.exception))
+        self.assertIn("runner-images", str(error.exception))
 
     def test_build_summary_fails_closed_when_source_rules_reference_unknown_watched_fact_path(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
