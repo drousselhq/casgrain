@@ -19,7 +19,16 @@
 - [ ] 2.3 Keep `runner-images`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-up groups.
 - [ ] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `java.distribution` or any other new Java fact.
 - Goal: Make the repo-owned manifest describe one bounded active Java source rule without reopening the other runner-host follow-up scopes.
-- Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
+- Validation: `python3 - <<'PY'
+import json
+from pathlib import Path
+manifest = json.loads(Path('.github/runner-host-advisory-sources.json').read_text(encoding='utf-8'))
+groups = {group['key']: group for group in manifest['source_rule_groups']}
+assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
+for key in ['runner-images', 'android-gradle', 'android-emulator-runtime', 'ios-xcode-simulator']:
+    assert groups[key]['rule_kind'] == 'manual-review-required', (key, groups[key])
+print('android-java is the only promoted rule in the checked-in manifest at this checkpoint')
+PY`
 - Non-goals: No Gradle/emulator/iOS/runner-image source activation, no new managed issue title.
 - Hand back if: The Java slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the non-Java groups too.
 
@@ -36,7 +45,7 @@
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `android-java` is now source-backed while the other runner-host groups remain `manual-review-required`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so they no longer read as if current `main` still has no active runner-host source-backed evaluation at all.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, and `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` so they no longer read as if current `main` still has no active runner-host source-backed evaluation at all or still leaves `android-java` as an unresolved manual-only follow-up after `#154` lands.
 - [ ] 4.3 Keep `java.distribution` explicitly out of scope in every touched doc/spec artifact unless a later issue adds it to `.github/runner-host-watch.json`.
 - [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group is manual-only on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Java-source-backed story colliding with older drift-only wording.
@@ -48,6 +57,7 @@ checks = {
     'docs/development/security-owasp-baseline.md': ['android-java', 'source-backed'],
     'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-java'],
     'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-java'],
+    'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-java'],
 }
 for rel, needles in checks.items():
     text = Path(rel).read_text(encoding='utf-8').lower()
