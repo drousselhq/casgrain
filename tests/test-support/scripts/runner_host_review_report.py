@@ -76,6 +76,7 @@ EXPECTED_RUNNER_IMAGE_SOURCE_STREAMS = {
     },
 }
 RUNNER_IMAGE_RELEASE_REPO = "actions/runner-images"
+RUNNER_IMAGE_RELEASES_URL = f"https://api.github.com/repos/{RUNNER_IMAGE_RELEASE_REPO}/releases?per_page=100"
 RUNNER_IMAGE_RELEASE_TAG_PREFIXES = {
     "ubuntu-24.04": "ubuntu24",
     "macos-15-arm64": "macos-15-arm64",
@@ -515,11 +516,18 @@ def fetch_json_url(url: str) -> Any:
         raise RunnerHostWatchError(f"runner-image source fetch did not return valid JSON for {url}") from exc
 
 
-def normalize_runner_image_release_series(image_version: str) -> str:
-    pieces = image_version.split(".")
-    if len(pieces) < 2:
-        raise RunnerHostWatchError(f"runner-image version {image_version!r} is not release-tag compatible")
-    return ".".join(pieces[:-1])
+def fetch_latest_runner_image_release_tag(tag_prefix: str) -> str:
+    releases = fetch_json_url(RUNNER_IMAGE_RELEASES_URL)
+    if not isinstance(releases, list):
+        raise RunnerHostWatchError("runner-image releases listing must be a list")
+    for index, release in enumerate(releases):
+        if not isinstance(release, dict):
+            continue
+        tag_name = release.get("tag_name")
+        if isinstance(tag_name, str) and tag_name.startswith(f"{tag_prefix}/"):
+            return tag_name
+    raise RunnerHostWatchError(f"runner-image releases listing is missing a release for tag prefix {tag_prefix!r}")
+
 
 
 def fetch_runner_image_release_payload(
@@ -531,8 +539,7 @@ def fetch_runner_image_release_payload(
     tag_prefix = RUNNER_IMAGE_RELEASE_TAG_PREFIXES.get(image_name)
     if tag_prefix is None:
         raise RunnerHostWatchError(f"no runner-image release tag prefix is known for image_name={image_name!r}")
-    image_version = required_scalar_field(observed_runner, "image_version", error_context=f"observed {platform_name} runner")
-    tag_name = f"{tag_prefix}/{normalize_runner_image_release_series(image_version)}"
+    tag_name = fetch_latest_runner_image_release_tag(tag_prefix)
     release_url = (
         f"https://api.github.com/repos/{RUNNER_IMAGE_RELEASE_REPO}/releases/tags/"
         f"{urllib.parse.quote(tag_name, safe='')}"

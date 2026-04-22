@@ -327,6 +327,78 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("source-match", markdown)
         self.assertIn("runner-images", markdown)
 
+    def test_build_summary_uses_latest_runner_image_release_stream_for_source_drift(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("runner-images-promoted")
+
+        release_list_url = "https://api.github.com/repos/actions/runner-images/releases?per_page=100"
+        android_release_url = "https://api.github.com/repos/actions/runner-images/releases/tags/ubuntu24%2F20260420.95"
+        ios_release_url = "https://api.github.com/repos/actions/runner-images/releases/tags/macos-15-arm64%2F20260421.0007"
+        android_asset_url = "https://example.invalid/internal.ubuntu24.json"
+        ios_asset_url = "https://example.invalid/internal.macos-15-arm64.json"
+
+        def fake_fetch_json_url(url: str) -> object:
+            if url == release_list_url:
+                return [
+                    {"tag_name": "ubuntu24/20260420.95"},
+                    {"tag_name": "macos-15-arm64/20260421.0007"},
+                    {"tag_name": "ubuntu24/20260413.86"},
+                    {"tag_name": "macos-15-arm64/20260414.0270"},
+                ]
+            if url == android_release_url:
+                return {
+                    "assets": [
+                        {
+                            "name": "internal.ubuntu24.json",
+                            "browser_download_url": android_asset_url,
+                        }
+                    ]
+                }
+            if url == ios_release_url:
+                return {
+                    "assets": [
+                        {
+                            "name": "internal.macos-15-arm64.json",
+                            "browser_download_url": ios_asset_url,
+                        }
+                    ]
+                }
+            if url == android_asset_url:
+                return {
+                    "Children": [
+                        {"NodeType": "ToolVersionNode", "ToolName": "Image Version:", "Version": "20260420.95.1"},
+                        {"NodeType": "ToolVersionNode", "ToolName": "OS Version:", "Version": "Ubuntu 24.04.5 LTS"},
+                    ]
+                }
+            if url == ios_asset_url:
+                return {
+                    "Children": [
+                        {"NodeType": "ToolVersionNode", "ToolName": "Image Version:", "Version": "20260421.0007.1"},
+                        {"NodeType": "ToolVersionNode", "ToolName": "OS Version:", "Version": "macOS 15.7.5 (24G520)"},
+                    ]
+                }
+            raise AssertionError(f"unexpected runner-image source URL: {url}")
+
+        with patch.object(MODULE, "fetch_json_url", side_effect=fake_fetch_json_url):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "runner-images-source-drift")
+        runner_images = {group["key"]: group for group in summary["source_rule_groups"]}["runner-images"]
+        android_result = next(result for result in runner_images["platform_results"] if result["platform"] == "android")
+        ios_result = next(result for result in runner_images["platform_results"] if result["platform"] == "ios")
+        self.assertEqual(android_result["source"]["runner.image_version"], "20260420.95.1")
+        self.assertEqual(android_result["source"]["runner.os_version"], "24.04.5")
+        self.assertEqual(ios_result["source"]["runner.image_version"], "20260421.0007.1")
+        self.assertEqual(ios_result["source"]["runner.os_version"], "15.7.5")
+        self.assertEqual(ios_result["source"]["runner.os_build"], "24G520")
+
     def test_build_summary_flags_runner_images_android_source_drift(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("runner-images-promoted")
