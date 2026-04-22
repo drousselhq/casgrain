@@ -134,6 +134,7 @@ Update:
 - `docs/development/security-owasp-baseline.md`
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md`
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 
 Update these docs so they say:
 - the runner-host lane is no longer uniformly drift-only once `#143` lands
@@ -141,6 +142,7 @@ Update these docs so they say:
 - the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`
 - the managed findings issue title remains `security: runner-host review needed`
 - the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work on current `main`; they must explicitly reconcile that `#143` is the delivered runner-images promotion slice while the other follow-up issues remain open
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md` no longer says the shipped runner-host lane stays drift-triggered review until a later Android follow-up lands; it must reconcile that `runner-images` becomes the delivered source-backed exception while `#154`, `#155`, and `#156` remain the Android follow-ups
 
 Workflow touch is allowed only if narrowly necessary:
 - `.github/workflows/cve-watch.yml` may change only for minimal step wording or a minimal input/env adjustment already available in the job
@@ -156,7 +158,7 @@ Workflow touch is allowed only if narrowly necessary:
 6. Actionable deterministic runner-image findings reuse the existing `security: runner-host review needed` path with `outcome=source-drift` rather than inventing a new managed issue title.
 7. Source retrieval, parsing, normalization, or matching failure for the promoted `runner-images` rule fails closed into `reason=runner-images-source-error` rather than a silent clean result.
 8. Drift / missing-evidence behavior for the rest of the runner-host watch remains intact on current `main`.
-9. The canonical runner-host docs and the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work after this slice lands; they reconcile `#143` as delivered while `#154`, `#155`, `#156`, and `#144` remain the open follow-ups.
+9. The canonical runner-host docs plus the older issue-spec docs for `#129`, `#124`, and `#142` no longer describe `#143` as remaining future work or claim the shipped runner-host lane stays uniformly drift-triggered after this slice lands; they reconcile `#143` as the delivered runner-images promotion while `#154`, `#155`, `#156`, and `#144` remain the open follow-ups.
 10. The implementation PR for this slice can honestly say `Closes #143` because it finishes the bounded `runner-images` promotion work, while the Android and iOS host-toolchain follow-ups remain open under their existing issue numbers.
 
 ## Behavior-spec scenario coverage
