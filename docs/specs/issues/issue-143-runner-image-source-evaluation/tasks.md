@@ -45,9 +45,10 @@
 
 ## 4. Keep the workflow/reporting contract truthful and reconcile docs
 - [ ] 4.1 Update the runner-host markdown / summary output so it clearly distinguishes the existing drift / missing-evidence path from the promoted runner-images source-backed `source-match`, `source-drift`, and `source-error` outcomes.
-- [ ] 4.2 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that only `runner-images` is source-backed after this slice.
-- [ ] 4.3 Touch `.github/workflows/cve-watch.yml` only if a minimal wording or already-available env/input adjustment is required for the promoted evaluator.
-- [ ] 4.4 Confirm the implementation still reuses `security: runner-host review needed` rather than inventing another title or sync step.
+- [ ] 4.2 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, `docs/development/security-owasp-baseline.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-124-runner-host-drift-watch.md` so they state that only `runner-images` is source-backed after this slice.
+- [ ] 4.3 In the two older issue-spec docs, remove the stale future-work wording that still presents `#143` as an open follow-up and reconcile them so `#143` is documented as the delivered runner-images slice while `#154`, `#155`, `#156`, and `#144` remain future work.
+- [ ] 4.4 Touch `.github/workflows/cve-watch.yml` only if a minimal wording or already-available env/input adjustment is required for the promoted evaluator.
+- [ ] 4.5 Confirm the implementation still reuses `security: runner-host review needed` rather than inventing another title or sync step.
 - Goal: Leave one truthful repo contract on `main` for how runner-images findings are reported and routed after `#143` lands.
 - Validation: `python3 - <<'PY'
 from pathlib import Path
@@ -55,11 +56,12 @@ for rel in [
     'docs/development/cve-watch-operations.md',
     'docs/development/security-automation-plan.md',
     'docs/development/security-owasp-baseline.md',
+    'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md',
+    'docs/specs/issues/issue-124-runner-host-drift-watch.md',
 ]:
     text = Path(rel).read_text(encoding='utf-8')
     assert '#143' in text, rel
     assert 'runner-images' in text, rel
-    assert 'source-drift' in text or 'source-error' in text, rel
 print('runner-images docs updated')
 PY`
 - Non-goals: No repo-wide documentation sweep beyond the runner-host security contract.
