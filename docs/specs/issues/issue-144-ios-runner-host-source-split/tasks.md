@@ -72,19 +72,19 @@ Hand back if:
 ## 4. Reconcile canonical docs and older issue-spec references
 
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they stop treating `#144` as the remaining umbrella iOS promotion issue and instead name `#164` and `#165`.
-- [ ] 4.2 Update `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-124-runner-host-drift-watch.md` so older repo-owned specs do not preserve the superseded `ios-xcode-simulator` umbrella story after this slice lands.
+- [ ] 4.2 Update `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-124-runner-host-drift-watch.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so older repo-owned specs do not preserve the superseded `ios-xcode-simulator` umbrella story after this slice lands.
 
 Goal: Keep canonical docs and older issue-spec artifacts aligned with the new iOS split.
 
 Validation:
-- `git grep -n 'ios-xcode-simulator\|#144' docs/development docs/specs/issues`
+- `git grep -n 'ios-xcode-simulator\|#144' docs/development docs/specs/issues/issue-129-runner-host-advisory-source-rules.md docs/specs/issues/issue-124-runner-host-drift-watch.md docs/specs/issues/issue-142-android-runner-host-source-split.md`
 
 Non-goals:
-- No unrelated docs cleanup outside the five named files.
+- No unrelated docs cleanup outside the six named files.
 - No rewrite of the underlying security policy beyond the split ownership story.
 
 Hand back if:
-- Another canonical doc or older live issue-spec still owns the old `#144` umbrella contract and this slice would otherwise leave contradictory repo guidance.
+- Another canonical doc or older live issue-spec, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, still owns the old `#144` umbrella contract and this slice would otherwise leave contradictory repo guidance.
 
 ## 5. Run scoped validation and prepare the implementation PR handoff
 

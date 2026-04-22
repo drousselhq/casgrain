@@ -117,20 +117,22 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md`
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 
 Those docs updates must explicitly say:
 - the shipped runner-host automation still evaluates drift / missing evidence only
 - the iOS backlog is no longer one combined `ios-xcode-simulator` umbrella after this slice
 - later source-backed iOS promotion is split across `#164` and `#165`
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a current summary key or `#144` as the remaining iOS umbrella owner once this slice lands
 - those later iOS slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
-- the current runner-image and Android follow-up ownership remains unchanged
+- the current runner-image and Android follow-up ownership remains unchanged outside that required iOS ownership reconciliation
 
 ## Acceptance criteria
 
 1. `.github/runner-host-advisory-sources.json` no longer uses `#144` as the owner of one combined iOS source group; it instead exposes two bounded iOS groups mapped to `#164` and `#165`.
 2. Every watched fact path in `.github/runner-host-watch.json` remains covered exactly once after the split.
 3. `runner_host_review_report.py` still reports the same honest top-level drift result for current clean `main`, while exposing the split iOS groups in JSON and markdown.
-4. The canonical security docs and older issue-spec docs stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`.
+4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`.
 5. The implementation PR for this slice can honestly say `Closes #144` because it finishes the immediate repo-owned contract split, while the actual Xcode/runtime source-backed integrations remain in follow-up issues.
 
 ## Bounded design decisions
@@ -139,7 +141,7 @@ Those docs updates must explicitly say:
 - one bounded manifest split in `.github/runner-host-advisory-sources.json`
 - one bounded update to `runner_host_review_report.py`
 - one focused test/fixture update that proves coverage stays fail-closed
-- bounded docs/spec updates in the five named files above
+- bounded docs/spec updates in the six named files above
 
 ### Explicit non-goals
 - **no** live external advisory queries in this slice
