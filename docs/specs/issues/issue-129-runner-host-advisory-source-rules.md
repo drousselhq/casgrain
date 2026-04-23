@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #129`
 - Follow-up source-specific slices after this contract lands:
-  - `#143` — GitHub-hosted runner image surfaces
+  - `#143` — delivered GitHub-hosted runner image release-metadata slice
   - `#142` — Android source-rule split contract that narrows the original Android umbrella into `#154`, `#155`, and `#156`
   - `#154` — Android Java host version facts
   - `#155` — Android Gradle host version facts
@@ -50,7 +50,7 @@ This slice must:
 1. keep the current drift / missing-evidence alert semantics unchanged
 2. make the current source-evaluation status explicit for each runner-host surface group
 3. bind each surface group to exactly one follow-up issue for later source-backed automation
-4. keep the reporting / docs truthful that the current live runner-host automation is still drift-triggered, not source-backed advisory evaluation
+4. keep the reporting / docs truthful that this contract initially shipped a drift-triggered live runner-host lane, and that later main may promote bounded source-backed slices like `#143` without widening the remaining groups
 5. stay testable from checked-in manifests plus deterministic fixtures
 
 This slice is **not** the later source-backed automation itself. It is the repo-owned contract that makes the later source-specific work bounded and auditable.
@@ -86,7 +86,7 @@ Each group entry must declare at minimum:
 - a short `candidate_source` description naming the future authoritative machine-readable source class to evaluate later
 
 Current-slice rule requirement:
-- the honest initial rule kind for **all three groups** is `manual-review-required`
+- the honest initial rule kind for **all three groups** in this contract slice was `manual-review-required`; current `main` now promotes `runner-images` via `#143` while the other groups remain manual-review follow-ups
 - the rationale must explain why the repo is not yet claiming trustworthy source-backed evaluation for that group on current `main`
 - the manifest must point to:
   - `#143` for `runner-images`
@@ -106,7 +106,7 @@ Update:
 Implementation contract for this slice:
 - read and validate `.github/runner-host-advisory-sources.json`
 - include a machine-readable summary of source-rule status per group in the emitted JSON summary
-- include a concise markdown section that states which groups are still `manual-review-required` and which follow-up issue owns each later promotion
+- include a concise markdown section that states which groups are still `manual-review-required`, and on current `main` also reflects that `runner-images` became the delivered source-backed promotion via `#143`
 - keep the current top-level drift logic authoritative for alerting in this slice
 - do **not** change the existing `alert`, `advisory_count`, `verdict`, or managed-issue-opening semantics merely because the new source-rule inventory exists
 - if the new manifest is missing, malformed, or references unknown watched fact paths, fail closed rather than silently dropping the source-rule story
@@ -214,10 +214,10 @@ The live invocation above should still report the same clean drift verdict on cu
 The implementation PR for this spec should be able to close `#129` because it finishes the immediate repo-owned source-rule contract and reporting/doc plumbing.
 
 After that PR merges:
-- `#143` remains the bounded follow-up for any GitHub-hosted runner image source-backed automation
+- the delivered `#143` slice becomes the bounded GitHub-hosted runner image source-backed automation on current `main`
 - `#142` initially owns the Android umbrella follow-up, and the later narrowing contract in `#142` then splits that Android work into `#154`, `#155`, and `#156`
 - `#154` remains the bounded follow-up for Android Java host version source-backed automation after that narrowing lands
 - `#155` remains the bounded follow-up for Android Gradle host version source-backed automation after that narrowing lands
 - `#156` remains the bounded follow-up for Android emulator-runtime source-backed automation after that narrowing lands
 - `#144` remains the bounded follow-up for any iOS Xcode / simulator-runtime source-backed automation
-- the shipped runner-host lane on `main` still remains drift-triggered review until one of those follow-up issues lands
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception while the remaining follow-ups stay manual-review-only until their own slices land
