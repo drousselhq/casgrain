@@ -103,6 +103,7 @@ Update:
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`
 
 Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `android-java` only
@@ -110,7 +111,7 @@ Those updates must explicitly say:
 - actionable Android Java findings continue to reuse `security: runner-host review needed`
 - `java.distribution` remains outside the watched runner-host inventory unless a later contract change adds it explicitly
 - the older issue-spec artifacts are historical and must not keep claiming that current `main` still has no source-backed runner-host evaluation at all
-- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` must be reconciled as historical too, because its current-main contract still says only `runner-images` is promoted and still leaves `android-java` in the remaining manual-only follow-up set
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` must both be reconciled as historical artifacts, because their current-main contract still says only `runner-images` is promoted and still leaves `android-java` in the remaining manual-only follow-up set
 
 ## Acceptance criteria
 
@@ -118,7 +119,7 @@ Those updates must explicitly say:
 2. A supported/baseline-match Android Java evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Java source findings requiring review.
 3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish Android Java source-backed findings from drift / missing-evidence findings and leave the non-Java runner-host groups as `manual-review-required` follow-ups.
-5. The named canonical docs and older main-branch issue specs, including `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, no longer claim that current runner-host automation is drift-only for every source group or that `android-java` still remains a manual-only future follow-up after `#154` lands.
+5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, no longer claim that current runner-host automation is drift-only for every source group or that `android-java` still remains a manual-only future follow-up after `#154` lands.
 6. The implementation PR for this slice can honestly say `Closes #154` because the Android Java source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals

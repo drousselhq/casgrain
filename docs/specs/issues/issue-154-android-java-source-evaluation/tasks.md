@@ -49,7 +49,7 @@
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `android-java` is now source-backed while the other runner-host groups remain `manual-review-required`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, and `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` so they no longer read as if current `main` still has no active runner-host source-backed evaluation at all or still leaves `android-java` as an unresolved manual-only follow-up after `#154` lands.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, and `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` so they no longer read as if current `main` still has no active runner-host source-backed evaluation at all or still leaves `android-java` as an unresolved manual-only follow-up after `#154` lands.
 - [ ] 4.3 Keep `java.distribution` explicitly out of scope in every touched doc/spec artifact unless a later issue adds it to `.github/runner-host-watch.json`.
 - [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group is manual-only on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Java-source-backed story colliding with older drift-only wording.
@@ -65,6 +65,7 @@
       'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-java'],
       'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-java'],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-java'],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['runner-images', 'android-java'],
   }
   for rel, needles in checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
