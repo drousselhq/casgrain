@@ -112,6 +112,7 @@ Update:
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md`
 
@@ -121,7 +122,7 @@ Those updates must explicitly say:
 - a newer upstream Gradle release alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized/broken/source-unavailable release-catalog evaluation
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop presenting `#155` as a still-open later follow-up on current `main` after this slice lands
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying the remaining future-work set still includes `#155` or that only `runner-images` is source-backed after this slice lands; after this slice lands, only `#154`, `#156`, and `#144` remain future source-backed follow-ups
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` must stop limiting the already-delivered source-backed exception on current `main` to `runner-images` alone; after this slice lands, that spec must describe `runner-images` and `android-gradle` as the already-delivered source-backed groups while keeping the iOS groups in that spec manual-review-only until `#164` / `#165` land
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop limiting the already-delivered source-backed exception on current `main` to `runner-images` alone; after this slice lands, those artifacts must describe `runner-images` and `android-gradle` as the already-delivered source-backed groups while keeping the iOS groups manual-review-only until `#164` / `#165` land, including the stale task-level live-summary expectation that still validates only the `runner-images` exception
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving `android-gradle` as an unchanged `manual-review-required` follow-up or validating it as such after this slice lands; those artifacts must instead treat `android-gradle` as an already-delivered source-backed group while keeping the Java slice itself open under `#154`
 - the older issue-spec artifacts are historical or adjacent-current backlog contracts and must not keep claiming that current `main` has no Android Gradle source-backed runner-host evaluation after this slice lands
 
@@ -131,7 +132,7 @@ Those updates must explicitly say:
 2. A recognized non-broken baseline-match Android Gradle evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Gradle source findings requiring review.
 3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle`, turns the overall runner-host summary/managed-issue path into `manual-review-required`, and increments the same top-level `advisory_count` field current `main` already uses for source-backed findings.
 4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings through explicit source-rule group details, preserve `runner-images` as the existing source-backed group, leave `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-ups, and do not auto-alert merely because a newer upstream Gradle release exists.
-5. The named canonical docs and older main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, `issue-144/spec.md`, and `issue-154/{spec,tasks}.md`) no longer claim that current runner-host automation is drift-only for every source group, that only `runner-images` is source-backed, or that `#155` remains future work on current `main` after this slice lands.
+5. The named canonical docs and older main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, `issue-144/{spec,tasks}.md`, and `issue-154/{spec,tasks}.md`) no longer claim that current runner-host automation is drift-only for every source group, that only `runner-images` is source-backed, or that `#155` remains future work on current `main` after this slice lands.
 6. The implementation PR for this slice can honestly say `Closes #155` because the Android Gradle source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals

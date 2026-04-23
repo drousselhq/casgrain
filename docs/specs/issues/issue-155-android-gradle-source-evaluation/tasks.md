@@ -51,9 +51,9 @@
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains source-backed, `android-gradle` becomes source-backed in this slice, and `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed, or as if `#155` is still future work after this slice lands.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed, or as if `#155` is still future work after this slice lands.
 - [ ] 4.3 Make the docs explicit that a newer Gradle release alone is informational for this slice unless the repo later adds a separate upgrade-policy contract.
-- [ ] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec wording that still frames `runner-images` as the only delivered source-backed exception, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands.
+- [ ] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec/task wording that still frames `runner-images` as the only delivered source-backed exception or validates only that live-summary state, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands.
 - [ ] 4.5 Run a targeted search for stale wording that still claims only `runner-images` is source-backed, that every runner-host group except `runner-images` is manual-only on current `main`, or that `#155` remains future work on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Gradle-source-backed story colliding with older drift-only wording.
 - Validation:
@@ -71,6 +71,7 @@
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-gradle'],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['android-gradle', 'source-backed'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['android-gradle', 'source-backed'],
+      'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['android-gradle', 'source-backed'],
       'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': ['android-gradle', 'source-backed'],
       'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': ['android-gradle', 'source-backed'],
   }
@@ -85,7 +86,10 @@
           'so they state that only `runner-images` is source-backed after this slice',
       ],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': [
-          'the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, while the iOS groups in this spec remain manual-review-only until their own follow-up slices land',
+          'the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, while the ios groups in this spec remain manual-review-only until their own follow-up slices land',
+      ],
+      'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': [
+          'render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, and source-rule keys `ios-xcode` / `ios-simulator-runtime` mapped to `#164` / `#165`.',
       ],
       'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': [
           '`android-gradle` and `android-emulator-runtime` remain `manual-review-required` follow-up groups',
