@@ -80,13 +80,13 @@
 
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-simulator-runtime` is now source-backed while `ios-xcode`, `#172`, and the non-iOS groups remain on their own follow-up issues.
-- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` so they no longer read as if current `main` still has no active iOS source-backed evaluation or still leaves `#144` as the live umbrella owner after this slice lands.
+- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, and the other named adjacent issue-spec artifacts so they no longer read as if current `main` still has no active iOS source-backed evaluation, still leaves `#144` as the live umbrella owner, or still preserves closed `#144` as the remaining iOS follow-up after this slice lands.
 - [ ] 5.3 Reconcile `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` so they stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work and all source-backed review findings still flow only through the shared top-level `advisory_count`; after `#165` lands, those older artifacts must treat `ios-simulator-runtime` as already source-backed on current `main` and preserve the separate simulator-runtime source finding/count surface instead of forbidding `source_advisory_count`.
 - [ ] 5.4 Reconcile `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split prerequisite is on current `main`, and so they keep the post-`#165` shared summary contract truthful by preserving a separate simulator-runtime source finding/count surface instead of collapsing those findings into a drift-only top-level count.
 - [ ] 5.5 Reconcile `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` so they stop requiring all source-backed review findings to live only in the shared top-level `advisory_count` with no separate source-backed finding/count field once this slice lands.
 - [ ] 5.6 Reconcile `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` so they stop requiring that shared top-level-count-only contract, and rewrite `issue-156/spec.md` so it no longer says the later iOS work has open spec-entry PRs `#171` and `#173` after this slice lands.
 - [ ] 5.7 Make the docs explicit that `simulator.device_name` remains a drift-only supporting fact in this slice and that any future device-availability source automation belongs to `#172`.
-- [ ] 5.8 Run a targeted search for stale wording that still claims `ios-simulator-runtime` is manual-only future work, that `#144` still owns the live iOS umbrella contract after the split prerequisite, that `issue-164/{spec,tasks}.md` still preserves the post-`#164` top-level-`advisory_count`-only contract or keeps `ios-simulator-runtime` manual-only, that adjacent `#154` / `#155` / `#156` specs/tasks still encode conflicting shared summary/count expectations about `source_advisory_count`, or that `issue-156/spec.md` still preserves `#173` as an open spec-entry PR.
+- [ ] 5.8 Run a targeted search for stale wording that still claims `ios-simulator-runtime` is manual-only future work, that `#144` still owns the live iOS umbrella contract after the split prerequisite, that `issue-143/tasks.md` still says `#154`, `#155`, `#156`, and `#144` remain future work instead of the split `#164` / `#165` ownership, that `issue-164/{spec,tasks}.md` still preserves the post-`#164` top-level-`advisory_count`-only contract or keeps `ios-simulator-runtime` manual-only, that adjacent `#154` / `#155` / `#156` specs/tasks still encode conflicting shared summary/count expectations about `source_advisory_count`, or that `issue-156/spec.md` still preserves `#173` as an open spec-entry PR.
 - Goal: Leave one truthful repo-owned contract instead of a live simulator-runtime source-backed story colliding with older drift-only or umbrella-work wording.
 - Validation:
   ```bash
@@ -100,6 +100,7 @@
       'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['#172', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['#172', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['#172', 'ios-simulator-runtime'],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['#164', '#165', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['#172', '#165'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['#165', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-164-ios-xcode-source-evaluation/spec.md': ['#165', 'ios-simulator-runtime', 'source_advisory_count'],
@@ -117,6 +118,9 @@
           assert needle.lower() in text, (rel, needle)
   issue_164_spec = Path('docs/specs/issues/issue-164-ios-xcode-source-evaluation/spec.md').read_text(encoding='utf-8')
   issue_164_tasks = Path('docs/specs/issues/issue-164-ios-xcode-source-evaluation/tasks.md').read_text(encoding='utf-8')
+  issue_143_tasks = Path('docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md').read_text(encoding='utf-8')
+  assert '`#154`, `#155`, `#156`, and `#144` remain future work' not in issue_143_tasks, issue_143_tasks
+  assert '`#154`, `#155`, `#156`, and `#144` remain the open follow-ups' not in issue_143_tasks, issue_143_tasks
   assert "assert 'source_advisory_count' not in summary" not in issue_164_spec, issue_164_spec
   assert 'remains separate follow-up work under `#165`' not in issue_164_spec, issue_164_spec
   assert 'preserve `ios-simulator-runtime` as `manual-review-required` and mapped to `#165`' not in issue_164_spec, issue_164_spec
