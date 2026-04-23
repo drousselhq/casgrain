@@ -132,6 +132,8 @@ Update:
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md`
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md`
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md`
 
 Those updates must explicitly say:
 - current `main` already performs source-backed evaluation for `runner-images`, and after this slice it also performs source-backed evaluation for `android-emulator-runtime`
@@ -146,6 +148,7 @@ Those updates must explicitly say:
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying only `runner-images` is source-backed or presenting `#156` as untouched future work once this slice lands
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop using closed issue `#144` as if it were still the live owner of the later iOS source-backed work; after `#156` lands they must keep `runner-images` and `android-emulator-runtime` as the delivered source-backed exceptions while pointing the later iOS follow-up ownership at `#164` / `#165`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop requiring drift-only `advisory_count` plus a top-level `source_advisory_count`, and must stop saying `android-emulator-runtime` remains `manual-review-required` after `#156` lands
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop preserving `android-emulator-runtime` as a later unchanged `manual-review-required` follow-up or leaving `#156` as untouched future work after this slice lands; after `#156` lands they must treat `android-emulator-runtime` as an already-delivered source-backed group while keeping only the bounded `android-gradle` slice under `#155` and the later iOS ownership truthful under `#164` / `#165`
 
 ## Acceptance criteria
 
@@ -153,7 +156,7 @@ Those updates must explicitly say:
 2. A recognized Android 14 / API 34 Google APIs x86_64 runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no emulator-runtime source findings requiring review.
 3. Missing package metadata, an API/runtime mismatch, or source-unavailable Android emulator-runtime evaluation produces an explicit source-backed finding for `android-emulator-runtime`, increments the overall `advisory_count`, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when no watched-fact drift exists.
 4. The rendered JSON and markdown distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, keep `android-java` / `android-gradle` as separate follow-ups, and do not reintroduce closed issue `#144` as the live owner of the later iOS work already split across `#164` / `#165`.
-5. The named canonical docs and historical issue-spec/task artifacts no longer claim that current runner-host automation is drift-only or that only `runner-images` is source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only / unchanged-ownership wording, and no longer require a top-level `source_advisory_count` for the shared runner-host summary contract.
+5. The named canonical docs and historical issue-spec/task artifacts no longer claim that current runner-host automation is drift-only or that only `runner-images` is source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only / unchanged-ownership wording in the adjacent `#154` / `#155` issue-spec artifacts, and no longer require a top-level `source_advisory_count` for the shared runner-host summary contract.
 6. The implementation PR for this slice can honestly say `Closes #156` because the Android emulator-runtime source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals

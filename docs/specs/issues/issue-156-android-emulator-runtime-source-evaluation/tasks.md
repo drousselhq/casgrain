@@ -40,7 +40,7 @@
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-emulator-runtime` is newly source-backed in this slice, `android-java` / `android-gradle` remain manual-review follow-ups, and current docs do not preserve closed issue `#144` as the live owner of the later iOS work already split across `#164` / `#165`.
 - [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so they no longer read as if current `main` is uniformly drift-only, or as if only `#143` is delivered while `#156` still remains untouched future work after this slice lands.
 - [ ] 4.3 Reconcile `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` so they no longer say only `runner-images` is source-backed or leave `#156` as untouched future work once this slice lands.
-- [ ] 4.4 Reconcile `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` and `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they remove stale `android-emulator-runtime` manual-only / unchanged-ownership wording, stop treating closed issue `#144` as the live iOS owner after `#156` lands, and remove any drift-only `advisory_count` + top-level `source_advisory_count` expectations.
+- [ ] 4.4 Reconcile `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` so they remove stale `android-emulator-runtime` manual-only / unchanged-ownership wording, stop treating closed issue `#144` as the live iOS owner after `#156` lands, and stop presenting the post-`#155` current-main source-backed set as only `runner-images` + `android-gradle` once `android-emulator-runtime` is delivered by this slice.
 - [ ] 4.5 Make the docs explicit that `emulator.device_name` remains a drift-only supporting fact, that `target` / `arch` / `profile` are lookup/context inputs rather than newly watched runner-host facts, and run a targeted search for stale wording that still contradicts this contract.
 - Goal: Leave one truthful repo-owned contract instead of a live emulator-source-backed story colliding with older drift-only or runner-images-only wording.
 - Validation:
@@ -61,6 +61,8 @@
       'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['android-emulator-runtime'],
       'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': ['android-emulator-runtime'],
       'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': ['android-emulator-runtime'],
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md': ['android-emulator-runtime'],
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md': ['android-emulator-runtime'],
   }
   for rel, needles in required.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
