@@ -18,9 +18,9 @@ Already delivered on `main`:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
-  - `runner-images` still marked `manual-review-required`
+  - historical note: this slice originally started when `runner-images` was still marked `manual-review-required`; current `main` now keeps both `runner-images` and `android-emulator-runtime` source-backed
 
-That means the repo already owns the drift / missing-evidence runner-host lane honestly, but the `runner-images` source group is still only a placeholder for future source-backed evaluation.
+That means the repo already owns the drift / missing-evidence runner-host lane honestly, and current `main` now keeps `runner-images` plus `android-emulator-runtime` as delivered source-backed exceptions.
 
 ## Scope of this slice
 
@@ -61,7 +61,7 @@ Contract requirements:
   - `ios` → `runner_label=macos-15`, `image_name=macos-15-arm64`, `compared_facts=[runner.image_version, runner.os_version, runner.os_build]`
 - `runner.label` and `runner.image_name` remain part of the checked-in watched inventory and the emitted context, but this slice treats them as source-stream selectors / drift-only facts rather than as source-backed changed-fact assertions
 - leave the four non-`runner-images` groups on current `main` as `manual-review-required`
-- do not widen the watched inventory beyond the current runner-image / OS facts already owned by `runner-images`
+- do not widen the watched inventory beyond the current runner-image / OS facts already owned by `runner-images`; later current-main docs should also acknowledge the delivered `android-emulator-runtime` source-backed slice from `#156`
 - do not repurpose `#143` into a generic runner-host source-rule framework
 
 The promoted rule must stay fail-closed:

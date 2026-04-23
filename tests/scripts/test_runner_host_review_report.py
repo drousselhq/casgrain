@@ -18,6 +18,7 @@ SPEC.loader.exec_module(MODULE)
 FIXTURES_DIR = REPO_ROOT / "tests" / "test-support" / "fixtures" / "runner-host-watch"
 SOURCE_RULES_FIXTURES_DIR = FIXTURES_DIR / "source-rules"
 RUNNER_IMAGE_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "runner-image-source"
+EMULATOR_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "emulator-source"
 
 
 def load_case(name: str) -> tuple[dict[str, object], dict[str, object]]:
@@ -33,6 +34,26 @@ def load_source_rules_case(name: str) -> dict[str, object]:
 
 def load_runner_image_source_case(name: str) -> dict[str, object]:
     return json.loads((RUNNER_IMAGE_SOURCE_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
+
+
+def load_emulator_source_text(case_name: str, file_name: str) -> str:
+    return (EMULATOR_SOURCE_FIXTURES_DIR / case_name / file_name).read_text(encoding="utf-8")
+
+
+def emulator_source_side_effect(case_name: str, source_rules: dict[str, object]):
+    emulator_group = next(group for group in source_rules["groups"] if group["key"] == "android-emulator-runtime")
+    source_catalogs = emulator_group["source_catalogs"]
+
+    def fake_fetch_text_url(url: str) -> str:
+        if url == source_catalogs["platform_catalog_url"]:
+            return load_emulator_source_text(case_name, "platforms.xml")
+        if url == source_catalogs["system_image_catalog_url"]:
+            return load_emulator_source_text(case_name, "system-images.xml")
+        if url == source_catalogs["version_mapping_url"]:
+            return load_emulator_source_text(case_name, "version-map.html")
+        raise AssertionError(f"unexpected emulator source URL: {url}")
+
+    return fake_fetch_text_url
 
 
 def load_repo_source_rules() -> dict[str, object]:
@@ -188,6 +209,10 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             "fetch_runner_image_source_for_group",
             return_value=load_runner_image_source_case("clean"),
             create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_text_url",
+            side_effect=emulator_source_side_effect("clean", source_rules),
         ):
             summary = MODULE.build_summary(
                 repo=str(fixture_input["repo"]),
@@ -209,71 +234,33 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         android_java = source_rule_groups["android-java"]
         self.assertEqual(android_java["follow_up_issue"], 154)
         self.assertEqual(android_java["rule_kind"], "manual-review-required")
-        self.assertEqual(
-            android_java["watched_fact_paths"],
-            [
-                {
-                    "platform": "android",
-                    "path": "java.configured_major",
-                    "label": "configured Java major",
-                    "baseline": "17",
-                },
-                {
-                    "platform": "android",
-                    "path": "java.resolved_version",
-                    "label": "resolved Java version",
-                    "baseline": "17.0.18+8",
-                },
-            ],
-        )
 
         android_gradle = source_rule_groups["android-gradle"]
         self.assertEqual(android_gradle["follow_up_issue"], 155)
         self.assertEqual(android_gradle["rule_kind"], "manual-review-required")
-        self.assertEqual(
-            android_gradle["watched_fact_paths"],
-            [
-                {
-                    "platform": "android",
-                    "path": "gradle.configured_version",
-                    "label": "configured Gradle version",
-                    "baseline": "8.7",
-                },
-                {
-                    "platform": "android",
-                    "path": "gradle.resolved_version",
-                    "label": "resolved Gradle version",
-                    "baseline": "8.7",
-                },
-            ],
-        )
 
         android_emulator = source_rule_groups["android-emulator-runtime"]
         self.assertEqual(android_emulator["follow_up_issue"], 156)
-        self.assertEqual(android_emulator["rule_kind"], "manual-review-required")
+        self.assertEqual(android_emulator["rule_kind"], "android-system-image-catalog")
+        self.assertEqual(android_emulator["status"], "no review-needed")
+        self.assertEqual(android_emulator["outcome"], "source-match")
         self.assertEqual(
-            android_emulator["watched_fact_paths"],
-            [
-                {
-                    "platform": "android",
-                    "path": "emulator.api_level",
-                    "label": "Android API level",
-                    "baseline": "34",
-                },
-                {
-                    "platform": "android",
-                    "path": "emulator.device_name",
-                    "label": "emulator device",
-                    "baseline": "sdk_gphone64_x86_64",
-                },
-                {
-                    "platform": "android",
-                    "path": "emulator.os_version",
-                    "label": "Android runtime",
-                    "baseline": "14",
-                },
-            ],
+            android_emulator["observed"],
+            {
+                "emulator.api_level": "34",
+                "emulator.os_version": "14",
+                "emulator.target": "google_apis",
+                "emulator.arch": "x86_64",
+                "emulator.profile": "pixel_7",
+            },
         )
+        self.assertEqual(android_emulator["source"]["platform_package_path"], "platforms;android-34")
+        self.assertEqual(
+            android_emulator["source"]["system_image_package_path"],
+            "system-images;android-34;google_apis;x86_64",
+        )
+        self.assertEqual(android_emulator["source"]["mapped_os_version"], "14")
+        self.assertNotIn("source_advisory_count", summary)
 
     def test_build_summary_promotes_runner_images_with_clean_source_match(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
@@ -326,6 +313,133 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         markdown = MODULE.render_markdown(summary)
         self.assertIn("source-match", markdown)
         self.assertIn("runner-images", markdown)
+
+    def test_build_summary_promotes_android_emulator_runtime_with_clean_source_match(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("emulator-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_text_url",
+            side_effect=emulator_source_side_effect("clean", source_rules),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertFalse(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["reason"], "baseline-match")
+        emulator_group = {group["key"]: group for group in summary["source_rule_groups"]}["android-emulator-runtime"]
+        self.assertEqual(emulator_group["rule_kind"], "android-system-image-catalog")
+        self.assertEqual(emulator_group["status"], "no review-needed")
+        self.assertEqual(emulator_group["outcome"], "source-match")
+        self.assertEqual(emulator_group["source"]["mapped_os_version"], "14")
+        self.assertNotIn("source_advisory_count", summary)
+        markdown = MODULE.render_markdown(summary)
+        self.assertIn("android-system-image-catalog", markdown)
+
+    def test_build_summary_flags_android_emulator_runtime_when_system_image_package_is_missing(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("emulator-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_text_url",
+            side_effect=emulator_source_side_effect("missing-package", source_rules),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "android-emulator-runtime-source-review-needed")
+        emulator_group = {group["key"]: group for group in summary["source_rule_groups"]}["android-emulator-runtime"]
+        self.assertEqual(emulator_group["status"], "manual-review-required")
+        self.assertEqual(emulator_group["outcome"], "source-review-needed")
+        self.assertEqual(emulator_group["findings"][0]["code"], "system-image-package-missing")
+
+    def test_build_summary_flags_android_emulator_runtime_when_api_version_mapping_mismatches(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("emulator-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_text_url",
+            side_effect=emulator_source_side_effect("api-runtime-mismatch", source_rules),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "android-emulator-runtime-source-review-needed")
+        emulator_group = {group["key"]: group for group in summary["source_rule_groups"]}["android-emulator-runtime"]
+        self.assertEqual(emulator_group["status"], "manual-review-required")
+        self.assertEqual(emulator_group["outcome"], "source-review-needed")
+        self.assertEqual(emulator_group["findings"][0]["code"], "android-version-mismatch")
+
+    def test_build_summary_keeps_android_emulator_runtime_clean_when_only_newer_upstream_revision_exists(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("emulator-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_text_url",
+            side_effect=emulator_source_side_effect("newer-revision-only", source_rules),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertFalse(summary["alert"])
+        self.assertEqual(summary["reason"], "baseline-match")
+        emulator_group = {group["key"]: group for group in summary["source_rule_groups"]}["android-emulator-runtime"]
+        self.assertEqual(emulator_group["status"], "no review-needed")
+        self.assertEqual(emulator_group["outcome"], "source-match")
+
+    def test_build_summary_fails_closed_when_android_emulator_source_payload_is_malformed(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("emulator-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_text_url",
+            side_effect=emulator_source_side_effect("malformed", source_rules),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "android-emulator-runtime-source-review-needed")
+        emulator_group = {group["key"]: group for group in summary["source_rule_groups"]}["android-emulator-runtime"]
+        self.assertEqual(emulator_group["status"], "manual-review-required")
+        self.assertEqual(emulator_group["outcome"], "source-error")
+        self.assertIn("system image catalog", emulator_group["source_error"].lower())
 
     def test_build_summary_uses_latest_runner_image_release_stream_for_source_drift(self) -> None:
         baseline, fixture_input = load_case("baseline-match")

@@ -35,7 +35,7 @@ This slice must:
 1. replace the single iOS `ios-xcode-simulator` source-rule group with two bounded iOS groups
 2. bind each new iOS group to exactly one later follow-up issue
 3. keep the current drift / missing-evidence alert semantics and managed issue title unchanged
-4. keep the report/docs truthful that both iOS groups still remain `manual-review-required` on current `main`
+4. keep the report/docs truthful that the current combined iOS placeholder still renders `manual-review-required` on current `main`, while later live iOS ownership is `#164` / `#165` rather than closed issue `#144`
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
 This slice is **not** the later source-backed advisory implementation itself. It is the contract change that makes the later iOS source integrations bounded and auditable.
@@ -71,7 +71,7 @@ The implementation PR must replace the current combined iOS group with exactly t
 
 Contract requirements:
 - `runner-images` must remain mapped to `#143`
-- `android-java`, `android-gradle`, and `android-emulator-runtime` must remain mapped to `#154`, `#155`, and `#156`
+- `android-java` and `android-gradle` remain open follow-ups under `#154` / `#155`, while `android-emulator-runtime` is already delivered as a source-backed slice under `#156`
 - every watched fact path in `.github/runner-host-watch.json` must still be owned by exactly one source-rule group after the split
 - the manifest must fail closed if any watched iOS fact path is dropped, duplicated, or assigned to the wrong follow-up issue
 
@@ -95,7 +95,7 @@ Implementation contract for this slice:
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
 - the new source-rule section must make it explicit that Xcode and simulator-runtime promotion are still future follow-up work
-- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands
+- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands, and it must not revive closed issue `#144` as the live later owner
 
 ### 3. Tests and fixtures
 
@@ -132,7 +132,7 @@ Those docs updates must explicitly say:
 1. `.github/runner-host-advisory-sources.json` no longer uses `#144` as the owner of one combined iOS source group; it instead exposes two bounded iOS groups mapped to `#164` and `#165`.
 2. Every watched fact path in `.github/runner-host-watch.json` remains covered exactly once after the split.
 3. `runner_host_review_report.py` still reports the same honest top-level drift result for current clean `main`, while exposing the split iOS groups in JSON and markdown.
-4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`.
+4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`, even while current `main` still renders one combined placeholder key.
 5. The implementation PR for this slice can honestly say `Closes #144` because it finishes the immediate repo-owned contract split, while the actual Xcode/runtime source-backed integrations remain in follow-up issues.
 
 ## Bounded design decisions

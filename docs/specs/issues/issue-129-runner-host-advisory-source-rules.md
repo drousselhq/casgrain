@@ -9,7 +9,7 @@
   - `#154` — Android Java host version facts
   - `#155` — Android Gradle host version facts
   - `#156` — Android emulator-runtime host facts
-  - `#144` — iOS Xcode / simulator-runtime host surfaces
+  - `#164` / `#165` — later iOS Xcode / simulator-runtime host surfaces
 
 ## Why this slice exists
 
@@ -86,12 +86,12 @@ Each group entry must declare at minimum:
 - a short `candidate_source` description naming the future authoritative machine-readable source class to evaluate later
 
 Current-slice rule requirement:
-- the honest initial rule kind for **all three groups** in this contract slice was `manual-review-required`; current `main` now promotes `runner-images` via `#143` while the other groups remain manual-review follow-ups
+- the honest initial rule kind for every group in this contract slice was `manual-review-required`; current `main` now promotes `runner-images` via `#143` and `android-emulator-runtime` via `#156`, while `android-java`, `android-gradle`, and the current combined iOS placeholder remain manual-review follow-ups
 - the rationale must explain why the repo is not yet claiming trustworthy source-backed evaluation for that group on current `main`
 - the manifest must point to:
   - `#143` for `runner-images`
   - `#142` for the initial combined `android-java-gradle` group in this slice; the later narrowing contract in `#142` then splits that Android ownership into `#154`, `#155`, and `#156`
-  - `#144` for `ios-xcode-simulator`
+  - later iOS follow-ups `#164` / `#165` for the current combined `ios-xcode-simulator` placeholder
 
 Validation rule:
 - the manifest must fail closed if any listed watched fact path does not exist in `.github/runner-host-watch.json`
@@ -114,7 +114,7 @@ Implementation contract for this slice:
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
 - the new source-rule section must make it explicit that current runner-host automation is still drift-triggered review only
-- the report must not imply that any source-backed advisory evaluation is already active until a later follow-up issue lands
+- the report must not imply broader source-backed advisory evaluation than current `main` actually ships; today that means `runner-images` and `android-emulator-runtime` are active while the remaining groups stay manual-only
 
 ### 3. Tests and fixtures
 
@@ -150,7 +150,7 @@ Those docs updates must explicitly say:
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
 - the current source groups remain `manual-review-required` on `main` after this slice unless a later follow-up lands
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
-- later source-specific promotion work is split across `#143`, `#154`, `#155`, `#156`, and `#144` after the narrowing contract in `#142` lands
+- later source-specific promotion work is split across delivered `#143` / `#156` plus open follow-ups `#154`, `#155`, `#164`, and `#165` after the narrowing contract in `#142` lands
 
 ## Acceptance criteria
 

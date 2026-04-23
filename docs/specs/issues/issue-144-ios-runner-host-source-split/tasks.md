@@ -12,7 +12,7 @@
 
 ## 1. Confirm the current split is still needed
 
-- [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group mapped to `#144`.
+- [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group key, while live later iOS ownership now belongs to `#164` / `#165` rather than closed issue `#144`.
 - [ ] 1.2 Confirm follow-up issues `#164` and `#165` are still the intended later implementation slices for Xcode and simulator-runtime source-backed work.
 
 Goal: Prove the repo still needs the contract split described in `spec.md` before changing manifests, tests, or docs.
@@ -91,7 +91,7 @@ Hand back if:
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, and source-rule keys `ios-xcode` / `ios-simulator-runtime` mapped to `#164` / `#165`.
+- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports the combined `ios-xcode-simulator` placeholder key while surfacing later iOS ownership through `#164` / `#165` rather than closed issue `#144`.
 - [ ] 5.5 Prepare the implementation PR summary with exact validation evidence and honest closure semantics: `Closes #144` for the split contract, while `#164` and `#165` stay open for the later source-backed implementations.
 
 Goal: Prove the split lands without changing current drift behavior and hand QA a bounded, verifiable slice.
