@@ -26,7 +26,7 @@
   import json
   from pathlib import Path
   manifest = json.loads(Path('.github/runner-host-advisory-sources.json').read_text(encoding='utf-8'))
-  groups = {group['key']: group for group in manifest['source_rule_groups']}
+  groups = {group['key']: group for group in manifest['groups']}
   assert groups['runner-images']['rule_kind'] == 'runner-image-release-metadata', groups['runner-images']
   assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
   for key in ['android-gradle', 'android-emulator-runtime', 'ios-xcode-simulator']:
