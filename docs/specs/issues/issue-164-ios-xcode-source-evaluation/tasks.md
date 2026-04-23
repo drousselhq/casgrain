@@ -43,7 +43,7 @@
 ## 2. Add failing regression coverage for iOS Xcode source-backed evaluation
 - [ ] 2.1 Add deterministic Apple Xcode support-matrix fixtures under `tests/test-support/fixtures/runner-host-watch/xcode-source/` for a clean match, a missing-version-row case, a simulator-SDK mismatch case, a newer-upstream-row-but-non-alerting case, and an unavailable/malformed source response.
 - [ ] 2.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `ios-xcode` remains `manual-review-required` instead of an active source-backed rule.
-- [ ] 2.3 Prove the new assertions distinguish Xcode source-backed findings from drift counts by keeping `advisory_count` at zero for Xcode-only source findings.
+- [ ] 2.3 Prove the new assertions keep iOS Xcode source-backed findings on the same top-level `advisory_count` path current `main` already uses for source-backed findings instead of introducing a separate top-level `source_advisory_count` field.
 - [ ] 2.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
 - Goal: Prove the missing iOS Xcode source-backed contract before touching the checked-in manifest or report logic.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
@@ -64,7 +64,7 @@
 - [ ] 4.1 Normalize and validate the new `apple-xcode-support-matrix` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
 - [ ] 4.2 Load Apple’s Xcode support matrix for live runs while keeping deterministic fixture injection for unit tests.
 - [ ] 4.3 Evaluate only `xcode.version` and `xcode.simulator_sdk_version`, and emit explicit review-needed findings when the Xcode row is missing, the simulator SDK version does not match the authoritative row, or the source payload is unavailable/malformed.
-- [ ] 4.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` scoped to changed/missing watched facts, with a separate source-backed finding count/list for Xcode findings.
+- [ ] 4.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` on the shared current-main contract: it remains the total actionable finding count across drift/missing evidence and source-backed results, without adding a separate top-level `source_advisory_count` field.
 - [ ] 4.5 Keep `xcode.app_path` in the existing drift path only; do not create a second source-only alert dimension for the local install path in this slice.
 - [ ] 4.6 Ensure a newer upstream Xcode or SDK row can be rendered as context without becoming a review-needed condition by itself on current `main`.
 - Goal: Activate one trustworthy Xcode-only source-backed path without changing the baseline drift contract for the rest of the runner-host watch.
@@ -74,9 +74,9 @@
 
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-xcode` is now source-backed while `ios-simulator-runtime` and the non-iOS groups remain on their own follow-up issues.
-- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` so they no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer say only `runner-images` is source-backed on current `main`, no longer frame `#164` as unresolved future work after this slice lands, and no longer describe post-`#164` current `main` as if `ios-xcode` were still manual-only future work or the combined placeholder still remained live.
+- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` so they no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer say only `runner-images` is source-backed on current `main`, no longer frame `#164` as unresolved future work after this slice lands, and no longer require a drift-only top-level `advisory_count` plus a separate top-level `source_advisory_count` for the shared runner-host summary contract.
 - [ ] 5.3 Make the docs explicit that `xcode.app_path` remains a drift-only supporting fact in this slice and that a newer upstream Xcode release or SDK row alone is not yet a review-needed condition.
-- [ ] 5.4 Run a targeted search for stale wording that still claims `ios-xcode` is manual-only future work on current `main`, still keeps `ios-xcode-simulator` / `#144` as the live post-`#164` iOS placeholder, or still treats the adjacent `#154` / `#155` / `#156` issue-spec artifacts as if the Xcode slice had not landed yet.
+- [ ] 5.4 Run a targeted search for stale wording that still claims `ios-xcode` is manual-only future work on current `main`, still keeps `ios-xcode-simulator` / `#144` as the live post-`#164` iOS placeholder, or still requires a drift-only `advisory_count` plus a top-level `source_advisory_count` in the adjacent `#154` / `#155` / `#156` issue-spec artifacts.
 - Goal: Leave one truthful repo-owned contract instead of a live Xcode-source-backed story colliding with older drift-only or future-work wording.
 - Validation:
   ```bash
@@ -104,6 +104,16 @@
       text = Path(rel).read_text(encoding='utf-8').lower()
       for needle in needles:
           assert needle.lower() in text, (rel, needle)
+  for rel in (
+      'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md',
+      'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md',
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md',
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md',
+      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md',
+      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md',
+  ):
+      text = Path(rel).read_text(encoding='utf-8').lower()
+      assert 'source_advisory_count' not in text, rel
   print('runner-host docs/specs reflect the ios-xcode source-backed contract')
   PY
   ```
@@ -114,7 +124,7 @@
 - [ ] 6.1 Run `git diff --check`.
 - [ ] 6.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 6.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 6.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `ios-xcode` now renders as `apple-xcode-support-matrix`.
+- [ ] 6.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `ios-xcode` now renders as `apple-xcode-support-matrix` without adding a top-level `source_advisory_count` field.
 - [ ] 6.5 In the PR summary/comment, say the implementation PR `Closes #164`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `#165` plus the non-iOS groups remained separate follow-up work.
 - Goal: Leave QA with one honest picture of the Xcode-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
