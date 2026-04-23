@@ -48,7 +48,7 @@ This slice must:
 
 This slice is **only** the change-detection + manual-review slice.
 Direct source-backed advisory evaluation for selected surfaces does not belong to this slice.
-That next repo-owned follow-up landed as issue #129 for the source-rule contract; the later Android narrowing contract in `#142` then split the remaining source-specific automation into issues #143, #154, #155, #156, and #144.
+That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images promotion slice while `#154`, `#155`, `#156`, and `#144` remain the later source-specific follow-ups.
 
 ## Required implementation artifacts
 
