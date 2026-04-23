@@ -7,8 +7,9 @@
 - [ ] 1.1 Verify current `main` still has both tap-counter fixture features, both compiler golden-plan tests, and both smoke CLI contract tests before editing anything.
 - [ ] 1.2 Verify the live `main` ruleset still requires both `ios-smoke` and `android-smoke`.
 - [ ] 1.3 Verify the canonical docs named in `spec.md` still contain the stale iOS-first / Android-advisory wording that this slice is supposed to remove.
+- [ ] 1.4 Verify `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md` still frames `#135` as a later parity/unblock follow-up so the repair scope stays grounded on a real current-main contradiction.
 - Goal: Prove this issue now owns the remaining shared-contract freeze/reconciliation slice rather than a missing Android implementation path.
-- Validation: `gh api repos/drousselhq/casgrain/rulesets/15179247 --jq '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context' && git grep -n -E 'iOS-first|parallel emulator-backed evidence lane|pending companion gate tracked by `#79`|Android parity matures separately' -- docs/specs/casgrain-product-spec.md docs/validation.md docs/development/merge-and-validation-policy.md docs/development/test-pyramid-and-runtime-contracts.md docs/development/security-owasp-baseline.md docs/prd/product-requirements.md`
+- Validation: `gh api repos/drousselhq/casgrain/rulesets/15179247 --jq '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context' && git grep -n -E 'iOS-first|parallel emulator-backed evidence lane|pending companion gate tracked by `#79`|Android parity matures separately|Bring the Android product-true vertical slice to parity with iOS|later parity work against the now-required Android gate|#135 stays downstream' -- docs/specs/casgrain-product-spec.md docs/validation.md docs/development/merge-and-validation-policy.md docs/development/test-pyramid-and-runtime-contracts.md docs/development/security-owasp-baseline.md docs/prd/product-requirements.md docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md`
 - Non-goals: No production edits yet, no new issue split, no new runtime design.
 - Hand back if: current `main` no longer has both live smoke gates, or the runtime surface has already changed beyond the bounded tap-counter contract frozen in `spec.md`.
 
@@ -30,14 +31,15 @@
 - Non-goals: No new command names, no emulator/simulator harness rewrite, no broader runtime refactor.
 - Hand back if: the existing fake-runner coverage cannot express the shared contract without redesigning the CLI shape itself.
 
-## 4. Reconcile the canonical docs to the shipped dual-platform slice
+## 4. Reconcile the canonical docs and older issue-spec to the shipped dual-platform slice
 - [ ] 4.1 Update `docs/specs/casgrain-product-spec.md` so the first product-true slice is framed as the current shared iOS/Android tap-counter contract, not an iOS-first / Android-advisory split.
 - [ ] 4.2 Update `docs/validation.md`, `docs/development/merge-and-validation-policy.md`, and `docs/development/test-pyramid-and-runtime-contracts.md` so they match the live rule that both `ios-smoke` and `android-smoke` are required mobile merge-gate checks on `main`.
 - [ ] 4.3 Update `docs/development/security-owasp-baseline.md` so it no longer says `android-smoke` is the pending companion gate tracked by `#79`.
 - [ ] 4.4 Update `docs/prd/product-requirements.md` so it no longer leaves the current slice as an unresolved iOS-first vs dual-platform sequencing question.
-- [ ] 4.5 Keep archived history docs untouched unless a touched canonical doc explicitly points at them as current truth.
+- [ ] 4.5 Reconcile `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md` so it stops presenting `#135` as a future parity/unblock follow-up and instead points at the already-live required Android gate plus this docs/test contract-freeze slice.
+- [ ] 4.6 Keep archived history docs untouched unless a touched canonical doc explicitly points at them as current truth.
 - Goal: Leave one truthful repo-wide description of the shipped bounded vertical slice and the live merge gate around it.
-- Validation: `git grep -n -E 'iOS-first|parallel emulator-backed evidence lane|pending companion gate tracked by `#79`|Android parity matures separately' -- docs/specs/casgrain-product-spec.md docs/validation.md docs/development/merge-and-validation-policy.md docs/development/test-pyramid-and-runtime-contracts.md docs/development/security-owasp-baseline.md docs/prd/product-requirements.md`
+- Validation: `git grep -n -E 'iOS-first|parallel emulator-backed evidence lane|pending companion gate tracked by `#79`|Android parity matures separately|Bring the Android product-true vertical slice to parity with iOS|later parity work against the now-required Android gate|#135 stays downstream' -- docs/specs/casgrain-product-spec.md docs/validation.md docs/development/merge-and-validation-policy.md docs/development/test-pyramid-and-runtime-contracts.md docs/development/security-owasp-baseline.md docs/prd/product-requirements.md docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md`
 - Non-goals: No historical-plan rewrite, no roadmap expansion beyond the current tap-counter slice.
 - Hand back if: making the docs truthful would require reopening product-scope questions beyond the already-shipped bounded slice.
 
