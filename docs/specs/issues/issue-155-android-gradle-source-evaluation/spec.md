@@ -17,13 +17,14 @@
 Already delivered on `main`:
 - PR #145 added the repo-owned runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
 - PR #158 split the Android runner-host backlog into bounded `android-java`, `android-gradle`, and `android-emulator-runtime` groups.
-- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against current `main` still reports:
-  - `verdict=no review-needed`
-  - `reason=baseline-match`
-  - `advisory_count=0`
+- A fresh live invocation at analyst repair (`2026-04-23` UTC) against current `main` reports:
+  - `verdict=manual-review-required`
+  - `reason=runner-images-source-drift`
+  - `advisory_count=2`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
-  - every current source-rule group, including `android-gradle`, remains `manual-review-required`
-- `tests/test-support/scripts/runner_host_review_report.py` currently accepts only `manual-review-required` source-rule kinds, so current `main` cannot yet express or evaluate an active Android Gradle source-backed rule.
+  - `runner-images` already renders as the delivered source-backed `runner-image-release-metadata` group
+  - `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator` still remain `manual-review-required`
+- `tests/test-support/scripts/runner_host_review_report.py` already supports an active promoted rule for `runner-images`, but current `main` still lacks any active Android Gradle source-backed rule.
 - `.github/runner-host-watch.json` watches only these Android Gradle facts on current `main`:
   - `gradle.configured_version`
   - `gradle.resolved_version`
@@ -39,7 +40,7 @@ This slice must:
 1. promote only `android-gradle` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate only the watched Android Gradle facts (`gradle.configured_version` and `gradle.resolved_version`) against authoritative machine-readable Gradle release metadata
 3. surface actionable Gradle findings through the existing managed issue `security: runner-host review needed`
-4. preserve the current drift / missing-evidence behavior for the existing watched facts and keep every non-Gradle runner-host group `manual-review-required`
+4. preserve the current drift / missing-evidence behavior for the existing watched facts while keeping `runner-images` on its already-delivered `runner-image-release-metadata` path and the remaining follow-up groups unchanged
 
 ## Required implementation artifacts
 
@@ -52,7 +53,7 @@ Contract:
 - keep the `android-gradle` group key, `follow_up_issue: 155`, surface name, and watched fact paths unchanged
 - change only the `android-gradle` rule kind from `manual-review-required` to a stable active kind: `gradle-release-catalog`
 - add the rule-specific source metadata needed to validate the official Gradle release catalog and to render the human-facing source description in report output
-- preserve `runner-images`, `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` groups mapped to their existing follow-up issues
+- preserve `runner-images` as the existing `runner-image-release-metadata` group mapped to `#143`, and preserve `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` groups mapped to their existing follow-up issues
 - do **not** add Android Gradle plugin versions, wrapper checksums, dependency-graph surfaces, or any other new watched fact to `.github/runner-host-watch.json`
 
 ### 2. Runner-host source evaluation and report plumbing
@@ -80,7 +81,7 @@ Implementation contract:
   - `baseline-match` when there is no drift and no Android Gradle source finding
   - existing drift reasons keep winning when drift or missing evidence exists
   - use a dedicated source-backed reason (for example `source-review-needed`) when drift count is zero but Android Gradle source findings require review
-- render markdown that clearly distinguishes Android Gradle source-backed findings from drift / missing-evidence findings and states that the non-Gradle runner-host groups still remain `manual-review-required` follow-ups
+- render markdown that clearly distinguishes Android Gradle source-backed findings from drift / missing-evidence findings and states that `runner-images` remains the already-delivered source-backed exception while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` stay follow-up groups
 - do **not** auto-alert solely because a newer Gradle release exists; until the repo defines a separate upgrade policy, newer upstream releases may be rendered as informational context but must not by themselves open or reopen the runner-host review lane on current `main`
 - fail closed on checked-in manifest/schema violations, but degrade authoritative-source retrieval/normalization failures into explicit review-needed Android Gradle findings rather than a silent pass
 
@@ -96,7 +97,7 @@ Required coverage:
 - authoritative-source payload unavailable or malformed → explicit review-needed Android Gradle source finding instead of silent success
 - a newer upstream Gradle release exists while the configured/resolved version is still a recognized non-broken stable release → no automatic alert from the Gradle source path alone
 - existing drift and missing-evidence fixtures still preserve their current `advisory_count` behavior
-- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `android-gradle` rule while the non-Gradle groups stay manual-only
+- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `android-gradle` rule while preserving `runner-images` as `runner-image-release-metadata` and the remaining groups as manual-only follow-ups
 
 ### 4. Canonical docs and live-contract reconciliation
 
@@ -110,7 +111,7 @@ Update:
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 
 Those updates must explicitly say:
-- current `main` now performs source-backed evaluation for `runner-images` and `android-gradle`, while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-up groups until their own slices land
+- `runner-images`, `android-gradle`, `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` are now the named current-main contract surface groups; after this slice lands, `runner-images` and `android-gradle` are source-backed while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-up groups until their own slices land
 - actionable Android Gradle findings continue to reuse `security: runner-host review needed`
 - a newer upstream Gradle release alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized/broken/source-unavailable release-catalog evaluation
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop presenting `#155` as a still-open later follow-up on current `main` after this slice lands
@@ -122,13 +123,13 @@ Those updates must explicitly say:
 1. `.github/runner-host-advisory-sources.json` exposes `android-gradle` as `gradle-release-catalog` while preserving its watched fact paths and `follow_up_issue: 155`.
 2. A recognized non-broken baseline-match Android Gradle evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Gradle source findings requiring review.
 3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
-4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings, leave the non-Gradle runner-host groups as `manual-review-required` follow-ups, and do not auto-alert merely because a newer upstream Gradle release exists.
+4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the existing source-backed group, leave `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-ups, and do not auto-alert merely because a newer upstream Gradle release exists.
 5. The named canonical docs and older main-branch issue specs (`#124`, `#129`, `#142`, and `#143`) no longer claim that current runner-host automation is drift-only for every source group or that `#155` remains future work on current `main` after this slice lands.
 6. The implementation PR for this slice can honestly say `Closes #155` because the Android Gradle source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals
 
-- **no** source-backed evaluation for `runner-images` (`#143`)
+- **no** new runner-images promotion or contract changes beyond preserving the existing `runner-image-release-metadata` path from `#143`
 - **no** source-backed evaluation for `android-java` (`#154`)
 - **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
 - **no** source-backed evaluation for `ios-xcode-simulator` (`#144`)
@@ -174,5 +175,5 @@ The implementation PR for this spec should be able to close `#155` because it tu
 
 After that PR merges:
 - Android Gradle facts are evaluated from authoritative machine-readable release metadata through the existing runner-host watch
-- `runner-images`, `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain separate manual-review follow-ups
+- `runner-images` remains on its existing source-backed path, while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain separate manual-review follow-ups
 - any future Gradle upgrade-policy, wrapper-integrity, or dependency-surface expansion must land as a new bounded follow-up issue instead of being smuggled into `#155`
