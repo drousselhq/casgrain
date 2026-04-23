@@ -10,7 +10,8 @@
 - Related follow-up issues that must remain separate from this slice:
   - `#154` (`android-java`)
   - `#155` (`android-gradle`)
-  - `#144` (`ios-xcode-simulator`)
+  - `#164` (`ios-xcode`)
+  - `#165` (`ios-simulator-runtime`)
 
 ## Why this slice exists
 
@@ -23,7 +24,8 @@ Already delivered on `main`:
   - `reason=runner-images-source-drift`
   - `advisory_count=2`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
-  - `runner-images` now evaluates as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder remain `manual-review-required`
+  - `runner-images` now evaluates as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder still render as `manual-review-required`
+- GitHub issue `#144` is already closed, while the later iOS source-backed work now lives in open follow-up issues `#164` and `#165` with open spec-entry PRs `#171` and `#173`.
 - The latest successful Android smoke artifact on `main` currently emits this emulator evidence:
   - `api_level=34`
   - `target=google_apis`
@@ -43,7 +45,7 @@ Already delivered on `main`:
   - `https://source.android.com/docs/setup/reference/build-numbers` maps `Android14` to `API level 34` / version `14`
 - Android's AVD documentation states that an emulator device is the combination of a hardware profile and a system image. Current `host-environment.json` records supporting lookup inputs (`target`, `arch`, `profile`) alongside the watched facts, but `.github/runner-host-watch.json` does not currently watch those supporting inputs and the emitted `sdk_gphone64_x86_64` string is an AVD product identity rather than a standalone upstream release channel.
 
-That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the Android emulator-runtime group by validating the selected system-image/runtime identity against authoritative Android platform metadata, while keeping the existing drift guard for the emitted `device_name` string, preserving the already-delivered `runner-images` slice, and without widening the checked-in watched inventory or rewriting the current combined iOS placeholder ownership on `main`.
+That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the Android emulator-runtime group by validating the selected system-image/runtime identity against authoritative Android platform metadata, while keeping the existing drift guard for the emitted `device_name` string, preserving the already-delivered `runner-images` slice, and without widening the checked-in watched inventory or smuggling the separate iOS ownership cleanup already split across `#164` / `#165` into this Android slice.
 
 ## Scope of this slice
 
@@ -53,7 +55,7 @@ This slice must:
 1. promote only `android-emulator-runtime` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate the observed Android emulator runtime identity from authoritative platform/system-image metadata using `emulator.api_level` and `emulator.os_version`, with the existing emitted `target` / `arch` fields as supporting lookup inputs
 3. surface actionable emulator-runtime findings through the existing managed issue `security: runner-host review needed`
-4. preserve the current drift / missing-evidence behavior, keep the delivered `runner-images` rule intact, and leave `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder otherwise unchanged
+4. preserve the current drift / missing-evidence behavior, keep the delivered `runner-images` rule intact, leave `android-java` and `android-gradle` unchanged, and do not widen this Android slice into the separate iOS follow-up ownership already tracked by `#164` / `#165`
 5. keep `emulator.device_name` as a drift-guarded supporting fact in this slice rather than inventing a second source-backed alert dimension for the generated AVD product string
 
 ## Required implementation artifacts
@@ -73,7 +75,8 @@ Contract:
   - Android version / API-level mapping metadata
 - the rule metadata may use the already-emitted `target` / `arch` fields as lookup inputs for source evaluation, but this slice must **not** widen `.github/runner-host-watch.json` to make those support fields newly watched facts
 - preserve `runner-images` as the delivered `runner-image-release-metadata` group
-- preserve `android-java`, `android-gradle`, and `ios-xcode-simulator` as `manual-review-required` groups mapped to their existing follow-up issues
+- preserve `android-java` and `android-gradle` as `manual-review-required` groups mapped to their existing follow-up issues
+- do not use this slice to reopen closed issue `#144` or to invent a new combined iOS owner in touched docs/specs; any later iOS source-backed work remains tracked by `#164` / `#165`
 
 ### 2. Runner-host source evaluation and report plumbing
 
@@ -94,7 +97,7 @@ Implementation contract:
 - keep the current drift / missing-evidence evaluation for watched facts authoritative and unchanged for both platforms
 - preserve the current meaning of top-level `advisory_count`: it remains the total actionable finding count across baseline drift / missing evidence and source-backed review findings; do **not** introduce a separate top-level `source_advisory_count`
 - when Android emulator-runtime source findings require review and baseline drift count is zero, use a dedicated emulator-runtime source reason (for example `android-emulator-runtime-source-review-needed`) rather than reusing a drift reason
-- render JSON and markdown that clearly distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, and state that `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder still remain `manual-review-required` follow-ups
+- render JSON and markdown that clearly distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, and avoid reintroducing closed issue `#144` as the live owner of the later iOS work now tracked by `#164` / `#165`
 - keep `emulator.device_name` in the existing baseline-drift story for this slice; do **not** invent a second source-only alert solely because the generated device string differs from an upstream naming convention
 - do **not** auto-alert solely because the Android catalog exposes a newer API level, extension level, or system-image revision than the current API 34 / Android 14 Google APIs x86_64 runtime while that selected runtime still resolves cleanly
 - fail closed on checked-in manifest/schema violations, but degrade authoritative-source retrieval/normalization failures into explicit review-needed Android emulator-runtime findings rather than a silent pass
@@ -133,15 +136,15 @@ Update:
 Those updates must explicitly say:
 - current `main` already performs source-backed evaluation for `runner-images`, and after this slice it also performs source-backed evaluation for `android-emulator-runtime`
 - `android-java` and `android-gradle` remain `manual-review-required` follow-up groups after this slice
-- the current combined `ios-xcode-simulator` placeholder remains `manual-review-required` under `#144` on current `main` until a later bounded iOS split/promotion slice lands
+- current `main` still renders one combined `ios-xcode-simulator` placeholder as `manual-review-required`, but touched docs/specs must not preserve closed issue `#144` as the live later-owner because the iOS source-backed follow-up work is already split across `#164` / `#165`
 - actionable Android emulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Android API level, extension level, or system-image revision alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized package/runtime identity, not general freshness policy
 - `emulator.device_name` remains part of the drift guard for the Android smoke artifact contract, while authoritative source evaluation in this slice is grounded on the platform/system-image runtime identity
 - `target`, `arch`, and `profile` remain supporting lookup/context fields emitted by `host-environment.json`, but this slice does not promote them into newly watched runner-host facts
-- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that only `#143` is delivered while `#154`, `#155`, `#156`, and `#144` all remain later source-specific follow-ups; after `#156` lands it must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed slices while keeping `android-java`, `android-gradle`, and the current combined iOS placeholder truthful
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that only `#143` is delivered while `#154`, `#155`, `#156`, and closed issue `#144` all remain later source-specific follow-ups; after `#156` lands it must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed slices while keeping `android-java`, `android-gradle`, and the later iOS follow-up ownership truthful under `#164` / `#165`
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop describing current `main` as uniformly drift-only or as having no active source-backed runner-host evaluation after `#156` lands
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying only `runner-images` is source-backed or presenting `#156` as untouched future work once this slice lands
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop saying the shipped runner-host lane still evaluates drift / missing evidence only and must stop preserving Android follow-up ownership as wholly unchanged; after `#156` lands they must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed exceptions while keeping `android-java`, `android-gradle`, and the current combined iOS placeholder truthful
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop using closed issue `#144` as if it were still the live owner of the later iOS source-backed work; after `#156` lands they must keep `runner-images` and `android-emulator-runtime` as the delivered source-backed exceptions while pointing the later iOS follow-up ownership at `#164` / `#165`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop requiring drift-only `advisory_count` plus a top-level `source_advisory_count`, and must stop saying `android-emulator-runtime` remains `manual-review-required` after `#156` lands
 
 ## Acceptance criteria
@@ -149,7 +152,7 @@ Those updates must explicitly say:
 1. `.github/runner-host-advisory-sources.json` exposes `android-emulator-runtime` as `android-system-image-catalog` while preserving its watched fact paths and `follow_up_issue: 156`, and keeps `runner-images` on `runner-image-release-metadata`.
 2. A recognized Android 14 / API 34 Google APIs x86_64 runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no emulator-runtime source findings requiring review.
 3. Missing package metadata, an API/runtime mismatch, or source-unavailable Android emulator-runtime evaluation produces an explicit source-backed finding for `android-emulator-runtime`, increments the overall `advisory_count`, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when no watched-fact drift exists.
-4. The rendered JSON and markdown distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, leave `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder as unchanged follow-ups, and do not auto-alert merely because a newer Android API/system-image revision exists.
+4. The rendered JSON and markdown distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, keep `android-java` / `android-gradle` as separate follow-ups, and do not reintroduce closed issue `#144` as the live owner of the later iOS work already split across `#164` / `#165`.
 5. The named canonical docs and historical issue-spec/task artifacts no longer claim that current runner-host automation is drift-only or that only `runner-images` is source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only / unchanged-ownership wording, and no longer require a top-level `source_advisory_count` for the shared runner-host summary contract.
 6. The implementation PR for this slice can honestly say `Closes #156` because the Android emulator-runtime source-backed evaluation becomes active on `main`.
 
@@ -158,7 +161,7 @@ Those updates must explicitly say:
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
 - **no** source-backed evaluation for `android-gradle` (`#155`)
-- **no** source-backed evaluation or ownership split for the current combined `ios-xcode-simulator` placeholder (`#144`)
+- **no** source-backed evaluation or iOS ownership/split implementation work; later iOS follow-up work remains with `#164` and `#165`
 - **no** widening of `.github/runner-host-watch.json` to add `emulator.target`, `emulator.arch`, `emulator.profile`, extension levels, package revisions, or any other new watched fact
 - **no** separate source-only alert policy for the generated `emulator.device_name` string in this slice
 - **no** automatic freshness ratchet solely because a newer Android API, extension level, or system-image revision exists upstream
@@ -204,5 +207,5 @@ The implementation PR for this spec should be able to close `#156` because it tu
 After that PR merges:
 - Android emulator-runtime identity is evaluated from authoritative Android platform/system-image metadata through the existing runner-host watch
 - `runner-images` remains the delivered source-backed group on current `main`
-- `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder remain separate bounded follow-up work
+- `android-java` and `android-gradle` remain separate bounded follow-up work, and later iOS source-backed work remains under `#164` / `#165` even though current `main` still renders one combined iOS placeholder today
 - any future work on device-name policy, profile-level policy, API freshness ratchets, or broader Android runtime semantics must land as a new bounded follow-up issue instead of being smuggled into `#156`

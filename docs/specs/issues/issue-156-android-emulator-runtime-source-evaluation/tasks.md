@@ -16,12 +16,12 @@
 ## 2. Promote the checked-in `android-emulator-runtime` source rule from placeholder to active contract
 - [ ] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-emulator-runtime` uses `rule_kind: android-system-image-catalog`.
 - [ ] 2.2 Add only the rule-specific source metadata needed for the Android platform/system-image evaluator while preserving `follow_up_issue: 156` and the existing watched fact paths.
-- [ ] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, keep `android-java` and `android-gradle` as `manual-review-required` follow-up groups, and leave the current combined `ios-xcode-simulator` placeholder unchanged in this slice.
+- [ ] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, keep `android-java` and `android-gradle` as `manual-review-required` follow-up groups, and do not widen this Android slice into the separate iOS follow-up ownership already tracked by `#164` / `#165`.
 - [ ] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `emulator.target`, `emulator.arch`, `emulator.profile`, package revisions, extension levels, or any other new watched fact.
 - Goal: Make the repo-owned manifest describe one bounded active emulator-runtime source rule without reopening the delivered `runner-images` slice or the other runner-host follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No Java/Gradle/iOS source activation, no runner-images rework, no new managed issue title.
-- Hand back if: The emulator-runtime slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the non-emulator groups or the current combined iOS placeholder.
+- Hand back if: The emulator-runtime slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the non-emulator groups or silently overriding the separate iOS follow-up ownership already tracked by `#164` / `#165`.
 
 ## 3. Implement bounded Android emulator-runtime source evaluation in `runner_host_review_report.py`
 - [ ] 3.1 Normalize and validate the new `android-system-image-catalog` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
@@ -37,10 +37,10 @@
 - Hand back if: The bounded emulator-runtime evaluator would require widening the watched inventory, redefining the managed-issue sync path, or inventing an unsupported authoritative source for `emulator.device_name` instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
-- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-emulator-runtime` is newly source-backed in this slice, `android-java` / `android-gradle` remain manual-review follow-ups, and the current combined `ios-xcode-simulator` placeholder still remains `manual-review-required` under `#144` on current `main`.
+- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-emulator-runtime` is newly source-backed in this slice, `android-java` / `android-gradle` remain manual-review follow-ups, and current docs do not preserve closed issue `#144` as the live owner of the later iOS work already split across `#164` / `#165`.
 - [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so they no longer read as if current `main` is uniformly drift-only, or as if only `#143` is delivered while `#156` still remains untouched future work after this slice lands.
 - [ ] 4.3 Reconcile `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` so they no longer say only `runner-images` is source-backed or leave `#156` as untouched future work once this slice lands.
-- [ ] 4.4 Reconcile `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` and `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they remove stale `android-emulator-runtime` manual-only / unchanged-ownership wording and any drift-only `advisory_count` + top-level `source_advisory_count` expectations.
+- [ ] 4.4 Reconcile `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` and `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they remove stale `android-emulator-runtime` manual-only / unchanged-ownership wording, stop treating closed issue `#144` as the live iOS owner after `#156` lands, and remove any drift-only `advisory_count` + top-level `source_advisory_count` expectations.
 - [ ] 4.5 Make the docs explicit that `emulator.device_name` remains a drift-only supporting fact, that `target` / `arch` / `profile` are lookup/context inputs rather than newly watched runner-host facts, and run a targeted search for stale wording that still contradicts this contract.
 - Goal: Leave one truthful repo-owned contract instead of a live emulator-source-backed story colliding with older drift-only or runner-images-only wording.
 - Validation:
@@ -83,7 +83,7 @@
 - [ ] 5.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `android-emulator-runtime` now renders as `android-system-image-catalog` while `runner-images` still renders as `runner-image-release-metadata`, even if the current live summary still reports review-needed for unrelated runner-image findings.
-- [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #156`, explicitly note that `docs-needed` still applies because canonical docs/specs changed, and state that `runner-images` remains delivered while `android-java`, `android-gradle`, and the current combined iOS placeholder remain open follow-up scopes.
+- [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #156`, explicitly note that `docs-needed` still applies because canonical docs/specs changed, and state that `runner-images` remains delivered, `android-java` / `android-gradle` remain open follow-up scopes, and later iOS work stays with `#164` / `#165`.
 - Goal: Leave QA with one honest picture of the emulator-runtime-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.
