@@ -1,0 +1,11 @@
+{
+  "android": {
+    "image_version": "20260413.86.1",
+    "os_version": "24.04.4"
+  },
+  "ios": {
+    "image_version": "20260421.0007.1",
+    "os_version": "15.7.5",
+    "os_build": "24G520"
+  }
+}
