@@ -104,15 +104,18 @@ Update:
 - `docs/development/cve-watch-operations.md`
 - `docs/development/security-automation-plan.md`
 - `docs/development/security-owasp-baseline.md`
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md`
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 
 Those updates must explicitly say:
-- current `main` now performs source-backed evaluation for `android-gradle` only
-- `runner-images`, `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` still remain `manual-review-required` follow-up groups until their own slices land
+- current `main` now performs source-backed evaluation for `runner-images` and `android-gradle`, while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-up groups until their own slices land
 - actionable Android Gradle findings continue to reuse `security: runner-host review needed`
 - a newer upstream Gradle release alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized/broken/source-unavailable release-catalog evaluation
-- older issue-spec artifacts are historical and must not keep claiming that current `main` has no source-backed runner-host evaluation at all after this slice lands
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop presenting `#155` as a still-open later follow-up on current `main` after this slice lands
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` must stop saying the remaining future-work set still includes `#155`; after this slice lands, only `#154`, `#156`, and `#144` remain future source-backed follow-ups
+- the older issue-spec artifacts are historical and must not keep claiming that current `main` has no Android Gradle source-backed runner-host evaluation after this slice lands
 
 ## Acceptance criteria
 
@@ -120,7 +123,7 @@ Those updates must explicitly say:
 2. A recognized non-broken baseline-match Android Gradle evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Gradle source findings requiring review.
 3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings, leave the non-Gradle runner-host groups as `manual-review-required` follow-ups, and do not auto-alert merely because a newer upstream Gradle release exists.
-5. The named canonical docs and older main-branch issue specs no longer claim that current runner-host automation is drift-only for every source group.
+5. The named canonical docs and older main-branch issue specs (`#124`, `#129`, `#142`, and `#143`) no longer claim that current runner-host automation is drift-only for every source group or that `#155` remains future work on current `main` after this slice lands.
 6. The implementation PR for this slice can honestly say `Closes #155` because the Android Gradle source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals

@@ -36,26 +36,45 @@
 - Hand back if: The bounded Gradle evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the managed-issue sync path instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
-- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `android-gradle` is now source-backed while the other runner-host groups remain `manual-review-required`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so they no longer read as if current `main` still has no active runner-host source-backed evaluation at all.
+- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `android-gradle` is now source-backed while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required`.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, and `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation or as if `#155` is still future work after this slice lands.
 - [ ] 4.3 Make the docs explicit that a newer Gradle release alone is informational for this slice unless the repo later adds a separate upgrade-policy contract.
-- [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group is manual-only on current `main`.
+- [ ] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups and the `issue-143` line that says the remaining future-work set still includes `#155`.
+- [ ] 4.5 Run a targeted search for stale wording that still claims every runner-host group is manual-only or that `#155` remains future work on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Gradle-source-backed story colliding with older drift-only wording.
 - Validation:
   ```bash
   python3 - <<'PY'
   from pathlib import Path
-  checks = {
+
+  positive_checks = {
       'docs/development/cve-watch-operations.md': ['android-gradle', 'source-backed'],
       'docs/development/security-automation-plan.md': ['android-gradle', 'source-backed'],
       'docs/development/security-owasp-baseline.md': ['android-gradle', 'source-backed'],
+      'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['historical', 'android-gradle'],
       'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-gradle'],
       'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-gradle'],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-gradle'],
   }
-  for rel, needles in checks.items():
+  stale_checks = {
+      'docs/specs/issues/issue-124-runner-host-drift-watch.md': [
+          'remaining later source-specific automation is split across `#143` (runner images), `#154` (android java), `#155` (android gradle), `#156` (android emulator runtime), and `#144` (ios xcode / simulator runtime) after the android narrowing contract in `#142`',
+      ],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': [
+          'the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`',
+      ],
+  }
+
+  for rel, needles in positive_checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
       for needle in needles:
           assert needle in text, (rel, needle)
+
+  for rel, stale_needles in stale_checks.items():
+      text = Path(rel).read_text(encoding='utf-8').lower()
+      for needle in stale_needles:
+          assert needle not in text, (rel, needle)
+
   print('runner-host docs/specs reflect the android-gradle source-backed contract')
   PY
   ```
