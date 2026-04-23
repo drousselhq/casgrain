@@ -20,7 +20,7 @@ Already delivered on `main`:
   - `advisory_count=0`
   - `runner-images` still marked `manual-review-required`
 
-That means the repo already owns the drift / missing-evidence runner-host lane honestly, but the `runner-images` source group is still only a placeholder for future source-backed evaluation.
+That was the honest pre-implementation state for this slice. Current `main` has since advanced: `runner-images` is delivered from this slice, `android-java` is now also source-backed via `#154`, and `android-gradle`, `android-emulator-runtime`, plus the current combined `ios-xcode-simulator -> #144` placeholder remain the remaining manual-review follow-ups.
 
 ## Scope of this slice
 
@@ -138,8 +138,8 @@ Update:
 
 Update these docs so they say:
 - the runner-host lane is no longer uniformly drift-only once `#143` lands
-- `runner-images` is the only source-backed promoted group after this slice
-- the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`
+- `runner-images` is the source-backed group delivered by this slice, and current `main` later also promotes `android-java` via `#154`
+- the remaining runner-host groups stay explicit future work under `#155`, `#156`, and the current combined `#144` placeholder
 - the managed findings issue title remains `security: runner-host review needed`
 - the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work on current `main`; they must explicitly reconcile that `#143` is the delivered runner-images promotion slice while the other follow-up issues remain open
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md` no longer says the shipped runner-host lane stays drift-triggered review until a later Android follow-up lands; it must reconcile that `runner-images` becomes the delivered source-backed exception while `#154`, `#155`, and `#156` remain the Android follow-ups
@@ -263,7 +263,8 @@ The live invocation above should be treated as a render smoke and contract check
 The implementation PR for this spec should be able to close `#143` because it finishes the bounded `runner-images` source-backed promotion slice.
 
 After that PR merges:
-- `#154`, `#155`, and `#156` remain the bounded Android host-toolchain follow-ups
-- `#144` remains the bounded iOS Xcode / simulator-runtime follow-up
+- the later delivered `#154` slice adds bounded Android Java source-backed automation on current `main`
+- `#155` and `#156` remain the bounded Android host-toolchain follow-ups
+- `#144` remains the bounded current iOS Xcode / simulator-runtime placeholder follow-up
 - the runner-host lane continues to reuse `security: runner-host review needed`
 - any later desire for broader runner-image package or CVE inventory work must be shaped as a new bounded issue rather than smuggled into this slice

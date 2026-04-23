@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #124`
 - Follow-up contract that landed after this slice: `#129` (`Add source-rule contract for runner-host advisory evaluation`)
-- Remaining later source-specific automation is split across `#143` (runner images), `#154` (Android Java), `#155` (Android Gradle), `#156` (Android emulator runtime), and `#144` (iOS Xcode / simulator runtime) after the Android narrowing contract in `#142`
+- Delivered source-specific automation on current `main` now includes `#143` (runner images) and `#154` (Android Java); the remaining later source-specific automation is `#155` (Android Gradle), `#156` (Android emulator runtime), and the current combined `#144` (iOS Xcode / simulator runtime) placeholder after the Android narrowing contract in `#142`
 
 ## Why this slice exists
 
@@ -48,7 +48,7 @@ This slice must:
 
 This slice is **only** the change-detection + manual-review slice.
 Direct source-backed advisory evaluation for selected surfaces does not belong to this slice.
-That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images promotion slice while `#154`, `#155`, `#156`, and `#144` remain the later source-specific follow-ups.
+That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images and `#154` android-java promotion slices while `#155`, `#156`, and the current combined `#144` iOS placeholder remain the later source-specific follow-ups.
 
 ## Required implementation artifacts
 
@@ -216,7 +216,7 @@ Those docs updates must say, in repo-owned language rather than issue-only short
 - that any blanket wording claiming `manual-review-required` outcomes never open managed issues, or that `cve-watch` still has only three low-noise slices, is updated or removed so the canonical docs stay internally consistent
 - that this slice opens review only when watched facts drift or required evidence is missing/unreadable
 - that the result is drift-triggered **manual review**, not direct runner-image / host-toolchain advisory automation in this slice
-- that the repo-owned source-rule contract landed in follow-up issue `#129`, and any later source-backed advisory automation now advances via split follow-up issues `#143`, `#154`, `#155`, `#156`, and `#144` rather than staying attached to one umbrella tracker
+- that the repo-owned source-rule contract landed in follow-up issue `#129`, and current `main` now carries the delivered `#143` and `#154` source-backed slices while the remaining source-backed advisory automation advances via follow-up issues `#155`, `#156`, and the current combined `#144` placeholder rather than staying attached to one umbrella tracker
 
 The spec should leave no room for a later implementation PR to claim completion while keeping those canonical docs ambiguous or stale.
 
@@ -332,4 +332,4 @@ The implementation PR for this spec should be able to close `#124` because it co
 After that PR merges:
 - the weekly watch will keep manual review explicit only when the hosted environment drifts
 - issue #129 captured the repo-owned source-rule contract on top of this baseline
-- later source-specific automation now advances through split follow-up issues #143, #154, #155, #156, and #144 rather than returning to one umbrella issue
+- later source-specific automation now advances through the delivered #143 / #154 slices plus the remaining split follow-up issues #155, #156, and #144 rather than returning to one umbrella issue

@@ -19,7 +19,7 @@ Already delivered on `main`:
   - source-rule groups: `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
   - no managed `security: runner-host review needed` issue is currently open from drift or missing evidence
 
-That means the repo already owns the **drift / missing-evidence** runner-host slice honestly.
+That means the repo already owns the runner-host slice honestly; current `main` now keeps `runner-images` and `android-java` as delivered source-backed exceptions while the combined `ios-xcode-simulator -> #144` placeholder remains manual-review-only.
 
 What still remains is narrower than the current issue wording. The combined iOS group still mixes two different future source families that do not share one honest implementation seam:
 1. watched iOS Xcode host facts (`xcode.app_path`, `xcode.version`, `xcode.simulator_sdk_version`)
@@ -35,7 +35,7 @@ This slice must:
 1. replace the single iOS `ios-xcode-simulator` source-rule group with two bounded iOS groups
 2. bind each new iOS group to exactly one later follow-up issue
 3. keep the current drift / missing-evidence alert semantics and managed issue title unchanged
-4. keep the report/docs truthful that both iOS groups still remain `manual-review-required` on current `main`
+4. keep the report/docs truthful that current `main` still uses the combined `ios-xcode-simulator -> #144` placeholder until this later split lands, even though `runner-images` and `android-java` are already source-backed
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
 This slice is **not** the later source-backed advisory implementation itself. It is the contract change that makes the later iOS source integrations bounded and auditable.
@@ -120,10 +120,10 @@ The implementation PR for this spec must update these docs:
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation still evaluates drift / missing evidence only
-- the iOS backlog is no longer one combined `ios-xcode-simulator` umbrella after this slice
+- the shipped runner-host automation is no longer purely drift / missing evidence: current `main` keeps `runner-images` and `android-java` as delivered source-backed exceptions
+- the iOS backlog is no longer one combined `ios-xcode-simulator` umbrella after this slice lands, but current `main` still uses the combined `ios-xcode-simulator -> #144` placeholder until then
 - later source-backed iOS promotion is split across `#164` and `#165`
-- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a current summary key or `#144` as the remaining iOS umbrella owner once this slice lands
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as the future steady-state summary key once this slice lands, while this historical spec keeps the current-main placeholder truthful until then
 - those later iOS slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
 - the current runner-image and Android follow-up ownership remains unchanged outside that required iOS ownership reconciliation
 

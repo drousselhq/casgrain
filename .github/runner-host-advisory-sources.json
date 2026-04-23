@@ -42,11 +42,18 @@
         {"platform": "android", "path": "java.configured_major"},
         {"platform": "android", "path": "java.resolved_version"}
       ],
-      "rule_kind": "manual-review-required",
-      "rationale": "Current main captures Android Java host version facts from smoke evidence only; it does not yet evaluate authoritative source metadata for those versions.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "rule_kind": "java-release-support",
+      "rationale": "Current main compares emitted Android Java facts against authoritative Eclipse Temurin release/support metadata for the configured Java line and resolved runtime version.",
+      "managed_issue_behavior": "Actionable Android Java findings must reuse the existing managed issue title.",
       "follow_up_issue": 154,
-      "candidate_source": "Authoritative Java release/support metadata for the configured and resolved runtime version facts"
+      "candidate_source": "Eclipse Temurin available releases and version metadata",
+      "source_metadata": {
+        "distribution": "temurin",
+        "vendor": "eclipse",
+        "release_catalog_url": "https://api.adoptium.net/v3/info/available_releases",
+        "version_lookup_url_template": "https://api.adoptium.net/v3/assets/version/{version}?architecture=x64&heap_size=normal&image_type=jdk&jvm_impl=hotspot&os=linux&page=0&page_size=1&project=jdk&release_type=ga&vendor=eclipse",
+        "supported_major_policy": "available_lts_plus_latest_feature"
+      }
     },
     {
       "key": "android-gradle",

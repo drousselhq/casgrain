@@ -1,0 +1,5 @@
+{
+  "errors": {
+    "https://api.adoptium.net/v3/info/available_releases": "java release-support metadata unavailable"
+  }
+}

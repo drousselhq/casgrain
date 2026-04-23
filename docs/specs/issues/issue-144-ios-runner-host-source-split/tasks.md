@@ -91,7 +91,7 @@ Hand back if:
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, and source-rule keys `ios-xcode` / `ios-simulator-runtime` mapped to `#164` / `#165`.
+- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, the delivered `runner-images` / `android-java` groups, and the current combined `ios-xcode-simulator -> #144` placeholder until this later split lands.
 - [ ] 5.5 Prepare the implementation PR summary with exact validation evidence and honest closure semantics: `Closes #144` for the split contract, while `#164` and `#165` stay open for the later source-backed implementations.
 
 Goal: Prove the split lands without changing current drift behavior and hand QA a bounded, verifiable slice.
@@ -108,9 +108,10 @@ summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encod
 assert summary['verdict'] == 'no review-needed', summary
 assert summary['reason'] == 'baseline-match', summary
 issue_map = {group['key']: group['follow_up_issue'] for group in summary['source_rule_groups']}
-assert issue_map['ios-xcode'] == 164, issue_map
-assert issue_map['ios-simulator-runtime'] == 165, issue_map
-print('runner-host iOS source split summary present')
+assert issue_map['runner-images'] == 143, issue_map
+assert issue_map['android-java'] == 154, issue_map
+assert issue_map['ios-xcode-simulator'] == 144, issue_map
+print('runner-host current-main iOS placeholder summary present')
 PY`
 
 Non-goals:

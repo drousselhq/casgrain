@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import sys
@@ -18,6 +19,15 @@ SPEC.loader.exec_module(MODULE)
 FIXTURES_DIR = REPO_ROOT / "tests" / "test-support" / "fixtures" / "runner-host-watch"
 SOURCE_RULES_FIXTURES_DIR = FIXTURES_DIR / "source-rules"
 RUNNER_IMAGE_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "runner-image-source"
+JAVA_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "java-source"
+
+JAVA_SOURCE_METADATA = {
+    "distribution": "temurin",
+    "vendor": "eclipse",
+    "release_catalog_url": "https://api.adoptium.net/v3/info/available_releases",
+    "version_lookup_url_template": "https://api.adoptium.net/v3/assets/version/{version}?architecture=x64&heap_size=normal&image_type=jdk&jvm_impl=hotspot&os=linux&page=0&page_size=1&project=jdk&release_type=ga&vendor=eclipse",
+    "supported_major_policy": "available_lts_plus_latest_feature",
+}
 
 
 def load_case(name: str) -> tuple[dict[str, object], dict[str, object]]:
@@ -35,8 +45,40 @@ def load_runner_image_source_case(name: str) -> dict[str, object]:
     return json.loads((RUNNER_IMAGE_SOURCE_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
+def load_java_source_case(name: str) -> dict[str, object]:
+    return json.loads((JAVA_SOURCE_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
+
+
 def load_repo_source_rules() -> dict[str, object]:
     return json.loads((REPO_ROOT / ".github" / "runner-host-advisory-sources.json").read_text(encoding="utf-8"))
+
+
+def build_android_java_promoted_source_rules() -> dict[str, object]:
+    source_rules = load_source_rules_case("runner-images-promoted")
+    android_java = next(group for group in source_rules["groups"] if group["key"] == "android-java")
+    android_java["rule_kind"] = "java-release-support"
+    android_java["rationale"] = (
+        "Current main compares emitted Android Java facts against authoritative Eclipse Temurin release/support metadata."
+    )
+    android_java["managed_issue_behavior"] = "Actionable Android Java findings must reuse the existing managed issue title."
+    android_java["candidate_source"] = "Eclipse Temurin available releases and version metadata"
+    android_java["source_metadata"] = copy.deepcopy(JAVA_SOURCE_METADATA)
+    return source_rules
+
+
+def patch_java_source_case(name: str):
+    source_case = load_java_source_case(name)
+
+    def fake_fetch_json_url(url: str) -> object:
+        for fixture_url, error_message in source_case.get("errors", {}).items():
+            if url == fixture_url:
+                raise MODULE.RunnerHostWatchError(str(error_message))
+        for fixture_url, response in source_case.get("responses", {}).items():
+            if url == fixture_url:
+                return response
+        raise AssertionError(f"unexpected Java source URL: {url}")
+
+    return patch.object(MODULE, "fetch_json_url", side_effect=fake_fetch_json_url)
 
 
 class RunnerHostReviewReportTests(unittest.TestCase):
@@ -189,26 +231,38 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             return_value=load_runner_image_source_case("clean"),
             create=True,
         ):
-            summary = MODULE.build_summary(
-                repo=str(fixture_input["repo"]),
-                baseline=baseline,
-                source_rules=source_rules,
-                observed_platforms=fixture_input["platforms"],
-                generated_at="2026-04-19T09:00:00Z",
-            )
+            with patch_java_source_case("supported"):
+                summary = MODULE.build_summary(
+                    repo=str(fixture_input["repo"]),
+                    baseline=baseline,
+                    source_rules=source_rules,
+                    observed_platforms=fixture_input["platforms"],
+                    generated_at="2026-04-19T09:00:00Z",
+                )
 
         source_rule_groups = {group["key"]: group for group in summary["source_rule_groups"]}
         self.assertEqual(
             set(source_rule_groups),
             {"runner-images", "android-java", "android-gradle", "android-emulator-runtime", "ios-xcode-simulator"},
         )
+        self.assertFalse(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["source_advisory_count"], 0)
+        self.assertEqual(summary["reason"], "baseline-match")
         self.assertEqual(source_rule_groups["runner-images"]["rule_kind"], "runner-image-release-metadata")
         self.assertEqual(source_rule_groups["runner-images"]["status"], "no review-needed")
         self.assertEqual(source_rule_groups["runner-images"]["outcome"], "source-match")
 
         android_java = source_rule_groups["android-java"]
         self.assertEqual(android_java["follow_up_issue"], 154)
-        self.assertEqual(android_java["rule_kind"], "manual-review-required")
+        self.assertEqual(android_java["rule_kind"], "java-release-support")
+        self.assertEqual(android_java["status"], "no review-needed")
+        self.assertEqual(android_java["outcome"], "source-match")
+        self.assertEqual(android_java["source_metadata"], JAVA_SOURCE_METADATA)
+        self.assertEqual(len(android_java["platform_results"]), 1)
+        self.assertEqual(android_java["platform_results"][0]["platform"], "android")
+        self.assertEqual(android_java["platform_results"][0]["outcome"], "source-match")
+        self.assertEqual(android_java["platform_results"][0]["findings"], [])
         self.assertEqual(
             android_java["watched_fact_paths"],
             [
@@ -274,6 +328,110 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                 },
             ],
         )
+
+    def test_build_summary_reports_android_java_source_review_needed_for_unsupported_major(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = build_android_java_promoted_source_rules()
+        fixture_input["platforms"]["android"]["host_environment"]["java"]["configured_major"] = "15"
+        fixture_input["platforms"]["android"]["host_environment"]["java"]["resolved_version"] = "15.0.9+9"
+        for watched in baseline["platforms"]["android"]["watched_facts"]:
+            if watched["path"] == "java.configured_major":
+                watched["baseline"] = "15"
+            if watched["path"] == "java.resolved_version":
+                watched["baseline"] = "15.0.9+9"
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ):
+            with patch_java_source_case("unsupported-major"):
+                summary = MODULE.build_summary(
+                    repo=str(fixture_input["repo"]),
+                    baseline=baseline,
+                    source_rules=source_rules,
+                    observed_platforms=fixture_input["platforms"],
+                    generated_at="2026-04-19T09:00:00Z",
+                )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["source_advisory_count"], 1)
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_java = {group["key"]: group for group in summary["source_rule_groups"]}["android-java"]
+        self.assertEqual(android_java["status"], "manual-review-required")
+        self.assertEqual(android_java["outcome"], "source-review-needed")
+        android_result = android_java["platform_results"][0]
+        self.assertEqual(android_result["outcome"], "unsupported-release")
+        self.assertEqual(android_result["findings"][0]["code"], "unsupported-configured-major")
+        self.assertEqual(android_result["findings"][0]["observed"], "15")
+
+    def test_build_summary_reports_android_java_source_review_needed_for_unrecognized_version(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = build_android_java_promoted_source_rules()
+        fixture_input["platforms"]["android"]["host_environment"]["java"]["resolved_version"] = "17.0.18+999"
+        for watched in baseline["platforms"]["android"]["watched_facts"]:
+            if watched["path"] == "java.resolved_version":
+                watched["baseline"] = "17.0.18+999"
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ):
+            with patch_java_source_case("unrecognized-version"):
+                summary = MODULE.build_summary(
+                    repo=str(fixture_input["repo"]),
+                    baseline=baseline,
+                    source_rules=source_rules,
+                    observed_platforms=fixture_input["platforms"],
+                    generated_at="2026-04-19T09:00:00Z",
+                )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["source_advisory_count"], 1)
+        self.assertEqual(summary["reason"], "source-review-needed")
+        android_java = {group["key"]: group for group in summary["source_rule_groups"]}["android-java"]
+        android_result = android_java["platform_results"][0]
+        self.assertEqual(android_result["outcome"], "unrecognized-version")
+        self.assertEqual(android_result["findings"][0]["code"], "unrecognized-resolved-version")
+        self.assertEqual(android_result["findings"][0]["observed"], "17.0.18+999")
+
+    def test_build_summary_fails_closed_when_android_java_source_metadata_is_unavailable(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = build_android_java_promoted_source_rules()
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ):
+            with patch_java_source_case("source-error"):
+                summary = MODULE.build_summary(
+                    repo=str(fixture_input["repo"]),
+                    baseline=baseline,
+                    source_rules=source_rules,
+                    observed_platforms=fixture_input["platforms"],
+                    generated_at="2026-04-19T09:00:00Z",
+                )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["source_advisory_count"], 1)
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_java = {group["key"]: group for group in summary["source_rule_groups"]}["android-java"]
+        self.assertEqual(android_java["status"], "manual-review-required")
+        self.assertEqual(android_java["outcome"], "source-error")
+        android_result = android_java["platform_results"][0]
+        self.assertEqual(android_result["status"], "manual-review-required")
+        self.assertEqual(android_result["outcome"], "source-error")
+        self.assertIn("metadata unavailable", android_result["source_error"])
 
     def test_build_summary_promotes_runner_images_with_clean_source_match(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
