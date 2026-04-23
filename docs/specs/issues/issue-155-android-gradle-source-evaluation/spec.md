@@ -72,8 +72,9 @@ Implementation contract:
   - the authoritative catalog marks the resolved version as `broken`
   - the authoritative Gradle source response is unavailable, malformed, or contradictory for the Gradle slice
 - keep the current drift / missing-evidence evaluation for watched facts authoritative and unchanged for both platforms
-- preserve the existing meaning of top-level `advisory_count`: it remains the count of changed or missing watched facts from the baseline contract
-- add a separate source-backed finding count/list (for example `source_advisory_count` plus detailed source findings) instead of overloading the drift counter
+- preserve the existing meaning of top-level `advisory_count` on current `main`: it is the total number of review-needed baseline drift / missing-evidence facts plus any review-needed source-backed findings already counted by the runner-images evaluator
+- make Android Gradle source findings contribute to that same top-level `advisory_count` instead of inventing a new top-level `source_advisory_count` field
+- keep Android Gradle source findings explicitly inspectable in the rendered summary / markdown through the source-rule group status, outcome, and platform-result details rather than by forcing QA or later automation to infer them from the top-level count alone
 - set top-level `alert` / `verdict` to review-needed when either:
   - drift / missing evidence requires review, or
   - Android Gradle source findings require review
@@ -92,11 +93,11 @@ Update:
 - `tests/test-support/fixtures/runner-host-watch/gradle-source/`
 
 Required coverage:
-- supported/current Android Gradle source payload + baseline-match host facts → `alert=false`, `advisory_count=0`, `source_advisory_count=0`, and `android-gradle` is reported as `gradle-release-catalog`
-- broken or unrecognized Android Gradle version → `alert=true` with a source-backed review-needed reason while the drift counter remains zero
+- supported/current Android Gradle source payload + baseline-match host facts → `alert=false`, `advisory_count=0`, and `android-gradle` is reported as `gradle-release-catalog`
+- broken or unrecognized Android Gradle version → `alert=true` with a source-backed review-needed reason and a non-zero top-level `advisory_count` even when the baseline drift count is zero
 - authoritative-source payload unavailable or malformed → explicit review-needed Android Gradle source finding instead of silent success
 - a newer upstream Gradle release exists while the configured/resolved version is still a recognized non-broken stable release → no automatic alert from the Gradle source path alone
-- existing drift and missing-evidence fixtures still preserve their current `advisory_count` behavior
+- existing drift and missing-evidence fixtures still preserve their current `advisory_count` behavior while source-backed findings continue to roll into that same top-level count on current `main`
 - a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `android-gradle` rule while preserving `runner-images` as `runner-image-release-metadata` and the remaining groups as manual-only follow-ups
 
 ### 4. Canonical docs and live-contract reconciliation
@@ -109,22 +110,26 @@ Update:
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`
+- `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`
+- `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md`
 
 Those updates must explicitly say:
 - `runner-images`, `android-gradle`, `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` are now the named current-main contract surface groups; after this slice lands, `runner-images` and `android-gradle` are source-backed while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-up groups until their own slices land
 - actionable Android Gradle findings continue to reuse `security: runner-host review needed`
 - a newer upstream Gradle release alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized/broken/source-unavailable release-catalog evaluation
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop presenting `#155` as a still-open later follow-up on current `main` after this slice lands
-- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` must stop saying the remaining future-work set still includes `#155`; after this slice lands, only `#154`, `#156`, and `#144` remain future source-backed follow-ups
-- the older issue-spec artifacts are historical and must not keep claiming that current `main` has no Android Gradle source-backed runner-host evaluation after this slice lands
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying the remaining future-work set still includes `#155` or that only `runner-images` is source-backed after this slice lands; after this slice lands, only `#154`, `#156`, and `#144` remain future source-backed follow-ups
+- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving `android-gradle` as an unchanged `manual-review-required` follow-up or validating it as such after this slice lands; those artifacts must instead treat `android-gradle` as an already-delivered source-backed group while keeping the Java slice itself open under `#154`
+- the older issue-spec artifacts are historical or adjacent-current backlog contracts and must not keep claiming that current `main` has no Android Gradle source-backed runner-host evaluation after this slice lands
 
 ## Acceptance criteria
 
 1. `.github/runner-host-advisory-sources.json` exposes `android-gradle` as `gradle-release-catalog` while preserving its watched fact paths and `follow_up_issue: 155`.
 2. A recognized non-broken baseline-match Android Gradle evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Gradle source findings requiring review.
-3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
-4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the existing source-backed group, leave `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-ups, and do not auto-alert merely because a newer upstream Gradle release exists.
-5. The named canonical docs and older main-branch issue specs (`#124`, `#129`, `#142`, and `#143`) no longer claim that current runner-host automation is drift-only for every source group or that `#155` remains future work on current `main` after this slice lands.
+3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle`, turns the overall runner-host summary/managed-issue path into `manual-review-required`, and increments the same top-level `advisory_count` field current `main` already uses for source-backed findings.
+4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings through explicit source-rule group details, preserve `runner-images` as the existing source-backed group, leave `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-ups, and do not auto-alert merely because a newer upstream Gradle release exists.
+5. The named canonical docs and older main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, and `issue-154/{spec,tasks}.md`) no longer claim that current runner-host automation is drift-only for every source group, that only `runner-images` is source-backed, or that `#155` remains future work on current `main` after this slice lands.
 6. The implementation PR for this slice can honestly say `Closes #155` because the Android Gradle source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals
@@ -164,7 +169,7 @@ summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encod
 android = next(group for group in summary['source_rule_groups'] if group['key'] == 'android-gradle')
 assert android['rule_kind'] == 'gradle-release-catalog', android
 assert android['follow_up_issue'] == 155, android
-assert 'source_advisory_count' in summary, summary
+assert 'source_rule_groups' in summary, summary
 print('android-gradle source-backed rule is present in the runner-host summary')
 PY
 ```
