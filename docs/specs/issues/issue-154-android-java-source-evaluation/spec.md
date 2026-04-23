@@ -110,6 +110,7 @@ Update:
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`
 
 Those updates must explicitly say:
 - current `main` already performs source-backed evaluation for `runner-images`, and after this slice it performs source-backed evaluation for `android-java` too
@@ -120,6 +121,7 @@ Those updates must explicitly say:
 - the older issue-spec artifacts are historical and must not keep claiming that current `main` still has no source-backed runner-host evaluation at all
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that current `main` still has delivered only `#143` while `#154`, `#155`, `#156`, and `#144` all remain later follow-ups; after this slice lands it must treat `#154` as delivered while keeping the unchanged combined iOS placeholder truthful
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` must be reconciled as historical artifacts so they no longer claim that only `runner-images` is source-backed after `#154` lands
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` must stop saying that the shipped runner-host automation still evaluates only drift / missing evidence; after `#154` lands it must describe `runner-images` and `android-java` as the already-delivered source-backed exceptions while keeping the live combined `ios-xcode-simulator -> #144` placeholder truthful until a later iOS split actually lands
 
 ## Acceptance criteria
 
@@ -127,7 +129,7 @@ Those updates must explicitly say:
 2. A supported/baseline-match Android Java evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Java source findings requiring review.
 3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish Android Java source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, and leave `android-gradle`, `android-emulator-runtime`, and the current combined iOS placeholder as unchanged follow-up entries.
-5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, no longer claim that only `runner-images` is source-backed and no longer present `#154` as a later follow-up once this slice lands, while still keeping the unchanged combined `ios-xcode-simulator -> #144` placeholder truthful on current `main`.
+5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, no longer claim that only drift / missing-evidence checks or only `runner-images` are source-backed on current `main`, no longer present `#154` as a later follow-up once this slice lands, and still keep the unchanged combined `ios-xcode-simulator -> #144` placeholder truthful on current `main`.
 6. The implementation PR for this slice can honestly say `Closes #154` because the Android Java source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals
