@@ -4,20 +4,20 @@
 - Source contract: `./spec.md`
 
 ## 1. Add failing regression coverage for Android Gradle source-backed evaluation
-- [ ] 1.1 Add deterministic Gradle source payload fixtures under `tests/test-support/fixtures/runner-host-watch/gradle-source/` for a recognized non-broken release, a broken or unrecognized release, a newer-release-available-but-non-alerting case, and an unavailable/malformed source response.
-- [ ] 1.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `android-gradle` remains `manual-review-required` instead of an active source-backed rule.
-- [ ] 1.3 Prove the new assertions distinguish Android Gradle source-backed findings from baseline drift / missing-evidence findings without inventing a new top-level `source_advisory_count` field.
-- [ ] 1.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
+- [x] 1.1 Add deterministic Gradle source payload fixtures under `tests/test-support/fixtures/runner-host-watch/gradle-source/` for a recognized non-broken release, a broken or unrecognized release, a newer-release-available-but-non-alerting case, and an unavailable/malformed source response.
+- [x] 1.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `android-gradle` remains `manual-review-required` instead of an active source-backed rule.
+- [x] 1.3 Prove the new assertions distinguish Android Gradle source-backed findings from baseline drift / missing-evidence findings without inventing a new top-level `source_advisory_count` field.
+- [x] 1.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
 - Goal: Prove the missing Android Gradle source-backed contract before touching the checked-in manifest or report logic.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No production manifest/report/docs edits yet.
 - Hand back if: Current `main` already reports `android-gradle` as an active source-backed rule with deterministic coverage for recognized, broken/unrecognized, newer-release-only, and source-unavailable cases.
 
 ## 2. Promote the checked-in `android-gradle` source rule from placeholder to active contract
-- [ ] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-gradle` uses `rule_kind: gradle-release-catalog`.
-- [ ] 2.2 Add only the rule-specific source metadata needed for the Gradle release-catalog evaluator while preserving `follow_up_issue: 155` and the existing watched fact paths.
-- [ ] 2.3 Keep `runner-images` on its existing `runner-image-release-metadata` contract, and keep `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-up groups.
-- [ ] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include Android Gradle plugin versions, wrapper checksums, dependency manifests, or any other new Gradle fact.
+- [x] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-gradle` uses `rule_kind: gradle-release-catalog`.
+- [x] 2.2 Add only the rule-specific source metadata needed for the Gradle release-catalog evaluator while preserving `follow_up_issue: 155` and the existing watched fact paths.
+- [x] 2.3 Keep `runner-images` on its existing `runner-image-release-metadata` contract, and keep `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` as `manual-review-required` follow-up groups.
+- [x] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include Android Gradle plugin versions, wrapper checksums, dependency manifests, or any other new Gradle fact.
 - Goal: Make the repo-owned manifest describe one bounded active Gradle source rule without reopening the other runner-host follow-up scopes.
 - Validation:
 
@@ -38,23 +38,23 @@
 - Hand back if: The Gradle slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the already-delivered `runner-images` contract or the remaining manual-only follow-up groups.
 
 ## 3. Implement bounded Android Gradle source evaluation in `runner_host_review_report.py`
-- [ ] 3.1 Normalize and validate the new `gradle-release-catalog` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
-- [ ] 3.2 Load authoritative machine-readable Gradle release data for live runs while keeping deterministic fixture injection for unit tests.
-- [ ] 3.3 Evaluate only `gradle.configured_version` and `gradle.resolved_version`, and emit explicit review-needed findings when a watched Gradle version is unrecognized, the resolved version is marked `broken`, or the source payload is unavailable/malformed.
-- [ ] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` consistent with current `main` by counting review-needed source-backed findings there too, while still making Android Gradle source findings explicit in the source-rule group details.
-- [ ] 3.5 Ensure a newer upstream Gradle release can be rendered as context without becoming a review-needed condition by itself on current `main`.
-- [ ] 3.6 Update the rendered markdown/summary so Android Gradle source findings are explicit, `runner-images` still renders as the already-delivered source-backed group, and the remaining follow-up groups stay manual-review-only.
+- [x] 3.1 Normalize and validate the new `gradle-release-catalog` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
+- [x] 3.2 Load authoritative machine-readable Gradle release data for live runs while keeping deterministic fixture injection for unit tests.
+- [x] 3.3 Evaluate only `gradle.configured_version` and `gradle.resolved_version`, and emit explicit review-needed findings when a watched Gradle version is unrecognized, the resolved version is marked `broken`, or the source payload is unavailable/malformed.
+- [x] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` consistent with current `main` by counting review-needed source-backed findings there too, while still making Android Gradle source findings explicit in the source-rule group details.
+- [x] 3.5 Ensure a newer upstream Gradle release can be rendered as context without becoming a review-needed condition by itself on current `main`.
+- [x] 3.6 Update the rendered markdown/summary so Android Gradle source findings are explicit, `runner-images` still renders as the already-delivered source-backed group, and the remaining follow-up groups stay manual-review-only.
 - Goal: Activate one trustworthy Gradle-only source-backed path without changing the baseline drift contract for the rest of the runner-host watch.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No Gradle plugin policy, no wrapper-integrity ratchet, no broad CVE scraping beyond the bounded release-catalog contract in `spec.md`.
 - Hand back if: The bounded Gradle evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the managed-issue sync path instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
-- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains source-backed, `android-gradle` becomes source-backed in this slice, and `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed, as if `#155` is still future work after this slice lands, or as if Android source-backed slices still require a drift-only `advisory_count` plus a separate `source_advisory_count`.
-- [ ] 4.3 Make the docs explicit that a newer Gradle release alone is informational for this slice unless the repo later adds a separate upgrade-policy contract.
-- [ ] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec/task wording that still frames `runner-images` as the only delivered source-backed exception or validates only that live-summary state, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands or that Android source-backed findings must be split into drift-only `advisory_count` plus a separate `source_advisory_count`.
-- [ ] 4.5 Run a targeted search for stale wording that still claims only `runner-images` is source-backed, that every runner-host group except `runner-images` is manual-only on current `main`, that `#155` remains future work on current `main`, or that Android source-backed findings must be rendered as drift-only `advisory_count` plus a separate `source_advisory_count`.
+- [x] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains source-backed, `android-gradle` becomes source-backed in this slice, and `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required`.
+- [x] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed, as if `#155` is still future work after this slice lands, or as if Android source-backed slices still require a drift-only `advisory_count` plus a separate `source_advisory_count`.
+- [x] 4.3 Make the docs explicit that a newer Gradle release alone is informational for this slice unless the repo later adds a separate upgrade-policy contract.
+- [x] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec/task wording that still frames `runner-images` as the only delivered source-backed exception or validates only that live-summary state, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands or that Android source-backed findings must be split into drift-only `advisory_count` plus a separate `source_advisory_count`.
+- [x] 4.5 Run a targeted search for stale wording that still claims only `runner-images` is source-backed, that every runner-host group except `runner-images` is manual-only on current `main`, that `#155` remains future work on current `main`, or that Android source-backed findings must be rendered as drift-only `advisory_count` plus a separate `source_advisory_count`.
 - Goal: Leave one truthful repo-owned contract instead of a live Gradle-source-backed story colliding with older drift-only wording.
 - Validation:
   ```bash
@@ -124,10 +124,10 @@
 - Hand back if: Another canonical contract file becomes false only because it encodes a separate policy decision that this Gradle-only slice cannot honestly change.
 
 ## 5. Run bounded validation and hand back with honest closure semantics
-- [ ] 5.1 Run `git diff --check`.
-- [ ] 5.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `android-gradle` now renders as `gradle-release-catalog`.
+- [x] 5.1 Run `git diff --check`.
+- [x] 5.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
+- [x] 5.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
+- [x] 5.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `android-gradle` now renders as `gradle-release-catalog`.
 - [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #155`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `runner-images` stayed source-backed while the remaining follow-up groups stayed manual-only.
 - Goal: Leave QA with one honest picture of the Gradle-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`

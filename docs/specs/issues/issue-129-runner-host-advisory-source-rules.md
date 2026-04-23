@@ -3,7 +3,7 @@
 - Issue: `#129`
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #129`
-- Follow-up source-specific slices after this contract lands:
+- Historical follow-up source-specific slices after this contract landed:
   - `#143` — delivered GitHub-hosted runner image release-metadata slice
   - `#142` — Android source-rule split contract that narrows the original Android umbrella into `#154`, `#155`, and `#156`
   - `#154` — Android Java host version facts
@@ -148,9 +148,9 @@ The implementation PR for this spec must update these docs:
 Those docs updates must explicitly say:
 - current shipped runner-host automation still evaluates drift / missing evidence only
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
-- the current source groups remain `manual-review-required` on `main` after this slice unless a later follow-up lands
+- the current source groups were initially `manual-review-required` in this contract; current `main` now has `runner-images` and `android-gradle` source-backed while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-ups
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
-- later source-specific promotion work is split across `#143`, `#154`, `#155`, `#156`, and `#144` after the narrowing contract in `#142` lands
+- later source-specific promotion work is split across the delivered `#143` / `#155` slices plus the remaining follow-ups `#154`, `#156`, and `#144` after the narrowing contract in `#142` lands
 
 ## Acceptance criteria
 
@@ -217,7 +217,7 @@ After that PR merges:
 - the delivered `#143` slice becomes the bounded GitHub-hosted runner image source-backed automation on current `main`
 - `#142` initially owns the Android umbrella follow-up, and the later narrowing contract in `#142` then splits that Android work into `#154`, `#155`, and `#156`
 - `#154` remains the bounded follow-up for Android Java host version source-backed automation after that narrowing lands
-- `#155` remains the bounded follow-up for Android Gradle host version source-backed automation after that narrowing lands
+- `#155` is the delivered bounded Android Gradle host version source-backed automation after that narrowing landed
 - `#156` remains the bounded follow-up for Android emulator-runtime source-backed automation after that narrowing lands
 - `#144` remains the bounded follow-up for any iOS Xcode / simulator-runtime source-backed automation
-- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception while the remaining follow-ups stay manual-review-only until their own slices land
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` and `android-gradle` source-backed exceptions while the remaining follow-ups stay manual-review-only until their own slices land

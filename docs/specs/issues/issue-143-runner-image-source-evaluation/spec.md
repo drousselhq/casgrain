@@ -8,7 +8,7 @@
 
 Already delivered on `main`:
 - PR #145 added the checked-in runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
-- PR #157 and PR #158 split the Android host-toolchain backlog into the bounded follow-up issues `#154`, `#155`, and `#156`.
+- Historical note: PR #157 and PR #158 split the Android host-toolchain backlog into the bounded follow-up issues `#154`, `#155`, and `#156`; current `main` now has `#155` delivered while `#154` and `#156` remain follow-ups.
 - The current runner-host watch already owns the live summary and managed issue flow through:
   - `.github/runner-host-watch.json`
   - `tests/test-support/scripts/runner_host_review_report.py`
@@ -35,7 +35,6 @@ This slice must:
 4. preserve the current drift / missing-evidence behavior for the rest of the runner-host watch
 5. keep the remaining source groups explicit future work:
    - `android-java` → `#154`
-   - `android-gradle` → `#155`
    - `android-emulator-runtime` → `#156`
    - `ios-xcode-simulator` → `#144`
 
@@ -138,8 +137,8 @@ Update:
 
 Update these docs so they say:
 - the runner-host lane is no longer uniformly drift-only once `#143` lands
-- `runner-images` is the only source-backed promoted group after this slice
-- the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`
+- `runner-images` and the later `android-gradle` slice `#155` are the delivered source-backed promoted groups on current `main`
+- the remaining runner-host groups stay explicit future work under `#154`, `#156`, and `#144`
 - the managed findings issue title remains `security: runner-host review needed`
 - the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work on current `main`; they must explicitly reconcile that `#143` is the delivered runner-images promotion slice while the other follow-up issues remain open
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md` no longer says the shipped runner-host lane stays drift-triggered review until a later Android follow-up lands; it must reconcile that `runner-images` becomes the delivered source-backed exception while `#154`, `#155`, and `#156` remain the Android follow-ups

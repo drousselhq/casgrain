@@ -1,0 +1,13 @@
+[
+  {
+    "version": "8.7",
+    "current": false,
+    "snapshot": false,
+    "nightly": false,
+    "releaseNightly": false,
+    "broken": false,
+    "activeRc": false,
+    "rcFor": "",
+    "milestoneFor": ""
+  }
+]

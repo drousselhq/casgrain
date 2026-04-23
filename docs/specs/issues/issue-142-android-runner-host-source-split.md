@@ -128,7 +128,7 @@ The implementation PR for this spec must update these docs:
 Those docs updates must explicitly say:
 - the shipped runner-host automation still evaluates drift / missing evidence only
 - the Android backlog is no longer one combined `android-java-gradle` umbrella after this slice
-- later source-backed Android promotion is split across `#154`, `#155`, and `#156`
+- historical note: later source-backed Android promotion was split across `#154`, `#155`, and `#156`; current `main` now has `#155` delivered while `#154` and `#156` remain follow-ups
 - those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
 - `java.distribution` is not part of the current watched runner-host inventory unless and until a later contract change adds it explicitly
 
@@ -204,6 +204,6 @@ The implementation PR for this spec should be able to close `#142` because it fi
 
 After that PR merges:
 - `#154` remains the bounded follow-up for Android Java host version source-backed promotion
-- `#155` remains the bounded follow-up for Android Gradle host version source-backed promotion
+- `#155` is the delivered Android Gradle host version source-backed promotion on current `main`
 - `#156` remains the bounded follow-up for Android emulator-runtime source-backed promotion
-- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, while `#154`, `#155`, and `#156` remain the Android follow-ups that are still manual-review-only on current `main`
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143` and the delivered `android-gradle` source-backed slice from `#155`, while `#154` and `#156` remain the Android follow-ups that are still manual-review-only on current `main`
