@@ -51,10 +51,10 @@
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains source-backed, `android-gradle` becomes source-backed in this slice, and `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed, or as if `#155` is still future work after this slice lands.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed, as if `#155` is still future work after this slice lands, or as if Android source-backed slices still require a drift-only `advisory_count` plus a separate `source_advisory_count`.
 - [ ] 4.3 Make the docs explicit that a newer Gradle release alone is informational for this slice unless the repo later adds a separate upgrade-policy contract.
-- [ ] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec/task wording that still frames `runner-images` as the only delivered source-backed exception or validates only that live-summary state, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands.
-- [ ] 4.5 Run a targeted search for stale wording that still claims only `runner-images` is source-backed, that every runner-host group except `runner-images` is manual-only on current `main`, or that `#155` remains future work on current `main`.
+- [ ] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec/task wording that still frames `runner-images` as the only delivered source-backed exception or validates only that live-summary state, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands or that Android source-backed findings must be split into drift-only `advisory_count` plus a separate `source_advisory_count`.
+- [ ] 4.5 Run a targeted search for stale wording that still claims only `runner-images` is source-backed, that every runner-host group except `runner-images` is manual-only on current `main`, that `#155` remains future work on current `main`, or that Android source-backed findings must be rendered as drift-only `advisory_count` plus a separate `source_advisory_count`.
 - Goal: Leave one truthful repo-owned contract instead of a live Gradle-source-backed story colliding with older drift-only wording.
 - Validation:
   ```bash
@@ -93,10 +93,17 @@
       ],
       'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': [
           '`android-gradle` and `android-emulator-runtime` remain `manual-review-required` follow-up groups',
+          'preserve the existing meaning of top-level `advisory_count`: it remains the count of changed or missing watched facts from the baseline contract',
+          'add a separate source-backed finding count/list (for example `source_advisory_count` plus detailed source findings) instead of overloading the drift counter',
+          'supported/current android java source payload + baseline-match host facts → `alert=false`, `advisory_count=0`, `source_advisory_count=0`, and `android-java` is reported as `java-release-support`',
+          'unsupported or unrecognized android java version → `alert=true` with a source-backed review-needed reason while the drift counter remains zero',
+          "assert 'source_advisory_count' in summary, summary",
       ],
       'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': [
           'keep `android-gradle` and `android-emulator-runtime` as `manual-review-required` follow-up groups',
           "assert groups[key]['rule_kind'] == 'manual-review-required'",
+          'prove the new assertions distinguish source-backed findings from drift counts by keeping `advisory_count` at zero for java-only source findings',
+          'preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` scoped to changed/missing watched facts, with a separate source-backed finding count/list for java findings.',
       ],
   }
 
