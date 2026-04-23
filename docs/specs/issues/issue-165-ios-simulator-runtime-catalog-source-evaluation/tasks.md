@@ -80,7 +80,7 @@
 
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-simulator-runtime` is now source-backed while `ios-xcode`, `#172`, and the non-iOS groups remain on their own follow-up issues.
-- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` so they no longer read as if current `main` still has no active iOS source-backed evaluation or still leaves `#144` as the live umbrella owner after this slice lands.
+- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` so they no longer read as if current `main` still has no active iOS source-backed evaluation or still leaves `#144` as the live umbrella owner after this slice lands.
 - [ ] 5.3 Make the docs explicit that `simulator.device_name` remains a drift-only supporting fact in this slice and that any future device-availability source automation belongs to `#172`.
 - [ ] 5.4 Run a targeted search for stale wording that still claims `ios-simulator-runtime` is manual-only future work or that `#144` still owns the live iOS umbrella contract on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live simulator-runtime source-backed story colliding with older drift-only or umbrella-work wording.
@@ -97,6 +97,7 @@
       'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['#172', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['#172', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['#172', '#165'],
+      'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['#165', 'ios-simulator-runtime'],
   }
   for rel, needles in checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()

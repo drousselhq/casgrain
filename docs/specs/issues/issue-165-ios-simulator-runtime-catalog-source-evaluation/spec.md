@@ -135,6 +135,7 @@ Update:
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`
 
 Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-simulator-runtime`
@@ -143,7 +144,7 @@ Those updates must explicitly say:
 - `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` remain on their own separate source-backed follow-up issues until those slices land
 - actionable simulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Apple runtime upstream alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized runtime identity/name validation for the observed runtime, not a general upgrade/freshness policy
-- older issue-spec artifacts must stop claiming that `#144` is still the current iOS umbrella owner or that current `main` still has no active iOS source-backed evaluation once this slice lands
+- older issue-spec artifacts, including the ordered task list in `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, must stop claiming that `#144` is still the current iOS umbrella owner or that current `main` still has no active iOS source-backed evaluation once this slice lands
 
 ## Acceptance criteria
 
