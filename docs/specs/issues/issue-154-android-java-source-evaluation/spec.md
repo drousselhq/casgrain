@@ -9,8 +9,9 @@
 - Related follow-up issues that must remain separate from this slice:
   - `#155` (`android-gradle`)
   - `#156` (`android-emulator-runtime`)
-  - `#164` (`ios-xcode`)
-  - `#165` (`ios-simulator-runtime`)
+  - `#144` (`current combined ios-xcode-simulator placeholder owner on main`)
+  - `#164` (`later ios-xcode source-backed follow-up once the iOS split lands`)
+  - `#165` (`later ios-simulator-runtime source-backed follow-up once the iOS split lands`)
 
 ## Why this slice exists
 
@@ -24,14 +25,14 @@ Already delivered on `main`:
   - issue title `security: runner-host review needed`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
   - `runner-images` now evaluates as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder remain `manual-review-required`
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` already narrow the later iOS source-backed implementation ownership to `#164` and `#165`; this slice must not reopen or overwrite that split.
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` already describe a later iOS split into `#164` and `#165`, but current `main` still keeps the combined `ios-xcode-simulator` placeholder mapped to `follow_up_issue: 144`; this slice must preserve that live placeholder contract instead of pretending the iOS split already landed.
 - `tests/test-support/scripts/runner_host_review_report.py` still has no active Android Java source-backed rule, so current `main` cannot yet evaluate the watched Java facts beyond the placeholder/manual entry.
 - `.github/runner-host-watch.json` watches only these Android Java facts on current `main`:
   - `java.configured_major`
   - `java.resolved_version`
 - `host-environment.json` still emits `java.distribution`, but that fact is not part of the checked-in watched inventory.
 
-That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the already-watched Android Java facts without widening the runner-host inventory, without reopening the delivered `runner-images` slice or the later iOS split contract, and without inventing a parallel managed-issue flow.
+That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the already-watched Android Java facts without widening the runner-host inventory, without reopening the delivered `runner-images` slice or rewriting the unchanged iOS placeholder ownership on current `main`, and without inventing a parallel managed-issue flow.
 
 ## Scope of this slice
 
@@ -56,7 +57,7 @@ Contract:
 - add the rule-specific source metadata needed to evaluate the watched Java facts and to render the human-facing source description in report output
 - preserve `runner-images` as the delivered `runner-image-release-metadata` group
 - preserve `android-gradle` and `android-emulator-runtime` as `manual-review-required` groups mapped to `#155` and `#156`
-- leave the current combined `ios-xcode-simulator` placeholder group unchanged in this slice; the later iOS source-backed implementation ownership already lives under `#164` and `#165` via `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`
+- leave the current combined `ios-xcode-simulator` placeholder group unchanged in this slice, including its live `follow_up_issue: 144` mapping on current `main`; do not rewrite that placeholder to `#164` or `#165` here
 - do **not** add `java.distribution` or any other new Android watched fact to `.github/runner-host-watch.json`
 
 ### 2. Runner-host source evaluation and report plumbing
@@ -109,18 +110,16 @@ Update:
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`
 
 Those updates must explicitly say:
 - current `main` already performs source-backed evaluation for `runner-images`, and after this slice it performs source-backed evaluation for `android-java` too
 - `android-gradle` and `android-emulator-runtime` remain `manual-review-required` follow-up groups
-- later iOS source-backed implementation work remains split across `#164` and `#165` by the issue-144 contract, even while the current combined `ios-xcode-simulator` placeholder group stays manual-only until those later slices land
+- the current combined `ios-xcode-simulator` placeholder group stays `manual-review-required` and still maps to `#144` on current `main`; this slice does not rewrite the live iOS placeholder ownership
 - actionable Android Java findings continue to reuse `security: runner-host review needed`
 - `java.distribution` remains outside the watched runner-host inventory unless a later contract change adds it explicitly
 - the older issue-spec artifacts are historical and must not keep claiming that current `main` still has no source-backed runner-host evaluation at all
-- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that current `main` still has delivered `#143` while `#154`, `#155`, `#156`, and `#144` all remain later follow-ups; after this slice lands it must treat `#154` as delivered and point the remaining iOS source-backed work at `#164` and `#165` instead of preserving `#144` as a live umbrella owner
-- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` must all be reconciled as historical artifacts, because they otherwise preserve stale current-main claims about which runner-host slices are already delivered and which later iOS issues still own the remaining source-backed work
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that current `main` still has delivered only `#143` while `#154`, `#155`, `#156`, and `#144` all remain later follow-ups; after this slice lands it must treat `#154` as delivered while keeping the unchanged combined iOS placeholder truthful
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` must be reconciled as historical artifacts so they no longer claim that only `runner-images` is source-backed after `#154` lands
 
 ## Acceptance criteria
 
@@ -128,7 +127,7 @@ Those updates must explicitly say:
 2. A supported/baseline-match Android Java evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Java source findings requiring review.
 3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish Android Java source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, and leave `android-gradle`, `android-emulator-runtime`, and the current combined iOS placeholder as unchanged follow-up entries.
-5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, no longer claim that only `runner-images` is source-backed, no longer present `#154` as a later follow-up once this slice lands, and no longer preserve umbrella issue `#144` as the remaining iOS source-backed owner; they reconcile the delivered `runner-images` slice, the new `android-java` slice, and the later iOS follow-ups `#164` and `#165`.
+5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, no longer claim that only `runner-images` is source-backed and no longer present `#154` as a later follow-up once this slice lands, while still keeping the unchanged combined `ios-xcode-simulator -> #144` placeholder truthful on current `main`.
 6. The implementation PR for this slice can honestly say `Closes #154` because the Android Java source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals
@@ -136,7 +135,7 @@ Those updates must explicitly say:
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
 - **no** source-backed evaluation for `android-gradle` (`#155`)
 - **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
-- **no** iOS source-rule split rework or source-backed evaluation beyond preserving the already-shaped follow-up ownership under `#164` and `#165`
+- **no** iOS source-rule split rework or source-backed evaluation; the current combined `ios-xcode-simulator -> #144` placeholder stays unchanged in this slice
 - **no** widening of `.github/runner-host-watch.json` to include `java.distribution` or any new Java fact
 - **no** new managed issue title or parallel runner-host issue-sync lane
 - **no** generic Java patch-freshness ratchet or vendor-distribution policy beyond the bounded release/support contract for `java.configured_major` and `java.resolved_version`
@@ -181,5 +180,5 @@ After that PR merges:
 - Android Java facts are evaluated from authoritative machine-readable release/support data through the existing runner-host watch
 - `runner-images` remains the delivered source-backed group on current `main`
 - `android-gradle` and `android-emulator-runtime` remain separate manual-review follow-ups
-- later iOS source-backed work stays split across `#164` and `#165`, even while the current combined `ios-xcode-simulator` placeholder group is otherwise unchanged by this slice
+- the current combined `ios-xcode-simulator` placeholder remains manual-only and still maps to `#144` on current `main`; any later split to `#164` / `#165` stays outside this slice
 - any future work on Java distribution policy, patch-freshness ratchets, or broader Java-source semantics must land as a new bounded follow-up issue instead of being smuggled into `#154`
