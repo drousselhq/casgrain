@@ -74,9 +74,9 @@
 
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-xcode` is now source-backed while `ios-simulator-runtime` and the non-iOS groups remain on their own follow-up issues.
-- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` so they no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer say only `runner-images` is source-backed on current `main`, and no longer frame `#164` as unresolved future work after this slice lands.
+- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` so they no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer say only `runner-images` is source-backed on current `main`, no longer frame `#164` as unresolved future work after this slice lands, and no longer describe post-`#164` current `main` as if `ios-xcode` were still manual-only future work or the combined placeholder still remained live.
 - [ ] 5.3 Make the docs explicit that `xcode.app_path` remains a drift-only supporting fact in this slice and that a newer upstream Xcode release or SDK row alone is not yet a review-needed condition.
-- [ ] 5.4 Run a targeted search for stale wording that still claims `ios-xcode` is manual-only future work on current `main`.
+- [ ] 5.4 Run a targeted search for stale wording that still claims `ios-xcode` is manual-only future work on current `main`, still keeps `ios-xcode-simulator` / `#144` as the live post-`#164` iOS placeholder, or still treats the adjacent `#154` / `#155` / `#156` issue-spec artifacts as if the Xcode slice had not landed yet.
 - Goal: Leave one truthful repo-owned contract instead of a live Xcode-source-backed story colliding with older drift-only or future-work wording.
 - Validation:
   ```bash
@@ -93,6 +93,12 @@
       'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['#164', '#165'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['historical', '#164', '#165'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['#164', '#165'],
+      'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': ['#164', '#165', 'ios-xcode'],
+      'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': ['#164', '#165', 'ios-xcode'],
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md': ['#164', '#165', 'ios-xcode'],
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md': ['#164', '#165', 'ios-xcode'],
+      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md': ['#164', '#165', 'ios-xcode'],
+      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md': ['#164', '#165', 'ios-xcode'],
   }
   for rel, needles in checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
