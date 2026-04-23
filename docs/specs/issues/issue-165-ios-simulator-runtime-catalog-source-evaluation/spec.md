@@ -136,6 +136,12 @@ Update:
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`
+- `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`
+- `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md`
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md`
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md`
+- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md`
+- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md`
 
 Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-simulator-runtime`
@@ -145,6 +151,8 @@ Those updates must explicitly say:
 - actionable simulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Apple runtime upstream alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized runtime identity/name validation for the observed runtime, not a general upgrade/freshness policy
 - older issue-spec artifacts, including the ordered task list in `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, must stop claiming that `#144` is still the current iOS umbrella owner or that current `main` still has no active iOS source-backed evaluation once this slice lands
+- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split `ios-xcode` / `ios-simulator-runtime` prerequisite is on current `main`, and must keep the post-`#165` shared summary contract truthful by preserving the separate source-backed finding surface/count rather than collapsing those findings back into a drift-only top-level count
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands; after `#165`, those adjacent follow-up artifacts must describe top-level `advisory_count` as the drift/missing-evidence count while the simulator-runtime source findings remain explicit in their own source-backed finding surface/count
 
 ## Acceptance criteria
 
@@ -152,7 +160,7 @@ Those updates must explicitly say:
 2. A recognized Apple simulator runtime row for the observed runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no simulator-runtime source findings requiring review.
 3. A missing runtime row, a runtime-name mismatch, or source-unavailable simulator-runtime evaluation produces an explicit source-backed finding for `ios-simulator-runtime` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish simulator-runtime source-backed findings from drift / missing-evidence findings, keep `simulator.device_name` in the drift-only/supporting contract, and leave `ios-xcode`, `#172`, and the non-iOS groups as separate work.
-5. The named canonical docs and older main-branch issue specs no longer claim that current runner-host automation has no active iOS source-backed evaluation or that `#144` remains the live iOS umbrella owner after `#165` lands.
+5. The named canonical docs and adjacent main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/spec.md`, `issue-144/{spec,tasks}.md`, and `issue-154/155/156/{spec,tasks}.md`) no longer claim that current runner-host automation has no active iOS source-backed evaluation, no longer preserve `#144` as the live iOS umbrella owner after the split prerequisite lands, and no longer leave contradictory shared summary/count expectations about whether simulator-runtime source findings use their own source-backed finding surface/count.
 6. The implementation PR for this slice can honestly say `Closes #165` because the iOS simulator runtime-catalog evaluation becomes active on `main` without widening the watched inventory or absorbing Xcode/device-availability work.
 
 ## Observable report scenarios
