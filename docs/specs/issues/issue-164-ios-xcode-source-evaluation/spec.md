@@ -124,8 +124,13 @@ Update:
 - `docs/development/cve-watch-operations.md`
 - `docs/development/security-automation-plan.md`
 - `docs/development/security-owasp-baseline.md`
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md`
+- `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`
 
 Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-xcode`
@@ -134,7 +139,9 @@ Those updates must explicitly say:
 - actionable iOS Xcode findings continue to reuse `security: runner-host review needed`
 - `xcode.app_path` remains part of the drift guard / supporting context for the iOS smoke artifact contract in this slice rather than a source-backed comparison field
 - a newer Apple Xcode release or newer SDK row alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized release/support metadata for the observed Xcode version and bundled SDK facts, not a general freshness policy
-- older issue-spec artifacts are historical and must not keep claiming that current `main` still has no active iOS source-backed evaluation or that `#164` remains unresolved future work after this slice lands
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving the superseded `ios-xcode-simulator` / `#144` umbrella as the live remaining iOS owner after this slice lands
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying that only `runner-images` is source-backed or that `#144` remains the later iOS follow-up once `#164` lands
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` become historical after this slice and must not keep framing `#164` as unresolved future work or the current runner-host lane as having no active iOS source-backed evaluation
 
 ## Acceptance criteria
 
@@ -142,7 +149,7 @@ Those updates must explicitly say:
 2. A recognized Apple support-matrix row for the observed Xcode version / bundled simulator SDK pair still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Xcode source findings requiring review.
 3. A missing row, a simulator-SDK mismatch, or source-unavailable iOS Xcode evaluation produces an explicit source-backed finding for `ios-xcode` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish iOS Xcode source-backed findings from drift / missing-evidence findings, keep `xcode.app_path` in the drift-only/supporting contract, and leave `ios-simulator-runtime` plus the non-iOS groups as separate manual-review follow-ups.
-5. The named canonical docs and older main-branch issue specs no longer claim that current runner-host automation has no active iOS source-backed evaluation or that `ios-xcode` remains unresolved future work after `#164` lands.
+5. The named canonical docs and older main-branch issue-spec/task artifacts no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer claim that only `runner-images` is source-backed on current `main`, and no longer frame `#164` as unresolved future work after `#164` lands.
 6. The implementation PR for this slice can honestly say `Closes #164` because the iOS Xcode source-backed evaluation becomes active on `main` without widening the watched inventory or absorbing the simulator-runtime work.
 
 ## Explicit non-goals

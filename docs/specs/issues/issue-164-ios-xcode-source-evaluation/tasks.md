@@ -74,7 +74,7 @@
 
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-xcode` is now source-backed while `ios-simulator-runtime` and the non-iOS groups remain on their own follow-up issues.
-- [ ] 5.2 Reconcile `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` and `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` so they no longer read as if current `main` still has no active iOS source-backed evaluation or still leaves `#164` as unresolved future work after this slice lands.
+- [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` so they no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer say only `runner-images` is source-backed on current `main`, and no longer frame `#164` as unresolved future work after this slice lands.
 - [ ] 5.3 Make the docs explicit that `xcode.app_path` remains a drift-only supporting fact in this slice and that a newer upstream Xcode release or SDK row alone is not yet a review-needed condition.
 - [ ] 5.4 Run a targeted search for stale wording that still claims `ios-xcode` is manual-only future work on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Xcode-source-backed story colliding with older drift-only or future-work wording.
@@ -86,8 +86,13 @@
       'docs/development/cve-watch-operations.md': ['ios-xcode', 'source-backed'],
       'docs/development/security-automation-plan.md': ['ios-xcode', 'source-backed'],
       'docs/development/security-owasp-baseline.md': ['ios-xcode', 'source-backed'],
-      'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'ios-xcode'],
-      'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['historical', '#164'],
+      'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['#164', '#165'],
+      'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['#164', '#165'],
+      'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['#164', '#165'],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', '#164', '#165'],
+      'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['#164', '#165'],
+      'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['historical', '#164', '#165'],
+      'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['#164', '#165'],
   }
   for rel, needles in checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
