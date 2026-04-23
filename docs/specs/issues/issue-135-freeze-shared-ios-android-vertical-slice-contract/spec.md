@@ -70,7 +70,7 @@ The guard must prove that both platform entrypoints preserve the same bounded us
 
 The comparison may normalize truthful platform-specific differences such as device platform/name/version strings, screenshot artifact ids, and additive platform-specific artifact entries.
 
-#### 3. Reconcile the canonical docs and prior issue-spec that still describe an iOS-only or advisory Android story
+#### 3. Reconcile the canonical docs and prior issue-spec artifacts that still describe an iOS-only or advisory Android story
 Update these repo-owned docs so they describe the current vertical slice as a shared iOS/Android product-true contract and match the live required-check reality:
 - `docs/specs/casgrain-product-spec.md`
 - `docs/validation.md`
@@ -79,6 +79,7 @@ Update these repo-owned docs so they describe the current vertical slice as a sh
 - `docs/development/security-owasp-baseline.md`
 - `docs/prd/product-requirements.md`
 - `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md`
+- `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/tasks.md`
 
 Required wording outcome:
 - the first product-true slice is no longer framed as iOS-first or Android-advisory on current `main`
@@ -87,12 +88,13 @@ Required wording outcome:
 - platform-specific evidence remains allowed where the implementation genuinely differs underneath the shared contract
 - `docs/prd/product-requirements.md` no longer leaves "iOS-first vs dual-platform MVP sequencing" as an unresolved current-state question for this shipped slice
 - `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md` no longer presents `#135` as a future parity/unblock follow-up; it must describe `#135` as the current docs/test contract-freeze slice on top of the already-promoted Android merge gate, or otherwise remove that stale downstream framing
+- `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/tasks.md` no longer preserves rollout-pending task wording as current truth for this area (for example `android-smoke` as a pending companion gate tracked by `#79`, or post-merge ruleset-flip tasks that still leave `#135` downstream) once this slice lands on `main`
 
 ### Acceptance checks
 - `crates/compiler/src/tests.rs` contains a parity guard that would fail if the two fixture plans drift in shared user-facing semantics while only target/source/screenshot naming changed.
 - `crates/casgrain/src/cli.rs` contains a parity guard that would fail if the two smoke entrypoints drift in summary / trace-json failure semantics while only truthful platform metadata differed.
-- `docs/specs/casgrain-product-spec.md`, `docs/validation.md`, `docs/development/merge-and-validation-policy.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/security-owasp-baseline.md`, `docs/prd/product-requirements.md`, and `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md` all match the current dual-platform tap-counter contract on `main`.
-- No repo doc updated by this slice still says Android is only an advisory / future promotion lane for the current product-true tap-counter slice, and the older issue-79 spec no longer frames `#135` as a future parity/unblock follow-up.
+- `docs/specs/casgrain-product-spec.md`, `docs/validation.md`, `docs/development/merge-and-validation-policy.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/security-owasp-baseline.md`, `docs/prd/product-requirements.md`, `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md`, and `docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/tasks.md` all match the current dual-platform tap-counter contract on `main`.
+- No repo doc updated by this slice still says Android is only an advisory / future promotion lane for the current product-true tap-counter slice, and the older issue-79 spec/tasks no longer frame `#135` as future parity work or Android gate promotion as still pending current-state work.
 - The implementation PR can honestly say `Closes #135` because runtime parity already exists on current `main` and this slice freezes + reconciles the remaining repo contract around that shipped reality.
 
 ## Validation notes
@@ -104,7 +106,7 @@ git diff --check
 cargo test -p compiler
 cargo test -p casgrain
 gh api repos/drousselhq/casgrain/rulesets/15179247 --jq '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context'
-git grep -n -E 'iOS-first|parallel emulator-backed evidence lane|pending companion gate tracked by `#79`|Android parity matures separately|Bring the Android product-true vertical slice to parity with iOS|later parity work against the now-required Android gate|#135 stays downstream' -- docs/specs/casgrain-product-spec.md docs/validation.md docs/development/merge-and-validation-policy.md docs/development/test-pyramid-and-runtime-contracts.md docs/development/security-owasp-baseline.md docs/prd/product-requirements.md docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md
+git grep -n -E 'iOS-first|parallel emulator-backed evidence lane|pending companion gate tracked by `#79`|Android parity matures separately|Bring the Android product-true vertical slice to parity with iOS|later parity work against the now-required Android gate|#135 stays downstream|live `android-smoke` ruleset flip is still pending|keep `#79` open until that verification is true on `main`' -- docs/specs/casgrain-product-spec.md docs/validation.md docs/development/merge-and-validation-policy.md docs/development/test-pyramid-and-runtime-contracts.md docs/development/security-owasp-baseline.md docs/prd/product-requirements.md docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/spec.md docs/specs/issues/issue-79-promote-android-smoke-to-a-required-merge-gate-on-main/tasks.md
 ```
 
 The final `git grep` should return no matches in those updated canonical docs.
