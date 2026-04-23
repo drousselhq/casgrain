@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import tempfile
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -60,7 +63,25 @@ EXPECTED_SOURCE_RULE_FACT_PATHS = {
         ("ios", "simulator.device_name"),
     },
 }
-ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required"}
+EXPECTED_RUNNER_IMAGE_SOURCE_STREAMS = {
+    "android": {
+        "runner_label": "ubuntu-latest",
+        "image_name": "ubuntu-24.04",
+        "compared_facts": ["runner.image_version", "runner.os_version"],
+    },
+    "ios": {
+        "runner_label": "macos-15",
+        "image_name": "macos-15-arm64",
+        "compared_facts": ["runner.image_version", "runner.os_version", "runner.os_build"],
+    },
+}
+RUNNER_IMAGE_RELEASE_REPO = "actions/runner-images"
+RUNNER_IMAGE_RELEASES_URL = f"https://api.github.com/repos/{RUNNER_IMAGE_RELEASE_REPO}/releases?per_page=100"
+RUNNER_IMAGE_RELEASE_TAG_PREFIXES = {
+    "ubuntu-24.04": "ubuntu24",
+    "macos-15-arm64": "macos-15-arm64",
+}
+ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required", "runner-image-release-metadata"}
 
 
 class RunnerHostWatchError(Exception):
@@ -256,6 +277,60 @@ def build_baseline_fact_index(normalized_baseline: dict[str, Any]) -> dict[tuple
     return fact_index
 
 
+def normalize_runner_image_source_streams(entry: dict[str, Any], *, error_context: str) -> dict[str, Any]:
+    raw_source_streams = required_object_field(entry, "source_streams", error_context=error_context)
+    normalized_streams: dict[str, Any] = {}
+    seen_platforms: set[str] = set()
+    for platform_name, expected in EXPECTED_RUNNER_IMAGE_SOURCE_STREAMS.items():
+        stream = required_object_field(raw_source_streams, platform_name, error_context=f"{error_context} source_streams")
+        seen_platforms.add(platform_name)
+        runner_label = required_string_field(
+            stream,
+            "runner_label",
+            error_context=f"{error_context} source_streams.{platform_name}",
+        )
+        image_name = required_string_field(
+            stream,
+            "image_name",
+            error_context=f"{error_context} source_streams.{platform_name}",
+        )
+        compared_facts_raw = required_list_field(
+            stream,
+            "compared_facts",
+            error_context=f"{error_context} source_streams.{platform_name}",
+        )
+        compared_facts: list[str] = []
+        for index, fact in enumerate(compared_facts_raw):
+            if not isinstance(fact, str) or not fact:
+                raise RunnerHostWatchError(
+                    f"{error_context} source_streams.{platform_name} compared_facts[{index}] must be a non-empty string"
+                )
+            compared_facts.append(fact)
+        if runner_label != expected["runner_label"]:
+            raise RunnerHostWatchError(
+                f"{error_context} source_streams.{platform_name}.runner_label must be {expected['runner_label']!r}"
+            )
+        if image_name != expected["image_name"]:
+            raise RunnerHostWatchError(
+                f"{error_context} source_streams.{platform_name}.image_name must be {expected['image_name']!r}"
+            )
+        if compared_facts != expected["compared_facts"]:
+            raise RunnerHostWatchError(
+                f"{error_context} source_streams.{platform_name}.compared_facts must be {expected['compared_facts']!r}"
+            )
+        normalized_streams[platform_name] = {
+            "runner_label": runner_label,
+            "image_name": image_name,
+            "compared_facts": compared_facts,
+        }
+    extra_platforms = sorted(set(raw_source_streams) - seen_platforms)
+    if extra_platforms:
+        raise RunnerHostWatchError(
+            f"{error_context} source_streams must not define extra platforms: {extra_platforms}"
+        )
+    return normalized_streams
+
+
 def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise RunnerHostWatchError("runner-host source rules JSON root must be an object")
@@ -297,6 +372,10 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
         if rule_kind not in ALLOWED_SOURCE_RULE_KINDS:
             raise RunnerHostWatchError(
                 f"{error_context} field 'rule_kind' must be one of {sorted(ALLOWED_SOURCE_RULE_KINDS)}"
+            )
+        if key != "runner-images" and rule_kind != "manual-review-required":
+            raise RunnerHostWatchError(
+                f"{error_context} source-rule group '{key}' must stay manual-review-required on current main"
             )
         rationale = required_string_field(entry, "rationale", error_context=error_context)
         follow_up_issue = required_int_field(entry, "follow_up_issue", error_context=error_context)
@@ -350,23 +429,27 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                 f"missing={missing} unexpected={unexpected}"
             )
 
-        normalized_groups.append(
-            {
-                "key": key,
-                "surface": required_string_field(entry, "surface", error_context=error_context),
-                "platforms": platforms,
-                "watched_fact_paths": normalized_paths,
-                "rule_kind": rule_kind,
-                "rationale": rationale,
-                "managed_issue_behavior": required_string_field(
-                    entry,
-                    "managed_issue_behavior",
-                    error_context=error_context,
-                ),
-                "follow_up_issue": follow_up_issue,
-                "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
-            }
-        )
+        normalized_group = {
+            "key": key,
+            "surface": required_string_field(entry, "surface", error_context=error_context),
+            "platforms": platforms,
+            "watched_fact_paths": normalized_paths,
+            "rule_kind": rule_kind,
+            "rationale": rationale,
+            "managed_issue_behavior": required_string_field(
+                entry,
+                "managed_issue_behavior",
+                error_context=error_context,
+            ),
+            "follow_up_issue": follow_up_issue,
+            "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
+        }
+        if rule_kind == "runner-image-release-metadata":
+            normalized_group["source_streams"] = normalize_runner_image_source_streams(
+                entry,
+                error_context=f"{error_context} source-rule group '{key}'",
+            )
+        normalized_groups.append(normalized_group)
 
     if seen_keys != set(EXPECTED_SOURCE_RULE_GROUPS):
         missing = sorted(set(EXPECTED_SOURCE_RULE_GROUPS) - seen_keys)
@@ -412,6 +495,171 @@ def get_nested_value(container: dict[str, Any], dotted_path: str) -> tuple[str |
     if isinstance(current, (dict, list, tuple, set, bool)):
         return json.dumps(current, sort_keys=True), True
     return str(current), True
+
+
+def fetch_json_url(url: str) -> Any:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "Hermes-Agent",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:  # type: ignore[attr-defined]
+        raise RunnerHostWatchError(f"runner-image source fetch failed for {url}: HTTP {exc.code}") from exc
+    except urllib.error.URLError as exc:  # type: ignore[attr-defined]
+        raise RunnerHostWatchError(f"runner-image source fetch failed for {url}: {exc.reason}") from exc
+    except json.JSONDecodeError as exc:
+        raise RunnerHostWatchError(f"runner-image source fetch did not return valid JSON for {url}") from exc
+
+
+def fetch_latest_runner_image_release_tag(tag_prefix: str) -> str:
+    releases = fetch_json_url(RUNNER_IMAGE_RELEASES_URL)
+    if not isinstance(releases, list):
+        raise RunnerHostWatchError("runner-image releases listing must be a list")
+    for index, release in enumerate(releases):
+        if not isinstance(release, dict):
+            continue
+        tag_name = release.get("tag_name")
+        if isinstance(tag_name, str) and tag_name.startswith(f"{tag_prefix}/"):
+            return tag_name
+    raise RunnerHostWatchError(f"runner-image releases listing is missing a release for tag prefix {tag_prefix!r}")
+
+
+
+def fetch_runner_image_release_payload(
+    platform_name: str,
+    stream: dict[str, Any],
+    observed_runner: dict[str, Any],
+) -> dict[str, Any]:
+    image_name = required_scalar_field(observed_runner, "image_name", error_context=f"observed {platform_name} runner")
+    tag_prefix = RUNNER_IMAGE_RELEASE_TAG_PREFIXES.get(image_name)
+    if tag_prefix is None:
+        raise RunnerHostWatchError(f"no runner-image release tag prefix is known for image_name={image_name!r}")
+    tag_name = fetch_latest_runner_image_release_tag(tag_prefix)
+    release_url = (
+        f"https://api.github.com/repos/{RUNNER_IMAGE_RELEASE_REPO}/releases/tags/"
+        f"{urllib.parse.quote(tag_name, safe='')}"
+    )
+    release = fetch_json_url(release_url)
+    if not isinstance(release, dict):
+        raise RunnerHostWatchError(f"runner-image release payload for {platform_name} must be an object")
+    assets = required_list_field(release, "assets", error_context=f"runner-image release {platform_name}")
+    asset_name = f"internal.{tag_prefix}.json"
+    asset_url = ""
+    for asset in assets:
+        if not isinstance(asset, dict):
+            continue
+        if asset.get("name") == asset_name:
+            asset_url = required_string_field(
+                asset,
+                "browser_download_url",
+                error_context=f"runner-image release {platform_name} asset {asset_name}",
+            )
+            break
+    if not asset_url:
+        raise RunnerHostWatchError(f"runner-image release {platform_name} is missing asset {asset_name!r}")
+    return {
+        "release": release,
+        "asset": fetch_json_url(asset_url),
+        "tag_name": tag_name,
+        "runner_label": stream["runner_label"],
+        "image_name": stream["image_name"],
+    }
+
+
+def normalize_runner_image_os_values(platform_name: str, raw_os_version: str) -> dict[str, str]:
+    if platform_name == "android":
+        match = re.search(r"(\d+(?:\.\d+)+)", raw_os_version)
+        if match is None:
+            raise RunnerHostWatchError(
+                f"runner-image source {platform_name} OS Version could not be normalized from {raw_os_version!r}"
+            )
+        return {"os_version": match.group(1)}
+    if platform_name == "ios":
+        match = re.search(r"macOS\s+(\d+(?:\.\d+)+)\s*\(([^)]+)\)", raw_os_version)
+        if match is None:
+            raise RunnerHostWatchError(
+                f"runner-image source {platform_name} OS Version could not be normalized from {raw_os_version!r}"
+            )
+        return {"os_version": match.group(1), "os_build": match.group(2)}
+    raise RunnerHostWatchError(f"unsupported runner-image source platform {platform_name!r}")
+
+
+def normalize_runner_image_source_payload(platform_name: str, payload: dict[str, Any]) -> dict[str, str]:
+    asset = required_object_field(payload, "asset", error_context=f"runner-image source payload {platform_name}")
+    children = required_list_field(asset, "Children", error_context=f"runner-image source payload {platform_name} asset")
+    tool_versions: dict[str, str] = {}
+    for index, child in enumerate(children):
+        if not isinstance(child, dict) or child.get("NodeType") != "ToolVersionNode":
+            continue
+        tool_name = required_string_field(
+            child,
+            "ToolName",
+            error_context=f"runner-image source payload {platform_name} asset Children[{index}]",
+        )
+        tool_versions[tool_name] = required_string_field(
+            child,
+            "Version",
+            error_context=f"runner-image source payload {platform_name} asset Children[{index}]",
+        )
+    image_version = tool_versions.get("Image Version:")
+    raw_os_version = tool_versions.get("OS Version:")
+    if not image_version:
+        raise RunnerHostWatchError(f"runner-image source payload {platform_name} is missing Image Version")
+    if not raw_os_version:
+        raise RunnerHostWatchError(f"runner-image source payload {platform_name} is missing OS Version")
+    normalized = {"image_version": image_version}
+    normalized.update(normalize_runner_image_os_values(platform_name, raw_os_version))
+    return normalized
+
+
+def fetch_runner_image_source_for_group(group: dict[str, Any], observed_platforms: dict[str, Any]) -> dict[str, dict[str, str]]:
+    source_by_platform: dict[str, dict[str, str]] = {}
+    source_streams = required_object_field(group, "source_streams", error_context="runner-images source rule")
+    for platform_name in group["platforms"]:
+        stream = required_object_field(source_streams, platform_name, error_context="runner-images source rule source_streams")
+        observed_platform = required_object_field(
+            observed_platforms,
+            platform_name,
+            error_context="observed platforms",
+        )
+        if "host_environment_error" in observed_platform:
+            raise RunnerHostWatchError(
+                required_scalar_field(
+                    observed_platform,
+                    "host_environment_error",
+                    error_context=f"observed platform {platform_name}",
+                )
+            )
+        host_environment = required_object_field(
+            observed_platform,
+            "host_environment",
+            error_context=f"observed platform {platform_name}",
+        )
+        observed_runner = required_object_field(
+            host_environment,
+            "runner",
+            error_context=f"observed platform {platform_name} host_environment",
+        )
+        runner_label = required_scalar_field(observed_runner, "label", error_context=f"observed {platform_name} runner")
+        image_name = required_scalar_field(observed_runner, "image_name", error_context=f"observed {platform_name} runner")
+        if runner_label != stream["runner_label"]:
+            raise RunnerHostWatchError(
+                f"runner-images source stream selector mismatch for {platform_name}: expected runner label "
+                f"{stream['runner_label']!r} observed {runner_label!r}"
+            )
+        if image_name != stream["image_name"]:
+            raise RunnerHostWatchError(
+                f"runner-images source stream selector mismatch for {platform_name}: expected image name "
+                f"{stream['image_name']!r} observed {image_name!r}"
+            )
+        payload = fetch_runner_image_release_payload(platform_name, stream, observed_runner)
+        source_by_platform[platform_name] = normalize_runner_image_source_payload(platform_name, payload)
+    return source_by_platform
 
 
 def run_gh_json(arguments: list[str]) -> Any:
@@ -638,6 +886,145 @@ def build_platform_summary(platform_name: str, baseline_platform: dict[str, Any]
     return summary, advisory_count
 
 
+def build_runner_image_platform_result(
+    platform_name: str,
+    stream: dict[str, Any],
+    observed_platforms: dict[str, Any],
+    source_by_platform: dict[str, dict[str, str]],
+    *,
+    fetch_error: str = "",
+) -> tuple[dict[str, Any], int]:
+    result = {
+        "platform": platform_name,
+        "status": "no review-needed",
+        "outcome": "source-match",
+        "observed": {},
+        "source": {},
+        "changed_facts": [],
+        "source_error": "",
+    }
+    if fetch_error:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = fetch_error
+        return result, 1
+
+    observed_platform = required_object_field(
+        observed_platforms,
+        platform_name,
+        error_context="observed platforms",
+    )
+    if "host_environment_error" in observed_platform:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = required_scalar_field(
+            observed_platform,
+            "host_environment_error",
+            error_context=f"observed platform {platform_name}",
+        )
+        return result, 1
+
+    host_environment = required_object_field(
+        observed_platform,
+        "host_environment",
+        error_context=f"observed platform {platform_name}",
+    )
+    source_record = source_by_platform.get(platform_name)
+    if source_record is None:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = f"runner-image source record missing for {platform_name}"
+        return result, 1
+
+    for fact_path in stream["compared_facts"]:
+        observed_value, present = get_nested_value(host_environment, fact_path)
+        if not present:
+            result["status"] = "manual-review-required"
+            result["outcome"] = "source-error"
+            result["source_error"] = f"observed fact missing for {fact_path}"
+            return result, 1
+        source_key = fact_path.split(".")[-1]
+        source_value = source_record.get(source_key)
+        if not source_value:
+            result["status"] = "manual-review-required"
+            result["outcome"] = "source-error"
+            result["source_error"] = f"runner-image source fact missing for {platform_name}:{source_key}"
+            return result, 1
+        result["observed"][fact_path] = observed_value
+        result["source"][fact_path] = str(source_value)
+        if observed_value != str(source_value):
+            result["status"] = "manual-review-required"
+            result["outcome"] = "source-drift"
+            result["changed_facts"].append(
+                {
+                    "path": fact_path,
+                    "observed": observed_value,
+                    "source": str(source_value),
+                }
+            )
+
+    return result, (len(result["changed_facts"]) if result["changed_facts"] else 0)
+
+
+def enrich_source_rule_groups(
+    normalized_source_rules: dict[str, Any],
+    observed_platforms: dict[str, Any],
+) -> tuple[list[dict[str, Any]], int, str | None]:
+    enriched_groups: list[dict[str, Any]] = []
+    source_advisory_count = 0
+    source_reason: str | None = None
+
+    for group in normalized_source_rules["groups"]:
+        if group["rule_kind"] != "runner-image-release-metadata":
+            enriched_groups.append(group)
+            continue
+
+        fetch_error = ""
+        source_by_platform: dict[str, dict[str, str]] = {}
+        try:
+            source_by_platform = fetch_runner_image_source_for_group(group, observed_platforms)
+        except RunnerHostWatchError as exc:
+            fetch_error = str(exc)
+
+        platform_results: list[dict[str, Any]] = []
+        group_outcome = "source-match"
+        group_status = "no review-needed"
+        group_advisory_count = 0
+        for platform_name in group["platforms"]:
+            platform_result, advisory_count = build_runner_image_platform_result(
+                platform_name,
+                group["source_streams"][platform_name],
+                observed_platforms,
+                source_by_platform,
+                fetch_error=fetch_error,
+            )
+            platform_results.append(platform_result)
+            group_advisory_count += advisory_count
+            if platform_result["outcome"] == "source-error":
+                group_outcome = "source-error"
+                group_status = "manual-review-required"
+            elif platform_result["outcome"] == "source-drift" and group_outcome != "source-error":
+                group_outcome = "source-drift"
+                group_status = "manual-review-required"
+
+        if group_outcome == "source-error":
+            source_reason = "runner-images-source-error"
+        elif group_outcome == "source-drift" and source_reason != "runner-images-source-error":
+            source_reason = "runner-images-source-drift"
+
+        enriched_groups.append(
+            {
+                **group,
+                "status": group_status,
+                "outcome": group_outcome,
+                "platform_results": platform_results,
+            }
+        )
+        source_advisory_count += group_advisory_count
+
+    return enriched_groups, source_advisory_count, source_reason
+
+
 def build_summary(
     *,
     repo: str,
@@ -652,42 +1039,54 @@ def build_summary(
         raise RunnerHostWatchError("observed platforms payload must be an object")
 
     platforms_summary: dict[str, Any] = {}
-    advisory_count = 0
+    baseline_advisory_count = 0
     for platform_name in ("android", "ios"):
         observed_platform = normalize_fixture_platform(
             platform_name,
             required_object_field(observed_platforms, platform_name, error_context="observed platforms"),
         )
-        platform_summary, platform_count = build_platform_summary(
+        platforms_summary[platform_name], platform_count = build_platform_summary(
             platform_name,
             normalized_baseline["platforms"][platform_name],
             observed_platform,
         )
-        platforms_summary[platform_name] = platform_summary
-        advisory_count += platform_count
+        baseline_advisory_count += platform_count
+        observed_platforms[platform_name] = observed_platform
 
-    if advisory_count == 0:
-        reason = "baseline-match"
+    if baseline_advisory_count == 0:
+        baseline_reason = "baseline-match"
     elif any(
         platform["missing_evidence"] or platform["missing_facts"]
         for platform in platforms_summary.values()
     ):
-        reason = "missing-evidence"
+        baseline_reason = "missing-evidence"
     else:
-        reason = "baseline-drift"
+        baseline_reason = "baseline-drift"
+
+    source_rule_groups, source_advisory_count, source_reason = enrich_source_rule_groups(
+        normalized_source_rules,
+        observed_platforms,
+    )
+    total_advisory_count = baseline_advisory_count + source_advisory_count
+    if baseline_advisory_count > 0:
+        reason = baseline_reason
+    elif source_reason is not None:
+        reason = source_reason
+    else:
+        reason = baseline_reason
 
     return {
         "generated_at": generated_at,
         "repo": repo,
         "issue_title": normalized_baseline["issue_title"],
         "scope": normalized_baseline["scope"],
-        "alert": advisory_count > 0,
-        "advisory_count": advisory_count,
+        "alert": total_advisory_count > 0,
+        "advisory_count": total_advisory_count,
         "reason": reason,
-        "verdict": "manual-review-required" if advisory_count > 0 else "no review-needed",
+        "verdict": "manual-review-required" if total_advisory_count > 0 else "no review-needed",
         "platforms": platforms_summary,
         "source_rule_managed_issue_title": normalized_source_rules["managed_issue_title"],
-        "source_rule_groups": normalized_source_rules["groups"],
+        "source_rule_groups": source_rule_groups,
     }
 
 
@@ -698,11 +1097,18 @@ def sanitize_cell(value: Any) -> str:
 
 def render_markdown(summary: dict[str, Any]) -> str:
     display_names = {"android": "Android", "ios": "iOS"}
+    verdict_reason = {
+        "baseline-match": "baseline drift/missing-evidence checks are clean for the watched runner-host inventory.",
+        "baseline-drift": "watched runner-host facts drifted from the checked-in baseline.",
+        "missing-evidence": "required runner-host evidence is missing or unreadable.",
+        "runner-images-source-drift": "source-backed runner-images metadata disagrees with the observed watched facts.",
+        "runner-images-source-error": "runner-images source-backed evaluation could not be trusted and failed closed.",
+    }.get(summary["reason"], summary["reason"])
     lines = [
         REPORT_MARKER,
         f"# {summary['issue_title']}",
         "",
-        f"Verdict: **{summary['verdict']}** — drift-triggered manual review only; this slice does not perform direct advisory evaluation.",
+        f"Verdict: **{summary['verdict']}** — {verdict_reason}",
         f"- Scope: {summary['scope']}",
         f"- Repo: `{summary['repo']}`",
         f"- Generated at: `{summary['generated_at']}`",
@@ -723,6 +1129,35 @@ def render_markdown(summary: dict[str, Any]) -> str:
                 f"  - Watched facts: {watched_fact_list}",
             ]
         )
+        if group["rule_kind"] == "runner-image-release-metadata":
+            lines.extend(
+                [
+                    f"  - Status: `{group['status']}`",
+                    f"  - Outcome: `{group['outcome']}`",
+                ]
+            )
+            for platform_result in group["platform_results"]:
+                lines.append(
+                    f"  - {display_names[platform_result['platform']]}: `{platform_result['status']}` / `{platform_result['outcome']}`"
+                )
+                if platform_result["observed"]:
+                    observed_text = ", ".join(
+                        f"{path}={sanitize_cell(value)}" for path, value in platform_result["observed"].items()
+                    )
+                    lines.append(f"    - Observed: {observed_text}")
+                if platform_result["source"]:
+                    source_text = ", ".join(
+                        f"{path}={sanitize_cell(value)}" for path, value in platform_result["source"].items()
+                    )
+                    lines.append(f"    - Source: {source_text}")
+                if platform_result["changed_facts"]:
+                    lines.append("    - Changed facts:")
+                    for change in platform_result["changed_facts"]:
+                        lines.append(
+                            f"      - `{change['path']}` observed `{sanitize_cell(change['observed'])}` source `{sanitize_cell(change['source'])}`"
+                        )
+                if platform_result["source_error"]:
+                    lines.append(f"    - Source error: {sanitize_cell(platform_result['source_error'])}")
     lines.append("")
     for platform_name in ("android", "ios"):
         platform = summary["platforms"][platform_name]
