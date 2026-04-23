@@ -199,4 +199,4 @@ The implementation PR for this spec should be able to close `#144` because it fi
 After that PR merges:
 - `#164` remains the bounded follow-up for iOS Xcode host fact source-backed promotion
 - `#165` remains the bounded follow-up for iOS simulator-runtime host fact source-backed promotion
-- the shipped runner-host lane on `main` still remains drift-triggered review until one of those later iOS follow-up issues lands
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, while the iOS groups in this spec remain manual-review-only until their own follow-up slices land
