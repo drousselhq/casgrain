@@ -50,9 +50,9 @@
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-java` is newly source-backed in this slice, `android-gradle` / `android-emulator-runtime` remain manual-review follow-ups, and later iOS source-backed work stays split across `#164` and `#165`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` so they no longer read as if current `main` still has only one delivered source-backed runner-host slice or still presents `#144` as the remaining live iOS source-backed backlog owner after `#154` lands.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` so they no longer read as if current `main` still has only one delivered source-backed runner-host slice, still presents `#154` as a later follow-up after this slice lands, or still presents `#144` as the remaining live iOS source-backed backlog owner.
 - [ ] 4.3 Keep `java.distribution` explicitly out of scope in every touched doc/spec artifact unless a later issue adds it to `.github/runner-host-watch.json`.
-- [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group except `runner-images` is manual-only on current `main` or still treats `#144` as the remaining iOS source-backed follow-up.
+- [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group except `runner-images` is manual-only on current `main`, still says `#154` remains future work in `docs/specs/issues/issue-124-runner-host-drift-watch.md`, or still treats `#144` as the remaining iOS source-backed follow-up.
 - Goal: Leave one truthful repo-owned contract instead of a live Java-source-backed story colliding with older drift-only wording or the already-shaped iOS split follow-ups.
 - Validation:
 
@@ -63,6 +63,7 @@
     'docs/development/cve-watch-operations.md': ['android-java', 'source-backed'],
     'docs/development/security-automation-plan.md': ['android-java', 'source-backed'],
     'docs/development/security-owasp-baseline.md': ['android-java', 'source-backed'],
+    'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['android-java', '#164', '#165'],
     'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-java'],
     'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-java'],
     'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-java'],
