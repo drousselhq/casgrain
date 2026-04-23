@@ -120,6 +120,7 @@ Update:
 - `docs/development/cve-watch-operations.md`
 - `docs/development/security-automation-plan.md`
 - `docs/development/security-owasp-baseline.md`
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md`
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`
@@ -137,6 +138,7 @@ Those updates must explicitly say:
 - a newer Android API level, extension level, or system-image revision alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized package/runtime identity, not general freshness policy
 - `emulator.device_name` remains part of the drift guard for the Android smoke artifact contract, while authoritative source evaluation in this slice is grounded on the platform/system-image runtime identity
 - `target`, `arch`, and `profile` remain supporting lookup/context fields emitted by `host-environment.json`, but this slice does not promote them into newly watched runner-host facts
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that only `#143` is delivered while `#154`, `#155`, `#156`, and `#144` all remain later source-specific follow-ups; after `#156` lands it must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed slices while keeping `android-java`, `android-gradle`, and the current combined iOS placeholder truthful
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop describing current `main` as uniformly drift-only or as having no active source-backed runner-host evaluation after `#156` lands
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying only `runner-images` is source-backed or presenting `#156` as untouched future work once this slice lands
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop saying the shipped runner-host lane still evaluates drift / missing evidence only and must stop preserving Android follow-up ownership as wholly unchanged; after `#156` lands they must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed exceptions while keeping `android-java`, `android-gradle`, and the current combined iOS placeholder truthful

@@ -38,7 +38,7 @@
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-emulator-runtime` is newly source-backed in this slice, `android-java` / `android-gradle` remain manual-review follow-ups, and the current combined `ios-xcode-simulator` placeholder still remains `manual-review-required` under `#144` on current `main`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so they no longer read as if current `main` is uniformly drift-only or has no active source-backed runner-host evaluation after `#156` lands.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so they no longer read as if current `main` is uniformly drift-only, or as if only `#143` is delivered while `#156` still remains untouched future work after this slice lands.
 - [ ] 4.3 Reconcile `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` so they no longer say only `runner-images` is source-backed or leave `#156` as untouched future work once this slice lands.
 - [ ] 4.4 Reconcile `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` and `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they remove stale `android-emulator-runtime` manual-only / unchanged-ownership wording and any drift-only `advisory_count` + top-level `source_advisory_count` expectations.
 - [ ] 4.5 Make the docs explicit that `emulator.device_name` remains a drift-only supporting fact, that `target` / `arch` / `profile` are lookup/context inputs rather than newly watched runner-host facts, and run a targeted search for stale wording that still contradicts this contract.
@@ -52,6 +52,7 @@
       'docs/development/cve-watch-operations.md': ['android-emulator-runtime', 'source-backed'],
       'docs/development/security-automation-plan.md': ['android-emulator-runtime', 'source-backed'],
       'docs/development/security-owasp-baseline.md': ['android-emulator-runtime', 'source-backed'],
+      'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['android-emulator-runtime', 'source-backed'],
       'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['android-emulator-runtime', 'source-backed'],
       'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['android-emulator-runtime', 'source-backed'],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['android-emulator-runtime'],
