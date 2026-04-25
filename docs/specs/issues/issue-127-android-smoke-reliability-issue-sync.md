@@ -17,13 +17,13 @@ Already delivered on `main`:
   - `reasons=["schedule_main_runs_below_threshold"]`
 - current blocker context remains run `24611423606` with `failure_class=artifact-contract-breach`
 
-That means the repo can now evaluate Android smoke reliability honestly, but it still has **no repo-owned issue sync** that turns the report into durable GitHub state.
+At shaping time, the repo could already evaluate Android smoke reliability honestly, but it still had **no repo-owned issue sync** that turned the report into durable GitHub state.
 
 The original issue mixed:
 1. the immediate tooling gap — sync the existing report into GitHub issue state
 2. the later wall-clock outcome — wait for enough scheduled `main` runs to accumulate and then record the first qualified window
 
-This issue is now narrowed to **only** the first concern. The later live-evidence outcome remains advisory only and does not use a separate tracker issue.
+This issue was narrowed to **only** the first concern. The later live-evidence outcome remains advisory only and does not use a separate tracker issue.
 
 ## Scope of this slice
 
@@ -137,9 +137,9 @@ That doc update must explicitly state:
 - the Android smoke workflow now has a repo-owned reliability issue-sync path
 - the repo does not use a separate live tracker issue for qualification state
 - the sync may create or reuse one bounded blocker issue when the report surfaces a concrete new blocker
-- this slice does **not** promote Android to a required merge gate and does **not** replace the broader docs/policy work under `#80`
+- this slice does **not** promote Android to a required merge gate and did **not** replace the broader docs/policy work that was still tracked in `#80` at shaping time
 
-Do **not** broaden this slice into a full `docs/validation.md` policy rewrite. The canonical validation/gate policy work remains under `#80` and `#79`.
+Do **not** broaden this slice into a full `docs/validation.md` policy rewrite. At shaping time, that broader validation/gate work still lived under `#80` and `#79`; current `main` has since completed both closed follow-ups.
 
 ## Bounded design decisions
 
@@ -153,8 +153,8 @@ Do **not** broaden this slice into a full `docs/validation.md` policy rewrite. T
 ### Explicit non-goals
 - **no** reimplementation or threshold changes in `android_smoke_reliability_window.py`
 - **no** manual prompt-time browsing as the persistence mechanism
-- **no** Android branch-protection / merge-gate promotion here (`#79`)
-- **no** broad Android evidence/docs parity rewrite here (`#80`)
+- **no** Android branch-protection / merge-gate promotion here (that later closed under `#79`)
+- **no** broad Android evidence/docs parity rewrite here (that later closed under `#80`)
 - **no** attempt to backfill pre-failure runs into the current qualifying window
 - **no** generic workflow-health issue manager for unrelated jobs
 
@@ -194,4 +194,4 @@ The implementation PR for this spec should be able to close `#127` because it fi
 
 After that PR merges:
 - the live evidence outcome remains advisory only; any concrete blocker issue is linked directly from the report output
-- issues `#80` and `#79` stay blocked on the actual Android readiness work they represent, not on a separate qualification tracker
+- at the time this slice landed, issues `#80` and `#79` remained the separate Android readiness follow-ups rather than qualification-tracker work; current `main` has since completed both closed follow-ups

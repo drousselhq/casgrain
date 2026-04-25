@@ -3,7 +3,7 @@
 - Issue: `#122`
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #122`
-- Immediate follow-up after this slice lands: `#127` (`Android smoke reliability-window issue sync`)
+- Historical immediate follow-up at shaping time: `#127` (`Android smoke reliability-window issue sync`)
 - The later live-evidence outcome remains advisory only; the repo does not use a separate qualification-tracker issue.
 
 ## Why this slice exists
@@ -32,7 +32,7 @@ This slice must:
 4. emit both machine-readable JSON and concise markdown output
 5. stay fully testable offline from saved fixtures
 
-This slice is **only** the reporter/tooling slice. The immediate follow-up is issue `#127`, which adds repo-owned issue sync around the report output. The later operational judgment remains advisory only and does not use a separate tracker issue.
+This slice is **only** the reporter/tooling slice. At shaping time, the immediate follow-up was issue `#127`, which added repo-owned issue sync around the report output; current `main` has since completed that closed follow-up. The later operational judgment remains advisory only and does not use a separate tracker issue.
 
 ## Required implementation artifacts
 
@@ -142,7 +142,7 @@ It must include:
 
 ### Explicit non-goals
 - **no** branch-protection or merge-gate promotion work here
-- **no** broad docs/validation policy rewrite here (tracked by #80)
+- **no** broad docs/validation policy rewrite here; that separate Android docs/policy reconciliation landed later in closed issue `#80`
 - **no** new Android runner hardening here unless the reporter cannot read the already-shipped artifact contract at all
 - **no** widening into generic workflow analytics for unrelated CI jobs
 - **no** dependence on prompt-time human inspection of Actions history
@@ -171,6 +171,6 @@ The live invocation above should currently produce a **not qualified** result un
 The implementation PR for this spec should be able to close `#122` because it finishes the immediate tooling slice.
 
 After that PR merges:
-- issue `#127` is the immediate follow-up that adds repo-owned issue sync around the reporter output
+- at the time this slice landed, issue `#127` was the immediate follow-up that added repo-owned issue sync around the reporter output; current `main` has since completed that closed follow-up
 - the repo does not create a separate qualification-tracker issue; any concrete blocker gets filed directly as a normal issue
-- issues `#80` and `#79` stay blocked on the actual Android readiness work they represent, not on a future-run streak
+- at the time this slice landed, issues `#80` and `#79` remained separate Android readiness follow-ups rather than future-run-streak work; current `main` has since completed both closed follow-ups
