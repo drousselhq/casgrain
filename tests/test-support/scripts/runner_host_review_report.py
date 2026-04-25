@@ -1116,6 +1116,16 @@ def build_gradle_platform_result(
         "review_needed_findings": [],
         "informational_findings": [],
     }
+    observed_platform = required_object_field(observed_platforms, platform_name, error_context="observed platforms")
+    if "host_environment_error" in observed_platform:
+        result["outcome"] = "source-skipped"
+        result["skip_reason"] = required_scalar_field(
+            observed_platform,
+            "host_environment_error",
+            error_context=f"observed platform {platform_name}",
+        )
+        return result, 0
+
     if fetch_error:
         result["status"] = "manual-review-required"
         result["outcome"] = "source-error"
@@ -1127,16 +1137,6 @@ def build_gradle_platform_result(
             }
         )
         return result, 1
-
-    observed_platform = required_object_field(observed_platforms, platform_name, error_context="observed platforms")
-    if "host_environment_error" in observed_platform:
-        result["outcome"] = "source-skipped"
-        result["skip_reason"] = required_scalar_field(
-            observed_platform,
-            "host_environment_error",
-            error_context=f"observed platform {platform_name}",
-        )
-        return result, 0
 
     host_environment = required_object_field(
         observed_platform,

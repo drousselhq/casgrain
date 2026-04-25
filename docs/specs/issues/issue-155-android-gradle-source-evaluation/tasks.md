@@ -117,6 +117,7 @@
       'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md': [
           '`android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder still render as `manual-review-required`',
           'preserve `android-java` and `android-gradle` as `manual-review-required` groups mapped to their existing follow-up issues',
+          'with open spec-entry prs `#171` and `#173`',
       ],
       'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md': [
           'keep `android-java` and `android-gradle` as `manual-review-required` follow-up groups',
