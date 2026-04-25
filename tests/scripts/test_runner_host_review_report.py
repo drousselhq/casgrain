@@ -654,6 +654,43 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
         self.assertIn("multiple current stable releases", platform_result["source_error"])
 
+    def test_build_summary_fails_closed_when_gradle_current_stable_is_not_latest_stable(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("current-not-latest"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        self.assertEqual(summary["advisory_count"], 1)
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+        self.assertIn("current stable release 8.7", platform_result["source_error"])
+        self.assertIn("latest stable release 8.8", platform_result["source_error"])
+
     def test_build_summary_fails_closed_when_android_gradle_source_uses_conflicting_duplicate_stable_records(self) -> None:
         payload = [
             {

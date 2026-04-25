@@ -36,7 +36,7 @@ This slice must:
 1. replace the single Android `android-java-gradle` source-rule group with three bounded Android groups
 2. bind each new Android group to exactly one later follow-up issue
 3. keep the current drift / missing-evidence alert semantics and managed issue title unchanged
-4. keep the report/docs truthful that all Android groups still remain `manual-review-required` on current `main`
+4. keep the report/docs truthful that this split itself does not activate any Android source-backed rule; when `#142` landed, all three Android groups still remained `manual-review-required` on then-current `main`
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
 This slice is **not** the later source-backed advisory implementation itself. It is the contract change that makes the later Android source integrations bounded and auditable.
@@ -56,7 +56,7 @@ The implementation PR must replace the current combined Android group with exact
      - `java.configured_major`
      - `java.resolved_version`
    - follow-up issue: `#154`
-   - current rule kind: `manual-review-required`
+   - initial rule kind after `#142` landed: `manual-review-required`
    - candidate source description: authoritative Java release/support metadata for the configured and resolved runtime version facts
 
 2. `android-gradle`
@@ -65,7 +65,7 @@ The implementation PR must replace the current combined Android group with exact
      - `gradle.configured_version`
      - `gradle.resolved_version`
    - follow-up issue: `#155`
-   - current rule kind: `manual-review-required`
+   - initial rule kind after `#142` landed: `manual-review-required`
    - candidate source description: authoritative Gradle release/support metadata for the configured and resolved version facts
 
 3. `android-emulator-runtime`
@@ -75,7 +75,7 @@ The implementation PR must replace the current combined Android group with exact
      - `emulator.device_name`
      - `emulator.os_version`
    - follow-up issue: `#156`
-   - current rule kind: `manual-review-required`
+   - initial rule kind after `#142` landed: `manual-review-required`
    - candidate source description: authoritative Android emulator / system-image / runtime metadata for the watched emulator facts
 
 Contract requirements:

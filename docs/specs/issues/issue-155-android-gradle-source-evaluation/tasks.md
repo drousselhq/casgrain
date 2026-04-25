@@ -85,6 +85,10 @@
       'docs/specs/issues/issue-124-runner-host-drift-watch.md': [
           'remaining later source-specific automation is split across `#143` (runner images), `#154` (android java), `#155` (android gradle), `#156` (android emulator runtime), and `#144` (ios xcode / simulator runtime) after the android narrowing contract in `#142`',
       ],
+      'docs/specs/issues/issue-142-android-runner-host-source-split.md': [
+          'keep the report/docs truthful that all android groups still remain `manual-review-required` on current `main`',
+          '- current rule kind: `manual-review-required`',
+      ],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': [
           'the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`',
           'while `#154`, `#155`, and `#156` remain the android follow-ups',

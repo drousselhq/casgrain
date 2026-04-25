@@ -1064,10 +1064,15 @@ def normalize_gradle_release_catalog_payload(payload: Any, *, error_context: str
         )
 
     stable_version_list = sorted(stable_versions, key=gradle_version_sort_key)
+    latest_stable_version = stable_version_list[-1]
+    if current_stable_versions_list and current_stable_versions_list[0] != latest_stable_version:
+        raise RunnerHostWatchError(
+            f"{error_context} current stable release {current_stable_versions_list[0]} does not match latest stable release {latest_stable_version}"
+        )
     return {
         "stable_versions": stable_versions,
         "stable_version_list": stable_version_list,
-        "latest_stable_version": stable_version_list[-1],
+        "latest_stable_version": latest_stable_version,
         "current_stable_versions": current_stable_versions_list,
     }
 
