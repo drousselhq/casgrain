@@ -81,9 +81,12 @@
       ],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': [
           'the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`',
+          'while `#154`, `#155`, and `#156` remain the android follow-ups',
+          '`#154`, `#155`, and `#156` remain the bounded android host-toolchain follow-ups',
       ],
       'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': [
           'so they state that only `runner-images` is source-backed after this slice',
+          'the four non-`runner-images` groups still `manual-review-required`',
       ],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': [
           'the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, while the ios groups in this spec remain manual-review-only until their own follow-up slices land',

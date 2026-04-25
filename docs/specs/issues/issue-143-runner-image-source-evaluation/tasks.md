@@ -71,7 +71,7 @@ PY`
 ## 5. Run bounded validation and prepare the QA handoff
 - [x] 5.1 Run `git diff --check`.
 - [x] 5.2 Run Python compile and unit-test coverage for the runner-host report path.
-- [x] 5.3 Re-run the live runner-host report and assert that the summary still carries the same managed issue title, all five source groups, the exact promoted runner-images fields, and the four non-`runner-images` groups still `manual-review-required`.
+- [x] 5.3 Re-run the live runner-host report and assert that the summary still carries the same managed issue title, all five source groups, the exact promoted runner-images fields, and the remaining `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` follow-up groups still `manual-review-required`.
 - [x] 5.4 In the PR handoff comment, state that `#143` promotes only `runner-images`, list the exact validation commands, note that docs still need review because the spec/reporting contract changed, and call out that `#154`, `#156`, and `#144` remain future work while `#155` is now delivered as the Android Gradle source-backed slice.
 - [x] 5.5 Add a regression that exercises the live runner-image release-discovery path and proves the report selects the latest stream release instead of the observed runner-image tag.
 - Goal: Hand QA a bounded PR with deterministic test evidence and an honest live render smoke, not a speculative framework change.
