@@ -81,7 +81,7 @@ Ruleset contract:
 3. PRs that **do** touch Android/shared-runtime surfaces still run the real emulator-backed Android smoke lane and preserve the current artifact/report contract.
 4. The active `main-protection-ruleset` requires `android-smoke` alongside the existing required contexts.
 5. `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/merge-and-validation-policy.md`, and `docs/development/security-owasp-baseline.md` no longer describe Android smoke as advisory-only.
-6. `#79` can close once the merged workflow changes and the live ruleset update are both complete.
+6. `#79` is the shipped Android merge-gate promotion slice because the merged workflow changes and the live ruleset update are both already complete.
 
 ## Explicit non-goals
 
@@ -111,7 +111,7 @@ print('android workflow exposes an unconditional PR trigger and stable android-s
 PY
 ```
 
-Post-merge verification required before closing `#79`:
+Post-merge verification that completed `#79`:
 
 ```bash
 RULESET_ID=$(gh api repos/drousselhq/casgrain/rulesets --jq '.[] | select(.name == "main-protection-ruleset") | .id')

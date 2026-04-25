@@ -221,6 +221,40 @@ mod tests {
         serde_json::from_str(&output).expect("smoke trace output should be valid json")
     }
 
+    fn run_smoke_summary_with_fake_runner(
+        command: &str,
+        feature_contents: &str,
+        relative_name: &str,
+        runner_env_key: &str,
+        artifact_dir_env_key: &str,
+        install_runner: fn(&std::path::Path) -> PathBuf,
+    ) -> String {
+        let feature = tempfile_feature(feature_contents, relative_name);
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_runner(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var(runner_env_key, &runner);
+            std::env::set_var(artifact_dir_env_key, &artifact_dir);
+        }
+
+        let output = run(vec![command.into(), feature])
+            .expect("smoke command should return summary output with injected fake runner");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var(runner_env_key);
+            std::env::remove_var(artifact_dir_env_key);
+        }
+
+        output
+    }
+
     fn normalized_shared_smoke_trace_contract(trace: &Value) -> Value {
         let steps = trace["steps"]
             .as_array()
@@ -249,6 +283,75 @@ mod tests {
             "status": trace["status"],
             "steps": steps,
         })
+    }
+
+    fn normalized_shared_smoke_summary_contract(summary: &str) -> Value {
+        let mut in_artifacts = false;
+        let lines = summary
+            .lines()
+            .map(|line| {
+                if line.starts_with("Casgrain ") {
+                    in_artifacts = false;
+                    let (_, plan_name) = line
+                        .split_once(": ")
+                        .expect("summary title should expose a plan name");
+                    return json!({
+                        "kind": "title",
+                        "plan_name": plan_name,
+                    });
+                }
+
+                if line.starts_with("Source: ") {
+                    return json!({
+                        "kind": "source",
+                    });
+                }
+
+                if line.starts_with("Device: ") {
+                    return json!({
+                        "kind": "device",
+                    });
+                }
+
+                if line == "Steps:" {
+                    in_artifacts = false;
+                    return json!({
+                        "kind": "section",
+                        "name": line,
+                    });
+                }
+
+                if line == "Artifacts:" {
+                    in_artifacts = true;
+                    return json!({
+                        "kind": "section",
+                        "name": line,
+                    });
+                }
+
+                if in_artifacts && line.starts_with("- ") {
+                    let (_, remainder) = line
+                        .strip_prefix("- ")
+                        .expect("artifact line should start with a dash")
+                        .split_once(" (")
+                        .expect("artifact line should expose an artifact id and type");
+                    let (artifact_type, _) = remainder
+                        .split_once(") -> ")
+                        .expect("artifact line should expose artifact type and path");
+                    return json!({
+                        "kind": "artifact",
+                        "artifact_type": artifact_type,
+                    });
+                }
+
+                json!({
+                    "kind": "line",
+                    "text": line,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        json!(lines)
     }
 
     fn step_id_at(trace: &Value, index: usize) -> String {
@@ -919,7 +1022,71 @@ mod tests {
     }
 
     #[test]
-    fn ios_and_android_smoke_entrypoints_keep_the_same_shared_trace_contract() {
+    fn ios_and_android_smoke_entrypoints_keep_the_same_shared_summary_and_trace_contract() {
+        let ios_success_summary = run_smoke_summary_with_fake_runner(
+            "run-ios-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+            "CASGRAIN_IOS_SMOKE_RUNNER",
+            "CASGRAIN_IOS_SMOKE_ARTIFACT_DIR",
+            install_fake_ios_smoke_runner,
+        );
+        let android_success_summary = run_smoke_summary_with_fake_runner(
+            "run-android-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/android-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+            "CASGRAIN_ANDROID_SMOKE_RUNNER",
+            "CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR",
+            install_fake_android_smoke_runner,
+        );
+
+        assert_eq!(
+            normalized_shared_smoke_summary_contract(&ios_success_summary),
+            normalized_shared_smoke_summary_contract(&android_success_summary)
+        );
+
+        let ios_failure_summary = run_smoke_summary_with_fake_runner(
+            "run-ios-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+            "CASGRAIN_IOS_SMOKE_RUNNER",
+            "CASGRAIN_IOS_SMOKE_ARTIFACT_DIR",
+            install_fake_ios_smoke_runner_with_failed_trace,
+        );
+        let android_failure_summary = run_smoke_summary_with_fake_runner(
+            "run-android-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/android-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+            "CASGRAIN_ANDROID_SMOKE_RUNNER",
+            "CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR",
+            install_fake_android_smoke_runner_with_failed_trace,
+        );
+
+        let ios_failure_summary_contract =
+            normalized_shared_smoke_summary_contract(&ios_failure_summary);
+        let android_failure_summary_contract =
+            normalized_shared_smoke_summary_contract(&android_failure_summary);
+        assert_eq!(
+            ios_failure_summary_contract,
+            android_failure_summary_contract
+        );
+
+        let drifted_failure_summary =
+            android_failure_summary.replacen("Run status: Failed", "Run status: Passed", 1);
+        assert_ne!(
+            ios_failure_summary_contract,
+            normalized_shared_smoke_summary_contract(&drifted_failure_summary),
+            "shared smoke parity guard must fail when summary semantics drift"
+        );
+
         let ios_success = run_smoke_trace_json_with_fake_runner(
             "run-ios-smoke",
             include_str!(
