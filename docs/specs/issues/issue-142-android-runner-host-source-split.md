@@ -36,7 +36,7 @@ This slice must:
 1. replace the single Android `android-java-gradle` source-rule group with three bounded Android groups
 2. bind each new Android group to exactly one later follow-up issue
 3. keep the current drift / missing-evidence alert semantics and managed issue title unchanged
-4. keep the report/docs truthful that this split itself does not activate any Android source-backed rule; when `#142` landed, all three Android groups still remained `manual-review-required` on then-current `main`
+4. keep the report/docs truthful that `android-java` remains `manual-review-required` on current `main` while `android-gradle` and `android-emulator-runtime` are now source-backed
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
 This slice is **not** the later source-backed advisory implementation itself. It is the contract change that makes the later Android source integrations bounded and auditable.
@@ -56,7 +56,7 @@ The implementation PR must replace the current combined Android group with exact
      - `java.configured_major`
      - `java.resolved_version`
    - follow-up issue: `#154`
-   - initial rule kind after `#142` landed: `manual-review-required`
+   - current rule kind: `manual-review-required`
    - candidate source description: authoritative Java release/support metadata for the configured and resolved runtime version facts
 
 2. `android-gradle`
@@ -65,7 +65,7 @@ The implementation PR must replace the current combined Android group with exact
      - `gradle.configured_version`
      - `gradle.resolved_version`
    - follow-up issue: `#155`
-   - initial rule kind after `#142` landed: `manual-review-required`
+   - current rule kind: `manual-review-required`
    - candidate source description: authoritative Gradle release/support metadata for the configured and resolved version facts
 
 3. `android-emulator-runtime`
@@ -75,12 +75,12 @@ The implementation PR must replace the current combined Android group with exact
      - `emulator.device_name`
      - `emulator.os_version`
    - follow-up issue: `#156`
-   - initial rule kind after `#142` landed: `manual-review-required`
+   - current rule kind: `manual-review-required`
    - candidate source description: authoritative Android emulator / system-image / runtime metadata for the watched emulator facts
 
 Contract requirements:
 - `runner-images` must remain mapped to `#143`
-- `ios-xcode-simulator` must remain mapped to `#144`
+- the current combined `ios-xcode-simulator` placeholder remains manual-only while later iOS ownership stays with `#164` / `#165`
 - every watched fact path in `.github/runner-host-watch.json` must still be owned by exactly one source-rule group after the split
 - the manifest must fail closed if any Android watched fact path is dropped, duplicated, or assigned to the wrong follow-up issue
 
@@ -103,8 +103,8 @@ Implementation contract for this slice:
 
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
-- historical note: when this Android split landed, the new source-rule section had to make it explicit that Android Java, Gradle, and emulator-runtime promotion were still future follow-up work
-- current `main` now has `#155` delivered, so this historical spec must not be read as claiming that every Android source-backed advisory evaluation is still inactive
+- the new source-rule section must make it explicit that Android Java, Gradle, and emulator-runtime promotion are still future follow-up work
+- the report must not imply broader Android source-backed advisory evaluation than current `main` ships; today `runner-images`, `android-gradle`, and `android-emulator-runtime` are active while `#154` remains the open Android follow-up
 
 ### 3. Tests and fixtures
 
@@ -126,9 +126,9 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- historical note: when `#142` landed, the shipped runner-host automation still evaluated drift / missing evidence only for the split Android follow-up groups; current `main` now keeps drift / missing-evidence authoritative while also including the delivered `android-gradle` source-backed slice
+- the shipped runner-host automation already includes the delivered `runner-images`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the remaining Android follow-up stays separate
 - the Android backlog is no longer one combined `android-java-gradle` umbrella after this slice
-- historical note: later source-backed Android promotion was split across `#154`, `#155`, and `#156`; current `main` now has `#155` delivered while `#154` and `#156` remain follow-ups
+- later source-backed Android promotion is split across `#154`, `#155`, and `#156`
 - those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
 - `java.distribution` is not part of the current watched runner-host inventory unless and until a later contract change adds it explicitly
 
@@ -155,7 +155,7 @@ Those docs updates must explicitly say:
 - **no** source-backed promotion logic for Android emulator runtime (`#156`)
 - **no** change to the existing runner-host managed issue title or drift-alert semantics
 - **no** widening of `.github/runner-host-watch.json` to add new watched Android facts such as `java.distribution`
-- **no** changes to the delivered runner-image slice (`#143`) or the iOS (`#144`) source-backed follow-up beyond re-pointing the Android contract story honestly
+- **no** changes to the delivered runner-image slice (`#143`) or the later iOS Xcode / simulator-runtime follow-ups now tracked by `#164` / `#165` beyond re-pointing the Android contract story honestly
 
 ## Validation contract for the later implementation PR
 
@@ -204,6 +204,6 @@ The implementation PR for this spec should be able to close `#142` because it fi
 
 After that PR merges:
 - `#154` remains the bounded follow-up for Android Java host version source-backed promotion
-- `#155` is the delivered Android Gradle host version source-backed promotion on current `main`
-- `#156` remains the bounded follow-up for Android emulator-runtime source-backed promotion
-- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143` and the delivered `android-gradle` source-backed slice from `#155`, while `#154` and `#156` remain the Android follow-ups that are still manual-review-only on current `main`
+- delivered `#155` now covers the Android Gradle host version source-backed promotion
+- delivered `#156` now covers the Android emulator-runtime source-backed promotion, while `#154` remains the open Android follow-up
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, the delivered `android-gradle` source-backed exception from `#155`, and the delivered `android-emulator-runtime` source-backed exception from `#156`, while `#154` remains the Android follow-up that is still manual-review-only on current `main`

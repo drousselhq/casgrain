@@ -8,19 +8,19 @@
 
 Already delivered on `main`:
 - PR #145 added the checked-in runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
-- Historical note: PR #157 and PR #158 split the Android host-toolchain backlog into the bounded follow-up issues `#154`, `#155`, and `#156`; current `main` now has `#155` delivered while `#154` and `#156` remain follow-ups.
+- PR #157 and PR #158 split the Android host-toolchain backlog into the bounded follow-up issues `#154`, `#155`, and `#156`.
 - The current runner-host watch already owns the live summary and managed issue flow through:
   - `.github/runner-host-watch.json`
   - `tests/test-support/scripts/runner_host_review_report.py`
   - `.github/workflows/cve-watch.yml`
   - `tests/test-support/scripts/cve_watch_issue_sync.py`
-- At issue #143 shaping time, a fresh analyst dry-run reported:
+- A fresh analyst dry-run on current `main` still reports:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
-  - `runner-images` marked `manual-review-required`
+  - historical note: this slice originally started when `runner-images` was still marked `manual-review-required`; current `main` now keeps `runner-images`, `android-gradle`, and `android-emulator-runtime` source-backed
 
-That meant the repo already owned the drift / missing-evidence runner-host lane honestly, but the `runner-images` source group was only a placeholder before PR #143 promoted it to source-backed evaluation.
+That means the repo already owns the drift / missing-evidence runner-host lane honestly, and current `main` now keeps `runner-images`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed exceptions.
 
 ## Scope of this slice
 
@@ -33,10 +33,11 @@ This slice must:
 2. keep the existing `security: runner-host review needed` managed issue path
 3. keep the watched fact inventory in `.github/runner-host-watch.json` unchanged
 4. preserve the current drift / missing-evidence behavior for the rest of the runner-host watch
-5. keep the remaining source groups explicit future work:
+5. keep the remaining source groups explicit later work, with the original `#143` checkpoint separated from current `main` ownership:
    - `android-java` → `#154`
-   - `android-emulator-runtime` → `#156`
-   - `ios-xcode-simulator` → historical umbrella `#144` at the time of this slice; current later iOS follow-up ownership now lives in `#164` / `#165`
+   - `android-gradle` → `#155`
+   - `android-emulator-runtime` → later delivered by `#156`
+   - combined `ios-xcode-simulator` placeholder → later iOS follow-ups `#164` / `#165` (historically tracked under `#144`)
 
 ## Required implementation artifacts
 
@@ -59,8 +60,8 @@ Contract requirements:
   - `android` → `runner_label=ubuntu-latest`, `image_name=ubuntu-24.04`, `compared_facts=[runner.image_version, runner.os_version]`
   - `ios` → `runner_label=macos-15`, `image_name=macos-15-arm64`, `compared_facts=[runner.image_version, runner.os_version, runner.os_build]`
 - `runner.label` and `runner.image_name` remain part of the checked-in watched inventory and the emitted context, but this slice treats them as source-stream selectors / drift-only facts rather than as source-backed changed-fact assertions
-- leave the four non-`runner-images` groups on current `main` as `manual-review-required`
-- do not widen the watched inventory beyond the current runner-image / OS facts already owned by `runner-images`
+- the original `#143` checkpoint left the four non-`runner-images` groups on current `main` as `manual-review-required`, but later current-main docs must preserve that `android-gradle` and `android-emulator-runtime` are now delivered source-backed slices while `android-java` and the combined iOS placeholder remain follow-up work
+- do not widen the watched inventory beyond the current runner-image / OS facts already owned by `runner-images`; later current-main docs should also acknowledge the delivered `android-gradle` and `android-emulator-runtime` source-backed slices from `#155` / `#156`
 - do not repurpose `#143` into a generic runner-host source-rule framework
 
 The promoted rule must stay fail-closed:
@@ -122,8 +123,8 @@ Required coverage:
 - an Android actionable runner-image case
 - an iOS actionable runner-image case
 - a malformed or unavailable runner-image source case that proves the evaluator fails closed
-- unchanged manual-review-only behavior for `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
-- a checked-in manifest test that proves only `runner-images` was promoted and the other four groups stayed manual-review-only
+- historical proof that the original `#143` landing kept `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator` as follow-up groups at that checkpoint
+- a checked-in manifest test that proves `#143` promoted `runner-images` first without widening the other group contracts; current `main` now also keeps `android-gradle` and `android-emulator-runtime` on their later delivered source-backed paths from `#155` / `#156`
 
 ### 4. Reconcile report wording and canonical docs
 
@@ -137,11 +138,11 @@ Update:
 
 Update these docs so they say:
 - the runner-host lane is no longer uniformly drift-only once `#143` lands
-- `runner-images` and the later `android-gradle` slice `#155` are the delivered source-backed promoted groups on current `main`
-- the remaining runner-host groups stay explicit future work under `#154`, `#156`, and the later iOS follow-up ownership now split across `#164` / `#165`, while the checked-in manifest still keeps one combined `ios-xcode-simulator` placeholder mapped to historical issue `#144`
+- `runner-images` is the source-backed group delivered by `#143`, and current `main` now also includes the later `android-gradle` / `android-emulator-runtime` promotions from `#155` / `#156`
+- the remaining open follow-ups on current `main` are `#154` and the split iOS work `#164` / `#165`, while the live summary still keeps the combined `ios-xcode-simulator` placeholder
 - the managed findings issue title remains `security: runner-host review needed`
-- the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work on current `main`; they must explicitly reconcile that `#143` is the delivered runner-images promotion slice while the other follow-up issues remain open
-- `docs/specs/issues/issue-142-android-runner-host-source-split.md` no longer says the shipped runner-host lane stays drift-triggered review until a later Android follow-up lands; it must reconcile that `runner-images` becomes the delivered source-backed exception while `#154` and `#156` remain the Android follow-ups after the later Android Gradle slice `#155` landed
+- the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work on current `main`; they must explicitly reconcile `#143` as the delivered runner-images promotion slice while later source-backed follow-ups remain open
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md` no longer says the shipped runner-host lane stays drift-triggered review until a later Android follow-up lands; it must reconcile that `runner-images` becomes the first delivered source-backed exception and that current `main` also includes `android-gradle` and `android-emulator-runtime` while `#154`, `#164`, and `#165` remain the open follow-ups
 
 Workflow touch is allowed only if narrowly necessary:
 - `.github/workflows/cve-watch.yml` may change only for minimal step wording or a minimal input/env adjustment already available in the job
@@ -149,7 +150,7 @@ Workflow touch is allowed only if narrowly necessary:
 
 ## Acceptance criteria
 
-1. `.github/runner-host-advisory-sources.json` promotes only `runner-images`, uses the exact literal `rule_kind=runner-image-release-metadata`, and keeps the other four runner-host groups `manual-review-required`.
+1. At the original `#143` landing checkpoint, `.github/runner-host-advisory-sources.json` promoted only `runner-images`, used the exact literal `rule_kind=runner-image-release-metadata`, and kept the other four runner-host groups `manual-review-required`.
 2. The promoted `runner-images` manifest entry freezes the exact `source_streams` selectors and compared-fact boundaries for Android and iOS without widening `.github/runner-host-watch.json`.
 3. `runner_host_review_report.py` keeps the existing top-level summary shape intact and uses only the exact runner-images-specific reason values `runner-images-source-drift` and `runner-images-source-error` when the promoted rule drives the verdict.
 4. The `runner-images` entry inside `summary['source_rule_groups']` emits the exact promoted-rule fields `status`, `outcome`, and `platform_results`, and each platform result emits `platform`, `status`, `outcome`, `observed`, `source`, `changed_facts`, and `source_error`.
@@ -157,8 +158,8 @@ Workflow touch is allowed only if narrowly necessary:
 6. Actionable deterministic runner-image findings reuse the existing `security: runner-host review needed` path with `outcome=source-drift` rather than inventing a new managed issue title.
 7. Source retrieval, parsing, normalization, or matching failure for the promoted `runner-images` rule fails closed into `reason=runner-images-source-error` rather than a silent clean result.
 8. Drift / missing-evidence behavior for the rest of the runner-host watch remains intact on current `main`.
-9. The canonical runner-host docs plus the older issue-spec docs for `#129`, `#124`, and `#142` no longer describe `#143` as remaining future work or claim the shipped runner-host lane stays uniformly drift-triggered after this slice lands; they reconcile `#143` as the delivered runner-images promotion, `#155` as the later delivered Android Gradle slice, `#154` / `#156` as the remaining Android follow-ups, and the later iOS follow-up ownership as `#164` / `#165` rather than reviving closed umbrella issue `#144` as the open owner.
-10. The implementation PR for this slice can honestly say `Closes #143` because it finishes the bounded `runner-images` promotion work, while the Android and iOS host-toolchain follow-ups remain open under their existing issue numbers.
+9. The canonical runner-host docs plus the older issue-spec docs for `#129`, `#124`, and `#142` no longer describe `#143` as remaining future work or claim the shipped runner-host lane stays uniformly drift-triggered; they reconcile `#143` as the delivered first runner-images promotion, current `main` as also having the later `#156` emulator-runtime promotion, and the remaining open follow-ups as `#154`, `#155`, `#164`, and `#165`.
+10. The implementation PR for this slice can honestly say `Closes #143` because it finishes the bounded `runner-images` promotion work, while the later Android and iOS host-toolchain follow-ups remain open under their truthful current issue numbers.
 
 ## Behavior-spec scenario coverage
 
@@ -196,10 +197,10 @@ Feature: Source-backed runner-images evaluation in the runner-host watch
     And the output explains that the runner-images source-backed evaluation could not be trusted
     And the report does not silently return a clean result
 
-  Scenario: Non-promoted host-toolchain groups stay manual-review-only
+  Scenario: Non-`#143` host-toolchain groups stay unchanged at the original landing checkpoint
     Given runner-images has been promoted by this slice
     When the runner-host report is rendered
-    Then android-java, android-gradle, android-emulator-runtime, and ios-xcode-simulator remain manual-review-only follow-up groups
+    Then android-java, android-gradle, android-emulator-runtime, and ios-xcode-simulator remain follow-up groups at the `#143` checkpoint
 ```
 
 ## Explicit non-goals
@@ -207,7 +208,7 @@ Feature: Source-backed runner-images evaluation in the runner-host watch
 - **no** Android Java source-backed automation in this slice (`#154`)
 - **no** Android Gradle source-backed automation in this slice (`#155`)
 - **no** Android emulator-runtime source-backed automation in this slice (`#156`)
-- **no** iOS Xcode / simulator source-backed automation in this slice; that later work now lives in `#164` / `#165` after the historical umbrella issue `#144`
+- **no** iOS Xcode / simulator source-backed automation in this slice; later iOS work stays with split follow-ups `#164` / `#165` (the earlier combined checkpoint was tracked under `#144`)
 - **no** widening of `.github/runner-host-watch.json` to add new watched facts such as `runner.os_name`
 - **no** generic source-rule engine for every future runner-host source family
 - **no** broad package-in-image scraping or unrelated CVE inventory work beyond the current `runner-images` contract
@@ -262,7 +263,7 @@ The live invocation above should be treated as a render smoke and contract check
 The implementation PR for this spec should be able to close `#143` because it finishes the bounded `runner-images` source-backed promotion slice.
 
 After that PR merges:
-- `#154` and `#156` remain the bounded Android host-toolchain follow-ups after the later Android Gradle slice `#155` shipped
-- `#164` / `#165` remain the bounded later iOS Xcode / simulator-runtime follow-ups, while the checked-in manifest still keeps one combined `ios-xcode-simulator` placeholder mapped to historical issue `#144`
+- `#154`, `#155`, and `#156` remain the bounded Android host-toolchain follow-ups
+- later iOS source-backed work stays under split follow-ups `#164` / `#165`, while current `main` keeps the combined `ios-xcode-simulator` placeholder until that later split lands
 - the runner-host lane continues to reuse `security: runner-host review needed`
 - any later desire for broader runner-image package or CVE inventory work must be shaped as a new bounded issue rather than smuggled into this slice

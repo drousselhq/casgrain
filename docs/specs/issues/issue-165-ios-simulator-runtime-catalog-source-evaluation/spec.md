@@ -20,12 +20,13 @@
 Already delivered on `main`:
 - PR #145 added the repo-owned runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
 - PR #166 merged the analyst contract for `#144`, which froze the later iOS source-backed work into separate follow-up issues instead of one umbrella iOS slice.
-- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against current `main` still reports:
+- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against then-current `main` reported:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
-  - `runner-images` and `android-gradle` are already source-backed on current `main`, while `android-java`, `android-emulator-runtime`, and the combined iOS placeholder remain `manual-review-required`
+  - at that handoff point, every source-rule group, including the combined iOS group, still remained `manual-review-required`
+- current `main` has since promoted `runner-images` and `android-emulator-runtime` to delivered source-backed groups, while `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder remain later follow-up work until their bounded slices land
 - The checked-in iOS baseline on current `main` watches these simulator facts:
   - `simulator.runtime_identifier=com.apple.CoreSimulator.SimRuntime.iOS-26-2`
   - `simulator.runtime_name=iOS 26.2`
@@ -93,8 +94,8 @@ Implementation contract:
   - the observed runtime name does not match the authoritative runtime row for the normalized version
   - the Apple source response is unavailable, malformed, or contradictory for the simulator-runtime slice
 - keep the current drift / missing-evidence evaluation for watched facts authoritative and unchanged for both platforms
-- preserve the existing meaning of top-level `advisory_count` on current `main`: it is the total actionable finding count across baseline drift / missing evidence and source-backed review findings already counted by the delivered `runner-images` and `android-gradle` evaluators
-- make iOS simulator-runtime source findings contribute to that same top-level `advisory_count` instead of inventing a separate top-level `source_advisory_count`
+- preserve the existing meaning of top-level `advisory_count`: it remains the count of changed or missing watched facts from the baseline contract
+- add a separate source-backed finding count/list (for example `source_advisory_count` plus detailed source findings) instead of overloading the drift counter
 - set top-level `alert` / `verdict` to review-needed when either:
   - drift / missing evidence requires review, or
   - iOS simulator-runtime source findings require review
@@ -116,12 +117,12 @@ Update:
 - `tests/test-support/fixtures/runner-host-watch/simulator-runtime-source/`
 
 Required coverage:
-- matching Apple simulator runtime metadata for the observed `simulator.runtime_identifier=com.apple.CoreSimulator.SimRuntime.iOS-26-2` and `simulator.runtime_name=iOS 26.2` → `alert=false`, `advisory_count=0`, and `ios-simulator-runtime` is reported as `apple-simulator-runtime-catalog`
-- no matching Apple runtime row for the observed runtime version → `alert=true` with a dedicated simulator-runtime source-backed review-needed reason and an incremented top-level `advisory_count` even when the watched-fact drift count remains zero
-- Apple runtime row present but the observed runtime name does not match the authoritative row → `alert=true` with a dedicated simulator-runtime source-backed review-needed reason and an incremented top-level `advisory_count` even when the watched-fact drift count remains zero
-- authoritative-source payload unavailable or malformed → explicit review-needed simulator-runtime source finding instead of silent success, with the same top-level `advisory_count` path used for other source-backed findings on current `main`
+- matching Apple simulator runtime metadata for the observed `simulator.runtime_identifier=com.apple.CoreSimulator.SimRuntime.iOS-26-2` and `simulator.runtime_name=iOS 26.2` → `alert=false`, `advisory_count=0`, `source_advisory_count=0`, and `ios-simulator-runtime` is reported as `apple-simulator-runtime-catalog`
+- no matching Apple runtime row for the observed runtime version → `alert=true` with `reason=ios-simulator-runtime-source-drift` while the drift counter remains zero
+- Apple runtime row present but the observed runtime name does not match the authoritative row → `alert=true` with `reason=ios-simulator-runtime-source-drift` while the drift counter remains zero
+- authoritative-source payload unavailable or malformed → explicit review-needed simulator-runtime source finding with `reason=ios-simulator-runtime-source-error` instead of silent success
 - newer runtime rows exist upstream while the observed runtime still resolves cleanly → no automatic alert from the simulator-runtime source path alone
-- existing drift and missing-evidence fixtures still preserve their current overall `advisory_count` behavior while source-backed findings remain distinguishable in the rendered output
+- existing drift and missing-evidence fixtures still preserve their current `advisory_count` behavior
 - a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `ios-simulator-runtime` rule while `simulator.device_name` remains a watched drift-only fact and `ios-xcode` plus the non-iOS groups stay outside this slice
 
 ### 4. Canonical docs and live-contract reconciliation
@@ -150,23 +151,23 @@ Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-simulator-runtime`
 - `ios-xcode` remains separate follow-up work under `#164`
 - `simulator.device_name` remains part of the watched drift contract, but any future source-backed device-availability work belongs to `#172` rather than this runtime-catalog slice
-- `runner-images` and `android-gradle` remain the already-delivered source-backed groups on current `main`, while `android-java` and `android-emulator-runtime` stay on their own separate follow-up issues until those slices land
+- `runner-images` and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`, while `android-java` and `android-gradle` remain the separate non-iOS follow-up issues
 - actionable simulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Apple runtime upstream alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized runtime identity/name validation for the observed runtime, not a general upgrade/freshness policy
 - older issue-spec artifacts, including the ordered task lists in `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, must stop claiming that `#144` is still the current or future iOS umbrella owner, must stop preserving closed `#144` as the remaining iOS follow-up after the split prerequisite lands, and must stop claiming that current `main` still has no active iOS source-backed evaluation once this slice lands
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` must stop preserving the stale post-`#143` wording that `#154`, `#155`, `#156`, and `#144` remain future work; after `#165` lands, that historical task artifact must point the remaining iOS follow-up ownership at the split issues `#164` / `#165` instead of reviving closed umbrella issue `#144`
-- `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` must stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work; after `#165` lands, those older artifacts must describe `ios-simulator-runtime` as already source-backed on current `main` and preserve the shared current-main contract where source-backed findings increment the same top-level `advisory_count` while remaining explicit through source-rule group details
-- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split `ios-xcode` / `ios-simulator-runtime` prerequisite is on current `main`, and must keep the post-`#165` shared summary contract truthful by preserving that same shared current-main contract instead of reviving either a drift-only top-level count or a separate top-level `source_advisory_count`
-- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop requiring simulator-runtime source findings to use a separate top-level source-backed finding/count field once this slice lands; after `#165`, those adjacent follow-up artifacts must preserve the shared current-main contract where simulator-runtime source findings increment the same top-level `advisory_count` while remaining explicit through source-rule group details
-- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must keep that same shared current-main contract for simulator-runtime source findings, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work lives in open spec-entry PRs `#171` and `#173`; after `#165` lands, that adjacent spec must describe the later iOS ownership through open follow-up issues `#164` / `#165` without preserving `#173` as still open
+- `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` must stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work and all source-backed review findings still flow only through the shared top-level `advisory_count`; after `#165` lands, those older artifacts must describe `ios-simulator-runtime` as already source-backed on current `main` and preserve the separate simulator-runtime source finding/count surface instead of banning `source_advisory_count`
+- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split `ios-xcode` / `ios-simulator-runtime` prerequisite is on current `main`, and must keep the post-`#165` shared summary contract truthful by preserving the separate source-backed finding surface/count rather than collapsing those findings back into a drift-only top-level count
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands; after `#165`, those adjacent follow-up artifacts must describe top-level `advisory_count` as the drift/missing-evidence count while the simulator-runtime source findings remain explicit in their own source-backed finding surface/count
+- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work lives in open spec-entry PRs `#171` and `#173`; after `#165` lands, that adjacent spec must describe the later iOS ownership through open follow-up issues `#164` / `#165` without preserving `#173` as still open
 
 ## Acceptance criteria
 
 1. Once the split iOS source-rule contract already exists on current `main`, `.github/runner-host-advisory-sources.json` exposes `ios-simulator-runtime` as `apple-simulator-runtime-catalog` while preserving `follow_up_issue: 165`, and `ios-xcode` remains the separate follow-up under `#164`.
 2. A recognized Apple simulator runtime row for the observed runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no simulator-runtime source findings requiring review.
-3. A missing runtime row, a runtime-name mismatch, or source-unavailable simulator-runtime evaluation produces an explicit source-backed finding for `ios-simulator-runtime`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when the watched-fact drift count remains zero.
+3. A missing runtime row, a runtime-name mismatch, or source-unavailable simulator-runtime evaluation produces an explicit source-backed finding for `ios-simulator-runtime` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish simulator-runtime source-backed findings from drift / missing-evidence findings, keep `simulator.device_name` in the drift-only/supporting contract, and leave `ios-xcode`, `#172`, and the non-iOS groups as separate work.
-5. The named canonical docs and adjacent main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, `issue-144/{spec,tasks}.md`, `issue-164/{spec,tasks}.md`, and `issue-154/155/156/{spec,tasks}.md`) no longer claim that current runner-host automation has no active iOS source-backed evaluation, no longer preserve `#144` as the live or remaining iOS umbrella owner after the split prerequisite lands, no longer preserve `ios-simulator-runtime` as manual-only future work after `#165`, and no longer leave contradictory shared summary/count expectations about whether simulator-runtime source findings increment the same top-level `advisory_count` or use a separate top-level `source_advisory_count` field.
+5. The named canonical docs and adjacent main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, `issue-144/{spec,tasks}.md`, `issue-164/{spec,tasks}.md`, and `issue-154/155/156/{spec,tasks}.md`) no longer claim that current runner-host automation has no active iOS source-backed evaluation, no longer preserve `#144` as the live or remaining iOS umbrella owner after the split prerequisite lands, no longer preserve `ios-simulator-runtime` as manual-only future work after `#165`, and no longer leave contradictory shared summary/count expectations about whether simulator-runtime source findings use their own source-backed finding surface/count.
 6. The implementation PR for this slice can honestly say `Closes #165` because the iOS simulator runtime-catalog evaluation becomes active on `main` without widening the watched inventory or absorbing Xcode/device-availability work.
 
 ## Observable report scenarios
@@ -200,10 +201,10 @@ Feature: iOS simulator runtime-catalog evaluation in the runner-host watch
 
 ## Explicit non-goals
 
-- **no** further behavior or ownership changes to the already-delivered `runner-images` source-backed slice (`#143`)
+- **no** source-backed evaluation for `runner-images` (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
-- **no** further behavior or ownership changes to the already-delivered `android-gradle` source-backed slice (`#155`)
-- **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
+- **no** source-backed evaluation for `android-gradle` (`#155`)
+- **no** changes to the already-delivered `android-emulator-runtime` source-backed evaluation (`#156`)
 - **no** source-backed evaluation for `ios-xcode` (`#164`)
 - **no** source-backed evaluation for `simulator.device_name`; that future device-availability work belongs to `#172`
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched iOS facts
@@ -237,7 +238,7 @@ summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encod
 ios_runtime = next(group for group in summary['source_rule_groups'] if group['key'] == 'ios-simulator-runtime')
 assert ios_runtime['rule_kind'] == 'apple-simulator-runtime-catalog', ios_runtime
 assert ios_runtime['follow_up_issue'] == 165, ios_runtime
-assert 'source_advisory_count' not in summary, summary
+assert 'source_advisory_count' in summary, summary
 print('ios-simulator-runtime source-backed rule is present in the runner-host summary')
 PY
 ```
