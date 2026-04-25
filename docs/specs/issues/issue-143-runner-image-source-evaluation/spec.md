@@ -33,11 +33,11 @@ This slice must:
 2. keep the existing `security: runner-host review needed` managed issue path
 3. keep the watched fact inventory in `.github/runner-host-watch.json` unchanged
 4. preserve the current drift / missing-evidence behavior for the rest of the runner-host watch
-5. keep the remaining source groups explicit future work:
+5. keep the remaining source groups explicit later work, with the original `#143` checkpoint separated from current `main` ownership:
    - `android-java` → `#154`
    - `android-gradle` → `#155`
-   - `android-emulator-runtime` → `#156`
-   - `ios-xcode-simulator` → `#144`
+   - `android-emulator-runtime` → later delivered by `#156`
+   - combined `ios-xcode-simulator` placeholder → later iOS follow-ups `#164` / `#165` (historically tracked under `#144`)
 
 ## Required implementation artifacts
 
@@ -208,7 +208,7 @@ Feature: Source-backed runner-images evaluation in the runner-host watch
 - **no** Android Java source-backed automation in this slice (`#154`)
 - **no** Android Gradle source-backed automation in this slice (`#155`)
 - **no** Android emulator-runtime source-backed automation in this slice (`#156`)
-- **no** iOS Xcode / simulator source-backed automation in this slice (`#144`)
+- **no** iOS Xcode / simulator source-backed automation in this slice; later iOS work stays with split follow-ups `#164` / `#165` (the earlier combined checkpoint was tracked under `#144`)
 - **no** widening of `.github/runner-host-watch.json` to add new watched facts such as `runner.os_name`
 - **no** generic source-rule engine for every future runner-host source family
 - **no** broad package-in-image scraping or unrelated CVE inventory work beyond the current `runner-images` contract
