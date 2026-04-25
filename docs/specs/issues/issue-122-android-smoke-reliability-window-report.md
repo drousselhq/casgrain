@@ -164,7 +164,7 @@ python3 tests/test-support/scripts/android_smoke_reliability_window.py \
   --markdown-out /tmp/android-smoke-reliability-window.md
 ```
 
-The live invocation above should currently produce a **not qualified** result until enough new scheduled `main` runs accumulate.
+At shaping time, the live invocation above produced a **not qualified** result because the qualifying window still lacked enough scheduled `main` runs. On current `main`, use the emitted summary JSON as the source of truth for the exact `reasons` set rather than assuming that schedule-only shortfall still stands alone.
 
 ## Completion boundary
 

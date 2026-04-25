@@ -71,7 +71,7 @@ Required blocker rules:
   - be labeled `enhancement` and `devops`
   - include the blocker run ID, run URL, report verdict/reasons, and machine-readable `failure_class` when present
   - include a marker that lets later sync runs update the same blocker issue instead of churning duplicates
-- the current known state (`schedule_main_runs_below_threshold` with historical blocker run `24611423606`) must **not** open a blocker issue by itself; it should stay advisory-only unless a previously managed blocker issue needs to close because the report no longer justifies keeping it open
+- the shaping-time known state (`schedule_main_runs_below_threshold` with historical blocker run `24611423606`) must **not** open a blocker issue by itself; it should stay advisory-only unless a previously managed blocker issue needs to close because the report no longer justifies keeping it open
 
 A simple deterministic title shape is acceptable, for example:
 - `android-smoke: unblock reliability window after <failure_class>`
@@ -83,7 +83,7 @@ Add checked-in sync fixtures under:
 - `tests/test-support/fixtures/android-smoke/reliability-issue-sync/`
 
 Required fixture cases:
-- `schedule-shortfall.*` modeling the current honest live state:
+- `schedule-shortfall.*` modeling the shaping-time honest live state:
   - `verdict=not_qualified`
   - `reasons=["schedule_main_runs_below_threshold"]`
   - run `24611423606`
@@ -186,7 +186,7 @@ python3 tests/test-support/scripts/android_smoke_issue_sync.py \
   --dry-run
 ```
 
-The current live dry-run should plan a **tracker-free no-op** action (`report_kind=tracking_only`, `blocker.action=noop`) because the report is still not qualified solely for `schedule_main_runs_below_threshold`.
+On current `main`, the live dry-run still plans a **tracker-free no-op** action (`report_kind=tracking_only`, `blocker.action=noop`), but the report is now not qualified for multiple threshold reasons (`total_runs_below_threshold`, `schedule_main_runs_below_threshold`, and `pull_request_runs_below_threshold`) rather than only the schedule-`main` shortfall captured at shaping time.
 
 ## Completion boundary
 
