@@ -155,7 +155,7 @@ Those docs updates must explicitly say:
 - **no** source-backed promotion logic for Android emulator runtime (`#156`)
 - **no** change to the existing runner-host managed issue title or drift-alert semantics
 - **no** widening of `.github/runner-host-watch.json` to add new watched Android facts such as `java.distribution`
-- **no** changes to the delivered runner-image slice (`#143`) or the iOS (`#144`) source-backed follow-up beyond re-pointing the Android contract story honestly
+- **no** changes to the delivered runner-image slice (`#143`) or the later iOS Xcode / simulator-runtime follow-ups now tracked by `#164` / `#165` beyond re-pointing the Android contract story honestly
 
 ## Validation contract for the later implementation PR
 
@@ -205,5 +205,5 @@ The implementation PR for this spec should be able to close `#142` because it fi
 After that PR merges:
 - `#154` remains the bounded follow-up for Android Java host version source-backed promotion
 - `#155` remains the bounded follow-up for Android Gradle host version source-backed promotion
-- `#156` remains the bounded follow-up for Android emulator-runtime source-backed promotion
+- delivered `#156` now covers the Android emulator-runtime source-backed promotion, while `#154` and `#155` remain the open Android follow-ups
 - the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143` and the delivered `android-emulator-runtime` source-backed exception from `#156`, while `#154` and `#155` remain the Android follow-ups that are still manual-review-only on current `main`
