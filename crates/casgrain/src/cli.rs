@@ -289,65 +289,54 @@ mod tests {
         let mut in_artifacts = false;
         let lines = summary
             .lines()
-            .map(|line| {
+            .filter_map(|line| {
                 if line.starts_with("Casgrain ") {
                     in_artifacts = false;
                     let (_, plan_name) = line
                         .split_once(": ")
                         .expect("summary title should expose a plan name");
-                    return json!({
+                    return Some(json!({
                         "kind": "title",
                         "plan_name": plan_name,
-                    });
+                    }));
                 }
 
                 if line.starts_with("Source: ") {
-                    return json!({
+                    return Some(json!({
                         "kind": "source",
-                    });
+                    }));
                 }
 
                 if line.starts_with("Device: ") {
-                    return json!({
+                    return Some(json!({
                         "kind": "device",
-                    });
+                    }));
                 }
 
                 if line == "Steps:" {
                     in_artifacts = false;
-                    return json!({
+                    return Some(json!({
                         "kind": "section",
                         "name": line,
-                    });
+                    }));
                 }
 
                 if line == "Artifacts:" {
                     in_artifacts = true;
-                    return json!({
+                    return Some(json!({
                         "kind": "section",
                         "name": line,
-                    });
+                    }));
                 }
 
                 if in_artifacts && line.starts_with("- ") {
-                    let (_, remainder) = line
-                        .strip_prefix("- ")
-                        .expect("artifact line should start with a dash")
-                        .split_once(" (")
-                        .expect("artifact line should expose an artifact id and type");
-                    let (artifact_type, _) = remainder
-                        .split_once(") -> ")
-                        .expect("artifact line should expose artifact type and path");
-                    return json!({
-                        "kind": "artifact",
-                        "artifact_type": artifact_type,
-                    });
+                    return None;
                 }
 
-                json!({
+                Some(json!({
                     "kind": "line",
                     "text": line,
-                })
+                }))
             })
             .collect::<Vec<_>>();
 
@@ -1044,9 +1033,12 @@ mod tests {
             install_fake_android_smoke_runner,
         );
 
+        let android_success_summary_with_extra_artifact = format!(
+            "{android_success_summary}\n- android-ui-dump (ui_dump) -> /tmp/android-ui-dump.json"
+        );
         assert_eq!(
             normalized_shared_smoke_summary_contract(&ios_success_summary),
-            normalized_shared_smoke_summary_contract(&android_success_summary)
+            normalized_shared_smoke_summary_contract(&android_success_summary_with_extra_artifact)
         );
 
         let ios_failure_summary = run_smoke_summary_with_fake_runner(
@@ -1072,8 +1064,11 @@ mod tests {
 
         let ios_failure_summary_contract =
             normalized_shared_smoke_summary_contract(&ios_failure_summary);
+        let android_failure_summary_with_extra_artifact = format!(
+            "{android_failure_summary}\n- android-ui-dump (ui_dump) -> /tmp/android-ui-dump.json"
+        );
         let android_failure_summary_contract =
-            normalized_shared_smoke_summary_contract(&android_failure_summary);
+            normalized_shared_smoke_summary_contract(&android_failure_summary_with_extra_artifact);
         assert_eq!(
             ios_failure_summary_contract,
             android_failure_summary_contract

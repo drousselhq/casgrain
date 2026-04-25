@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Part of #79`
 - Upstream slice already landed on `main`: `#80` (`Retire stale Android tracker sync path and align the Android smoke contract`)
-- Current follow-up on top of the shipped required Android gate: `#135` (`Freeze the shared iOS/Android vertical-slice contract`)
+- Historical downstream contract-freeze slice that landed on `main`: `#135` (`Freeze the shared iOS/Android vertical-slice contract`)
 
 ## Why this slice exists
 
@@ -125,5 +125,5 @@ The implementation PRs for this spec were correctly `Part of #79`, not `Closes #
 
 Current main state after this slice landed:
 - `#79` is the shipped Android merge-gate promotion slice
-- `#135` is the current docs/test contract-freeze follow-up on top of the already-required Android gate
+- `#135` landed as the docs/test contract-freeze follow-up on top of the already-required Android gate
 - any future Android smoke scope expansion should be opened as a new bounded follow-up issue rather than reopening this promotion slice
