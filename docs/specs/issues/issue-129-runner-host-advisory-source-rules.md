@@ -214,10 +214,9 @@ The live invocation above should still report the same clean drift verdict on cu
 The implementation PR for this spec should be able to close `#129` because it finishes the immediate repo-owned source-rule contract and reporting/doc plumbing.
 
 After that PR merges:
-- the delivered `#143` slice becomes the bounded GitHub-hosted runner image source-backed automation on current `main`
-- `#142` initially owns the Android umbrella follow-up, and the later narrowing contract in `#142` then splits that Android work into `#154`, `#155`, and `#156`
+- `#143` remains the bounded GitHub-hosted runner image source-backed automation already delivered on current `main`
+- `#142` initially owned the Android umbrella follow-up, and the later narrowing contract in `#142` then split that Android work into `#154`, `#155`, and delivered `#156`
 - `#154` remains the bounded follow-up for Android Java host version source-backed automation after that narrowing lands
 - `#155` remains the bounded follow-up for Android Gradle host version source-backed automation after that narrowing lands
-- `#156` remains the bounded follow-up for Android emulator-runtime source-backed automation after that narrowing lands
-- `#144` remains the bounded follow-up for any iOS Xcode / simulator-runtime source-backed automation
-- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception while the remaining follow-ups stay manual-review-only until their own slices land
+- later iOS source-backed work stays split across open follow-up issues `#164` / `#165`, even while current `main` still renders the combined `ios-xcode-simulator` placeholder
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` and `android-emulator-runtime` source-backed exceptions while the remaining follow-ups stay manual-review-only until their own slices land

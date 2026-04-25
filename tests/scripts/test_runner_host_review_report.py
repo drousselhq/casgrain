@@ -186,6 +186,8 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(key_map["android-java"]["follow_up_issue"], 154)
         self.assertEqual(key_map["android-gradle"]["follow_up_issue"], 155)
         self.assertEqual(key_map["android-emulator-runtime"]["follow_up_issue"], 156)
+        self.assertEqual(key_map["ios-xcode-simulator"]["follow_up_issues"], [164, 165])
+        self.assertNotIn("follow_up_issue", key_map["ios-xcode-simulator"])
 
         markdown = MODULE.render_markdown(summary)
         self.assertIn("<!-- cve-watch-report -->", markdown)
@@ -199,6 +201,8 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("#154", markdown)
         self.assertIn("#155", markdown)
         self.assertIn("#156", markdown)
+        self.assertIn("via #164, #165", markdown)
+        self.assertNotIn("via #144", markdown)
 
     def test_build_summary_accepts_checked_in_source_rules_manifest(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
@@ -254,12 +258,19 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                 "emulator.profile": "pixel_7",
             },
         )
-        self.assertEqual(android_emulator["source"]["platform_package_path"], "platforms;android-34")
+        self.assertEqual(
+            android_emulator["source"]["platform_package_path"],
+            "platforms;android-34",
+        )
         self.assertEqual(
             android_emulator["source"]["system_image_package_path"],
             "system-images;android-34;google_apis;x86_64",
         )
         self.assertEqual(android_emulator["source"]["mapped_os_version"], "14")
+        self.assertEqual(android_emulator["source"]["system_image_revision"], "12")
+        ios_placeholder = source_rule_groups["ios-xcode-simulator"]
+        self.assertEqual(ios_placeholder["follow_up_issues"], [164, 165])
+        self.assertNotIn("follow_up_issue", ios_placeholder)
         self.assertNotIn("source_advisory_count", summary)
 
     def test_build_summary_promotes_runner_images_with_clean_source_match(self) -> None:

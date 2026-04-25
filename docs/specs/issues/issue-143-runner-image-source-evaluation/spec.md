@@ -264,6 +264,6 @@ The implementation PR for this spec should be able to close `#143` because it fi
 
 After that PR merges:
 - `#154`, `#155`, and `#156` remain the bounded Android host-toolchain follow-ups
-- `#144` remains the bounded iOS Xcode / simulator-runtime follow-up
+- later iOS source-backed work stays under split follow-ups `#164` / `#165`, while current `main` keeps the combined `ios-xcode-simulator` placeholder until that later split lands
 - the runner-host lane continues to reuse `security: runner-host review needed`
 - any later desire for broader runner-image package or CVE inventory work must be shaped as a new bounded issue rather than smuggled into this slice

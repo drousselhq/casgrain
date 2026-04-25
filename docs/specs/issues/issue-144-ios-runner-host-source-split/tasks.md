@@ -107,10 +107,10 @@ from pathlib import Path
 summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encoding='utf-8'))
 assert summary['verdict'] == 'no review-needed', summary
 assert summary['reason'] == 'baseline-match', summary
-issue_map = {group['key']: group['follow_up_issue'] for group in summary['source_rule_groups']}
-assert issue_map['ios-xcode'] == 164, issue_map
-assert issue_map['ios-simulator-runtime'] == 165, issue_map
-print('runner-host iOS source split summary present')
+ios_placeholder = next(group for group in summary['source_rule_groups'] if group['key'] == 'ios-xcode-simulator')
+assert ios_placeholder['follow_up_issues'] == [164, 165], ios_placeholder
+assert 'follow_up_issue' not in ios_placeholder, ios_placeholder
+print('runner-host iOS placeholder ownership remains split under #164 / #165')
 PY`
 
 Non-goals:

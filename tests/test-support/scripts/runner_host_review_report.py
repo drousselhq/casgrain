@@ -473,6 +473,8 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                 f"missing={missing} unexpected={unexpected}"
             )
 
+        live_follow_up_issues = LIVE_FOLLOW_UP_ISSUES.get(key, [follow_up_issue])
+
         normalized_group = {
             "key": key,
             "surface": required_string_field(entry, "surface", error_context=error_context),
@@ -485,10 +487,11 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                 "managed_issue_behavior",
                 error_context=error_context,
             ),
-            "follow_up_issue": follow_up_issue,
             "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
-            "live_follow_up_issues": LIVE_FOLLOW_UP_ISSUES.get(key, [follow_up_issue]),
+            "follow_up_issues": live_follow_up_issues,
         }
+        if len(live_follow_up_issues) == 1:
+            normalized_group["follow_up_issue"] = follow_up_issue
         if rule_kind == "runner-image-release-metadata":
             normalized_group["source_streams"] = normalize_runner_image_source_streams(
                 entry,
@@ -1362,7 +1365,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
         watched_fact_list = ", ".join(
             f"{entry['platform']}:{entry['path']}" for entry in group["watched_fact_paths"]
         )
-        follow_up_display = ", ".join(f"#{number}" for number in group.get("live_follow_up_issues", [group["follow_up_issue"]]))
+        follow_up_numbers = group.get("follow_up_issues") or [group["follow_up_issue"]]
+        follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
         lines.extend(
             [
                 f"- `{group['key']}` — `{group['rule_kind']}` via {follow_up_display}",

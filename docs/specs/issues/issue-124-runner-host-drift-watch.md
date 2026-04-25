@@ -332,4 +332,4 @@ The implementation PR for this spec should be able to close `#124` because it co
 After that PR merges:
 - the weekly watch will keep manual review explicit only when the hosted environment drifts
 - issue #129 captured the repo-owned source-rule contract on top of this baseline
-- later source-specific automation now advances through split follow-up issues #143, #154, #155, #156, and #144 rather than returning to one umbrella issue
+- later source-specific automation now advances through delivered slices `#143` / `#156`, open Android follow-ups `#154` / `#155`, and split iOS follow-ups `#164` / `#165` rather than returning to one umbrella issue
