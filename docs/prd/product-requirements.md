@@ -140,5 +140,5 @@ Tracked follow-up:
 
 - canonical executable plan serialization format
 - exact selector precedence model
-- generated-plan bridge for the first shared mobile vertical slice
+- how the generated-plan bridge should expand beyond the current shared mobile vertical slice
 - how much automated repair is allowed locally vs in CI
