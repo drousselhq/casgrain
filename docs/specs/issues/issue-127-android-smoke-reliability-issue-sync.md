@@ -186,7 +186,7 @@ python3 tests/test-support/scripts/android_smoke_issue_sync.py \
   --dry-run
 ```
 
-On current `main`, the live dry-run still plans a **tracker-free no-op** action (`report_kind=tracking_only`, `blocker.action=noop`), but the report is now not qualified for multiple threshold reasons (`total_runs_below_threshold`, `schedule_main_runs_below_threshold`, and `pull_request_runs_below_threshold`) rather than only the schedule-`main` shortfall captured at shaping time.
+On current `main`, do **not** treat the shaping-time `tracking_only` / `blocker.action=noop` dry-run as a standing guarantee. Use the emitted summary JSON and dry-run as the source of truth instead: the live report can now surface additional reasons (for example `total_runs_below_threshold`, `schedule_main_runs_below_threshold`, and `streak_summary_missing`), and when it surfaces a concrete blocker such as `artifact-contract-breach` the sync plan can shift to `report_kind=managed_blocker` with `blocker.action=create`.
 
 ## Completion boundary
 
