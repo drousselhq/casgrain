@@ -261,7 +261,7 @@ mod tests {
             .to_string()
     }
 
-    fn failed_step<'a>(trace: &'a Value) -> &'a Value {
+    fn failed_step(trace: &Value) -> &Value {
         trace["steps"]
             .as_array()
             .expect("steps should be an array")

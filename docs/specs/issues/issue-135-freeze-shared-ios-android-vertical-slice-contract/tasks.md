@@ -58,7 +58,7 @@
 - [x] 5.2 Run `cargo test -p compiler`.
 - [x] 5.3 Run `cargo test -p casgrain`.
 - [x] 5.4 Re-check the live ruleset contexts and confirm the updated docs match them exactly.
-- [ ] 5.5 In the PR summary, state that the runtime parity already existed on `main`, list the exact validation commands, and keep the PR scoped to contract/tests/docs reconciliation for `#135`.
+- [x] 5.5 In the PR summary, state that the runtime parity already existed on `main`, list the exact validation commands, and keep the PR scoped to contract/tests/docs reconciliation for `#135`.
 - Goal: Hand QA a bounded contract-freeze PR with concrete validation evidence and no hidden runtime-scope expansion.
 - Validation: `git diff --check && cargo test -p compiler && cargo test -p casgrain && gh api repos/drousselhq/casgrain/rulesets/15179247 --jq '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context'`
 - Non-goals: No live ruleset mutation, no separate follow-up tracker, no new platform capability work.
