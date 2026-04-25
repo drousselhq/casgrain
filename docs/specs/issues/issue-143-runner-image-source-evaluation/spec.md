@@ -157,7 +157,7 @@ Workflow touch is allowed only if narrowly necessary:
 6. Actionable deterministic runner-image findings reuse the existing `security: runner-host review needed` path with `outcome=source-drift` rather than inventing a new managed issue title.
 7. Source retrieval, parsing, normalization, or matching failure for the promoted `runner-images` rule fails closed into `reason=runner-images-source-error` rather than a silent clean result.
 8. Drift / missing-evidence behavior for the rest of the runner-host watch remains intact on current `main`.
-9. The canonical runner-host docs plus the older issue-spec docs for `#129`, `#124`, and `#142` no longer describe `#143` as remaining future work or claim the shipped runner-host lane stays uniformly drift-triggered after this slice lands; they reconcile `#143` as the delivered runner-images promotion while `#154`, `#155`, `#156`, and `#144` remain the open follow-ups.
+9. The canonical runner-host docs plus the older issue-spec docs for `#129`, `#124`, and `#142` no longer describe `#143` as remaining future work or claim the shipped runner-host lane stays uniformly drift-triggered after this slice lands; they reconcile `#143` as the delivered runner-images promotion, `#155` as the later delivered Android Gradle slice, and only `#154`, `#156`, and `#144` as the open follow-ups.
 10. The implementation PR for this slice can honestly say `Closes #143` because it finishes the bounded `runner-images` promotion work, while the Android and iOS host-toolchain follow-ups remain open under their existing issue numbers.
 
 ## Behavior-spec scenario coverage
