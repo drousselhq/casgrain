@@ -9,9 +9,8 @@ It pairs with `docs/development/test-pyramid-and-runtime-contracts.md`, which ex
 Before merging work, run the required checks below unless the PR is explicitly scoped as a narrowly exempted docs-only or governance-only change and the reviewer accepts the exception.
 
 Repository reality today:
-- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke` status checks
-- this branch makes `android-smoke` the remaining required merge gate promotion for `#79`: the workflow now reports on every PR and self-skips unaffected diffs, and the post-merge close-out step is to add `android-smoke` to the live `main` ruleset once that always-reporting workflow is on `main`
-- both mobile smoke workflows now run on every PR on the candidate head, but self-skip unless the change touches their owned platform or shared runtime surfaces; this keeps the required `ios-smoke` context present today and makes `android-smoke` safe to require without paying the full simulator/emulator cost on unrelated work
+- `main` is protected with required `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, `ios-smoke`, and `android-smoke` status checks
+- both mobile smoke workflows always report a PR status on candidate heads, but self-skip unless the change touches their owned platform or shared runtime surfaces; this keeps the required mobile contexts present without paying the full simulator/emulator cost on unrelated work
 - both mobile smoke workflows also run on qualifying pushes to `main` plus a nightly schedule so `cve-watch` can consume fresh `main` host evidence after runner-host changes land
 - CodeQL participates in the required merge gate through `analyze (actions)` and `analyze (rust)` while also remaining the always-on static-analysis baseline for workflow logic and Rust code
 - the `coverage` job still enforces the same 75% workspace line-coverage floor, publishes a GitHub step summary plus uploaded `coverage-summary.json`, `coverage-report.json`, and `lcov.info` artifacts, and on pull requests it also checks that overall line coverage does not regress below the latest successful `main` coverage artifact when that baseline is available
@@ -62,9 +61,9 @@ Coverage interpretation:
 - contributors should also follow the documented review policy to target **85%+ coverage on new or materially changed code** and **90%+ on critical core logic** where the metric is meaningful
 - until touched/new-code coverage tooling lands, authors and reviewers must still apply the stronger 85%+/90%+ expectations through targeted tests, honest PR notes, and no-unexplained-regression discipline beyond the automated overall-line non-regression check
 
-First iOS vertical-slice note:
-- the current product-true execution proof is intentionally narrow: one fixture-specific iOS scenario compiled from `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature` and executed through `casgrain run-ios-smoke`
-- changes that touch this slice must preserve both halves of the user-facing contract: deterministic compile output shape and the CLI execution/reporting path
+First shared mobile vertical-slice note:
+- the current product-true execution proof is intentionally narrow: one shared tap-counter scenario compiled from `tests/test-support/fixtures/ios-smoke/features/tap_counter.feature` and `tests/test-support/fixtures/android-smoke/features/tap_counter.feature`, then executed through `casgrain run-ios-smoke` and `casgrain run-android-smoke`
+- changes that touch this slice must preserve both halves of the user-facing contract: deterministic compile output shape and the CLI execution/reporting path across both mobile smoke entrypoints
 - the older handwritten XCTest remains harness plumbing and debugging support under `tests/test-support/scripts/ios_smoke.sh`; it is not sufficient evidence by itself for the user-facing slice
 
 ## Validation style
@@ -92,9 +91,9 @@ First iOS vertical-slice note:
 
 ## Mobile smoke workflow policy
 
-- Casgrain's target product-true mobile merge gate is both `ios-simulator-smoke` and `android-emulator-smoke`.
-- `ios-simulator-smoke` is already a required PR check on `main`, and issue `#79` makes `android-emulator-smoke` always report on pull requests so it can become the matching required check immediately after that workflow lands on `main`.
-- On the `#79` candidate head both mobile smoke workflows always report a PR status so branch protection can enforce them safely, but each workflow only runs the expensive simulator/emulator path when the PR touches its owned platform or shared execution surfaces; qualifying pushes to `main` also run the device path so fresh host evidence exists after runner-host changes merge.
+- Casgrain's current product-true mobile merge gate is both `ios-smoke` and `android-smoke`.
+- Both mobile smoke workflows are required PR checks on `main`.
+- Both workflows always report a PR status, but each only runs the expensive simulator/emulator path when the PR touches its owned platform or shared execution surfaces; qualifying pushes to `main` also run the device path so fresh host evidence exists after runner-host changes merge.
 - There is no separate reliability-qualification tracker or future-run streak requirement for Android smoke; if it exposes a concrete defect, file that defect directly.
 - The Android workflow must still validate and archive an explicit artifact contract: `trace.json` plus stable sibling artifacts on success, or `failure.json` plus referenced diagnostics for runner-managed failure paths, with `failure_class`/`evidence-summary.json` capturing the machine-readable outcome. Empty, malformed, or failed `uiautomator` dump capture should stay inside that runner-managed contract as `ui-dump-failure`, preserving `ui-last.xml` (empty when the dump yielded no bytes) plus any truthful foreground diagnostics when available. If the workflow cannot produce either bundle, it should fail explicitly as an `artifact-contract-breach`.
 - Changes limited to docs, governance, labels, or other non-runtime surfaces should not pay the full mobile smoke cost.

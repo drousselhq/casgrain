@@ -144,19 +144,19 @@ Purpose:
 
 Status:
 - partially implemented
-- the first iOS fixture-app smoke path now exists under `tests/test-support/fixtures/ios-smoke/`
-- the macOS `ios-simulator-smoke` workflow now runs the generated-plan `casgrain run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
-- the Android emulator smoke path also exists now as a bounded Layer 4 evidence lane, with success traces and runner-managed failure diagnostics archived machine-readably for the canonical Android fixture
+- the first shared mobile fixture-app slice exists under both `tests/test-support/fixtures/ios-smoke/` and `tests/test-support/fixtures/android-smoke/`
+- the macOS `ios-simulator-smoke` workflow runs the generated-plan `casgrain run-ios-smoke` path and archives plan, trace, simulator, log, and xcresult evidence
+- the Linux `android-emulator-smoke` workflow runs the generated-plan `casgrain run-android-smoke` path and archives success traces plus runner-managed failure diagnostics machine-readably for the canonical Android fixture
 
 Current strategy:
-- keep one tiny iOS fixture app as the first honest integration target
+- keep one tiny shared tap-counter contract as the first honest mobile integration target across iOS and Android
 - prove launch, one visible tap, one visible assertion, and one screenshot artifact before broadening scope
 - keep simulator/emulator coverage as a narrow Layer 4 proof on top of cheaper workspace validation
-- keep iOS as the first product-true slice while converging on both `ios-smoke` and `android-smoke` as the mobile merge gate: `ios-smoke` is already live-required on `main`, and the `#79` candidate head makes `android-smoke` always report so it can be promoted next without forcing device work on unaffected PRs
+- treat both `ios-smoke` and `android-smoke` as the current live mobile merge gate on `main`, with always-reporting workflows that self-skip unaffected diffs without forcing device work on unrelated PRs
 
 Current target scope:
-- one iOS fixture-app smoke path
-- one Android fixture-app parity path with explicit artifact-contract validation
+- one shared iOS/Android fixture-app smoke contract
+- platform-specific fixture paths that preserve explicit artifact-contract validation underneath that shared contract
 - reproducible simulator/emulator setup in CI or documented pre-merge validation
 
 ## Stronger expectations for critical core logic
@@ -269,7 +269,7 @@ When you need to inspect coverage instead of only enforcing the floor, use the s
 
 1. Add compiler golden tests from representative product-spec slices to expected plan JSON.
 2. Expand runner and CLI contract coverage for retry, timeout, failure semantics, machine-readable output, and trace/artifact details.
-3. Keep Layer 4 focused on the narrow product-true iOS slice while Android parity matures separately.
+3. Keep Layer 4 focused on the narrow shared iOS/Android tap-counter slice, while allowing truthful platform-specific evidence underneath that bounded contract rather than reintroducing a single-platform/advisory framing.
 4. Revisit whether a touched-code or scope-aware coverage ratchet can be added later without creating noisy per-file mandates.
 
 ## Exit criteria for issue #1

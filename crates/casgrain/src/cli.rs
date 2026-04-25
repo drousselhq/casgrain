@@ -183,9 +183,122 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
 
-    use serde_json::Value;
+    use serde_json::{Value, json};
 
     use super::run;
+
+    fn run_smoke_trace_json_with_fake_runner(
+        command: &str,
+        feature_contents: &str,
+        relative_name: &str,
+        runner_env_key: &str,
+        artifact_dir_env_key: &str,
+        install_runner: fn(&std::path::Path) -> PathBuf,
+    ) -> Value {
+        let feature = tempfile_feature(feature_contents, relative_name);
+        let repo_root = temp_path("casgrain-cli-repo");
+        let artifact_dir = temp_path("casgrain-cli-artifacts");
+        let runner = install_runner(&repo_root);
+        let _guard = env_lock()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+        unsafe {
+            std::env::set_var("CASGRAIN_REPO_ROOT", &repo_root);
+            std::env::set_var(runner_env_key, &runner);
+            std::env::set_var(artifact_dir_env_key, &artifact_dir);
+        }
+
+        let output = run(vec![command.into(), feature, "--trace-json".into()])
+            .expect("smoke command should return trace json with injected fake runner");
+
+        unsafe {
+            std::env::remove_var("CASGRAIN_REPO_ROOT");
+            std::env::remove_var(runner_env_key);
+            std::env::remove_var(artifact_dir_env_key);
+        }
+
+        serde_json::from_str(&output).expect("smoke trace output should be valid json")
+    }
+
+    fn normalized_shared_smoke_trace_contract(trace: &Value) -> Value {
+        let steps = trace["steps"]
+            .as_array()
+            .expect("steps should be an array")
+            .iter()
+            .map(|step| {
+                let failure = if step["failure"].is_null() {
+                    Value::Null
+                } else {
+                    json!({
+                        "code": step["failure"]["code"],
+                        "message": step["failure"]["message"],
+                        "step_id_matches": step["failure"]["step_id"] == step["step_id"],
+                    })
+                };
+
+                json!({
+                    "status": step["status"],
+                    "attempts": step["attempts"],
+                    "failure": failure,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        json!({
+            "status": trace["status"],
+            "steps": steps,
+        })
+    }
+
+    fn step_id_at(trace: &Value, index: usize) -> String {
+        trace["steps"]
+            .as_array()
+            .expect("steps should be an array")
+            .get(index)
+            .and_then(|step| step["step_id"].as_str())
+            .expect("step should expose a string step_id")
+            .to_string()
+    }
+
+    fn failed_step<'a>(trace: &'a Value) -> &'a Value {
+        trace["steps"]
+            .as_array()
+            .expect("steps should be an array")
+            .iter()
+            .find(|step| step["status"] == "failed")
+            .expect("trace should contain a failed step")
+    }
+
+    fn assert_top_level_artifact_link(trace: &Value, artifact_type: &str, step_id: &str) {
+        assert!(
+            trace["artifacts"]
+                .as_array()
+                .expect("artifacts should be an array")
+                .iter()
+                .any(|artifact| {
+                    artifact["artifact_type"] == artifact_type && artifact["step_id"] == step_id
+                }),
+            "expected top-level {artifact_type} artifact linked to step {step_id}"
+        );
+    }
+
+    fn assert_step_artifact_link(step: &Value, artifact_type: &str) {
+        assert!(
+            step["artifacts"]
+                .as_array()
+                .expect("step artifacts should be an array")
+                .iter()
+                .any(|artifact| {
+                    artifact["artifact_type"] == artifact_type
+                        && artifact["step_id"] == step["step_id"]
+                }),
+            "expected step-local {artifact_type} artifact linked to {}",
+            step["step_id"]
+                .as_str()
+                .expect("step should expose a string step_id")
+        );
+    }
 
     #[test]
     fn usage_is_returned_for_missing_arguments() {
@@ -803,6 +916,88 @@ mod tests {
             failing_step["step_id"]
         );
         assert_eq!(json["artifacts"][0]["step_id"], failing_step["step_id"]);
+    }
+
+    #[test]
+    fn ios_and_android_smoke_entrypoints_keep_the_same_shared_trace_contract() {
+        let ios_success = run_smoke_trace_json_with_fake_runner(
+            "run-ios-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+            "CASGRAIN_IOS_SMOKE_RUNNER",
+            "CASGRAIN_IOS_SMOKE_ARTIFACT_DIR",
+            install_fake_ios_smoke_runner,
+        );
+        let android_success = run_smoke_trace_json_with_fake_runner(
+            "run-android-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/android-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+            "CASGRAIN_ANDROID_SMOKE_RUNNER",
+            "CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR",
+            install_fake_android_smoke_runner,
+        );
+
+        assert_eq!(
+            normalized_shared_smoke_trace_contract(&ios_success),
+            normalized_shared_smoke_trace_contract(&android_success)
+        );
+
+        let screenshot_step_id = step_id_at(&ios_success, 3);
+        assert_eq!(screenshot_step_id, step_id_at(&android_success, 3));
+        assert_top_level_artifact_link(&ios_success, "screenshot", &screenshot_step_id);
+        assert_top_level_artifact_link(&android_success, "screenshot", &screenshot_step_id);
+
+        let ios_failure = run_smoke_trace_json_with_fake_runner(
+            "run-ios-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+            "CASGRAIN_IOS_SMOKE_RUNNER",
+            "CASGRAIN_IOS_SMOKE_ARTIFACT_DIR",
+            install_fake_ios_smoke_runner_with_failed_trace,
+        );
+        let android_failure = run_smoke_trace_json_with_fake_runner(
+            "run-android-smoke",
+            include_str!(
+                "../../../tests/test-support/fixtures/android-smoke/features/tap_counter.feature"
+            ),
+            "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+            "CASGRAIN_ANDROID_SMOKE_RUNNER",
+            "CASGRAIN_ANDROID_SMOKE_ARTIFACT_DIR",
+            install_fake_android_smoke_runner_with_failed_trace,
+        );
+
+        let ios_failure_contract = normalized_shared_smoke_trace_contract(&ios_failure);
+        let android_failure_contract = normalized_shared_smoke_trace_contract(&android_failure);
+        assert_eq!(ios_failure_contract, android_failure_contract);
+
+        let ios_failed_step = failed_step(&ios_failure);
+        let android_failed_step = failed_step(&android_failure);
+        let failed_step_id = ios_failed_step["step_id"]
+            .as_str()
+            .expect("failed step should expose a string step_id");
+        assert_eq!(
+            failed_step_id,
+            android_failed_step["step_id"]
+                .as_str()
+                .expect("failed step should expose a string step_id")
+        );
+        assert_step_artifact_link(ios_failed_step, "failure_context");
+        assert_step_artifact_link(android_failed_step, "failure_context");
+        assert_top_level_artifact_link(&ios_failure, "failure_context", failed_step_id);
+        assert_top_level_artifact_link(&android_failure, "failure_context", failed_step_id);
+
+        let mut drifted_failure_contract = android_failure_contract.clone();
+        drifted_failure_contract["steps"][2]["failure"]["code"] = json!("timeout");
+        assert_ne!(
+            ios_failure_contract, drifted_failure_contract,
+            "shared smoke parity guard must fail when failure semantics drift"
+        );
     }
 
     #[test]

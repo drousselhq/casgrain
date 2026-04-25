@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Part of #79`
 - Upstream slice already landed on `main`: `#80` (`Retire stale Android tracker sync path and align the Android smoke contract`)
-- Downstream dependency that stays blocked until this slice lands: `#135` (`Bring the Android product-true vertical slice to parity with iOS`)
+- Current follow-up on top of the shipped required Android gate: `#135` (`Freeze the shared iOS/Android vertical-slice contract`)
 
 ## Why this slice exists
 
@@ -87,7 +87,7 @@ Ruleset contract:
 
 - **no** new Android product/runtime behavior changes
 - **no** new reliability-window math, tracker logic, or blocker-issue redesign
-- **no** broader Android fixture expansion or parity work beyond the existing smoke gate promotion (`#135` stays downstream)
+- **no** broader shared mobile contract-freeze work beyond the separate `#135` follow-up that documents the already-shipped dual-platform slice
 - **no** repo-wide docs sweep beyond the named contradictory policy/spec artifacts
 - **no** change to the stable `android-smoke` job/context name
 
@@ -121,9 +121,9 @@ gh api repos/drousselhq/casgrain/rulesets/$RULESET_ID --jq '.rules[] | select(.t
 
 ## Completion boundary
 
-The implementation PR for this spec should say `Part of #79`, not `Closes #79`, because the issue is only honestly complete once the merged workflow is on `main` **and** the live `main-protection-ruleset` has been updated to require `android-smoke`.
+The implementation PRs for this spec were correctly `Part of #79`, not `Closes #79`, because the issue only became honestly complete once the merged workflow was on `main` **and** the live `main-protection-ruleset` had been updated to require `android-smoke`.
 
-After this slice lands:
-- `#79` should close as the Android merge-gate promotion slice
-- `#135` becomes unblocked for the later parity work against the now-required Android gate
+Current main state after this slice landed:
+- `#79` is the shipped Android merge-gate promotion slice
+- `#135` is the current docs/test contract-freeze follow-up on top of the already-required Android gate
 - any future Android smoke scope expansion should be opened as a new bounded follow-up issue rather than reopening this promotion slice

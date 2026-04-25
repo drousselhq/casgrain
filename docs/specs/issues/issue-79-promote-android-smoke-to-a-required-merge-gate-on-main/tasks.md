@@ -33,10 +33,10 @@ PY`
 - Hand back if: Required-check-safe PR behavior would require splitting the Android smoke lane into a second workflow or otherwise changing the repo’s workflow topology beyond this bounded slice.
 
 ## 3. Reconcile the canonical repo contract for the `#79` rollout state
-- [x] 3.1 Update `docs/validation.md` so it describes the target Android merge-gate promotion, explains the always-reporting/self-skip model, and keeps the live `main` ruleset flip as a post-merge close-out step.
-- [x] 3.2 Update `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/merge-and-validation-policy.md` so they no longer describe Android as advisory-only or iOS as the sole mobile gate, while still separating the `#79` candidate-head behavior from the not-yet-applied live ruleset change.
-- [x] 3.3 Update `docs/development/security-owasp-baseline.md` so the protected-branch evidence snapshot stays truthful while `android-smoke` remains the pending companion gate tracked by `#79`.
-- Goal: Leave one truthful repo-owned policy/spec story for the `#79` rollout while the live `android-smoke` ruleset flip is still pending.
+- [x] 3.1 Update `docs/validation.md` so it describes the live Android merge gate, explains the always-reporting/self-skip model, and stops treating the live `main` ruleset flip as a future close-out step.
+- [x] 3.2 Update `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/merge-and-validation-policy.md` so they no longer describe Android as advisory-only or iOS as the sole mobile gate.
+- [x] 3.3 Update `docs/development/security-owasp-baseline.md` so the protected-branch evidence snapshot is truthful with both live mobile smoke gates enforced.
+- Goal: Leave one truthful repo-owned policy/spec story for the shipped `#79` rollout and a clean follow-up seam for `#135`.
 - Validation: `python3 - <<'PY'
 from pathlib import Path
 needles = {
@@ -55,11 +55,11 @@ PY`
 - Non-goals: No repo-wide wording sweep beyond the named contradictory files.
 - Hand back if: Another canonical doc or runbook becomes false only because it encodes a distinct policy decision that this slice cannot honestly change.
 
-## 4. Promote the live `main` ruleset once the workflow head is safe to enforce
+## 4. Record the live `main` ruleset promotion that completed this slice
 - [x] 4.1 Record the current `main-protection-ruleset` required status-check list before editing it.
-- [ ] 4.2 Add `android-smoke` to the live required-check list without removing any existing contexts or relaxing strict/review/history rules, but only after the always-reporting workflow has landed on `main`.
-- [ ] 4.3 Verify the live ruleset state through `gh api` after that post-merge update and keep `#79` open until that verification is true on `main`.
-- Goal: Make the live GitHub protection state match the promoted repo contract.
+- [x] 4.2 Add `android-smoke` to the live required-check list without removing any existing contexts or relaxing strict/review/history rules.
+- [x] 4.3 Verify the live ruleset state through `gh api`; current `main` already requires `android-smoke`.
+- Goal: Confirm the live GitHub protection state matches the promoted repo contract.
 - Validation: `RULESET_ID=$(gh api repos/drousselhq/casgrain/rulesets --jq '.[] | select(.name == "main-protection-ruleset") | .id') && gh api repos/drousselhq/casgrain/rulesets/$RULESET_ID --jq '.rules[] | select(.type == "required_status_checks").parameters.required_status_checks[].context' | grep -Fx 'android-smoke'`
 - Non-goals: No relaxation of branch protection, no bypass-policy changes, no new required contexts beyond `android-smoke`.
 - Hand back if: The authenticated actor cannot modify rulesets or repo governance requires a separate human-owned settings change.
@@ -67,9 +67,9 @@ PY`
 ## 5. Run the bounded validation set and hand back with honest closure semantics
 - [x] 5.1 Run `git diff --check` and the workflow-trigger regression tests.
 - [x] 5.2 Re-read the final Android workflow YAML and confirm the required-check-safe trigger plus stable `android-smoke` job name still hold.
-- [x] 5.3 In the PR summary/comment, say the implementation PR is `Part of #79` and state whether the live ruleset update has already been applied or is still the remaining close-out step.
+- [x] 5.3 In the PR summary/comment, say the implementation PR is `Part of #79` and record that the live ruleset update had already been applied by close-out.
 - [x] 5.4 Hand the PR back to QA with the exact validation evidence and any truthful docs lane note.
-- Goal: Leave QA and later merge work with one honest picture of what changed and what still remains to close `#79`.
+- Goal: Leave QA and later merge work with one honest picture of what changed and what had to be true before `#79` could close.
 - Validation: `git diff --check && python3 -m unittest tests/scripts/test_mobile_smoke_workflow_triggers.py`
-- Non-goals: No silent issue closure before the live ruleset verification is complete.
-- Hand back if: The refreshed workflow/docs diff is clean but the live ruleset state still cannot be updated by the current actor.
+- Non-goals: No retrospective reopening of `#79`, no new live-governance work beyond recording the already-complete promotion.
+- Hand back if: The refreshed workflow/docs diff is clean but the repo evidence still contradicts the claimed shipped `android-smoke` merge gate.

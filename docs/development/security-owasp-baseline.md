@@ -16,15 +16,15 @@ It does **not** claim that every desired control is fully enforced in-repo today
 ## Evidence snapshot
 
 Current repository evidence checked for this baseline:
-- `main` branch protection currently requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, and `ios-smoke`
-- issue `#79` is the remaining close-out step to add `android-smoke` after the always-reporting Android workflow lands on `main`
+- `main` branch protection currently requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, `ios-smoke`, and `android-smoke`
+- both mobile smoke workflows always report a PR status while self-skipping unaffected diffs, so the live required mobile contexts stay enforceable without paying full simulator/emulator cost on unrelated changes
 - `main` enforces strict up-to-date checks, linear history, admin enforcement, and resolved review conversations
 - force pushes and branch deletions are disabled on `main`
 - repository default workflow token permissions are `read`
 - `.github/workflows/security.yml` uses job-scoped least-privilege permissions and disables checkout credential persistence
 - repository security settings currently report `secret_scanning`, `secret_scanning_push_protection`, and `dependabot_security_updates` as enabled
 - repository security settings currently report `secret_scanning_non_provider_patterns` and `secret_scanning_validity_checks` as disabled
-- required PR-visible security checks today are `gitleaks`, `cargo-audit`, `cargo-deny-policy`, advisory CodeQL analysis, and the currently enforced mobile smoke gate (`ios-smoke`); `android-smoke` is the pending companion gate tracked by `#79`
+- required PR-visible security checks today are `gitleaks`, `cargo-audit`, `cargo-deny-policy`, advisory CodeQL analysis, and the live mobile smoke gates (`ios-smoke` and `android-smoke`)
 
 ## Baseline areas
 
