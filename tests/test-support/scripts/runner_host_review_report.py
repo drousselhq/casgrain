@@ -1018,7 +1018,7 @@ def normalize_gradle_release_catalog_payload(payload: Any, *, error_context: str
         raise RunnerHostWatchError(f"{error_context} must be a list")
 
     stable_versions: dict[str, dict[str, Any]] = {}
-    current_stable_versions: list[str] = []
+    current_stable_versions: set[str] = set()
     for index, entry in enumerate(payload):
         if not isinstance(entry, dict):
             raise RunnerHostWatchError(f"{error_context}[{index}] must be an object")
@@ -1035,21 +1035,27 @@ def normalize_gradle_release_catalog_payload(payload: Any, *, error_context: str
         is_stable = not any([snapshot, nightly, release_nightly, active_rc, rc_for, milestone_for, "-" in version])
         if not is_stable:
             continue
-        stable_versions[version] = {
+        normalized_entry = {
             "version": version,
             "current": current,
             "broken": broken,
         }
+        existing_entry = stable_versions.get(version)
+        if existing_entry is not None and existing_entry != normalized_entry:
+            raise RunnerHostWatchError(
+                f"{error_context} contains conflicting stable release records for {version}"
+            )
+        stable_versions[version] = normalized_entry
         if current:
-            current_stable_versions.append(version)
+            current_stable_versions.add(version)
 
     if not stable_versions:
         raise RunnerHostWatchError(f"{error_context} does not contain any stable releases")
 
-    current_stable_versions = sorted(current_stable_versions, key=gradle_version_sort_key)
-    if len(current_stable_versions) > 1:
+    current_stable_versions_list = sorted(current_stable_versions, key=gradle_version_sort_key)
+    if len(current_stable_versions_list) > 1:
         raise RunnerHostWatchError(
-            f"{error_context} contains multiple current stable releases: {current_stable_versions}"
+            f"{error_context} contains multiple current stable releases: {current_stable_versions_list}"
         )
 
     stable_version_list = sorted(stable_versions, key=gradle_version_sort_key)
@@ -1057,7 +1063,7 @@ def normalize_gradle_release_catalog_payload(payload: Any, *, error_context: str
         "stable_versions": stable_versions,
         "stable_version_list": stable_version_list,
         "latest_stable_version": stable_version_list[-1],
-        "current_stable_versions": current_stable_versions,
+        "current_stable_versions": current_stable_versions_list,
     }
 
 
@@ -1102,7 +1108,6 @@ def build_gradle_platform_result(
         "source": {},
         "review_needed_findings": [],
         "informational_findings": [],
-        "source_error": "",
     }
     if fetch_error:
         result["status"] = "manual-review-required"
@@ -1118,21 +1123,13 @@ def build_gradle_platform_result(
 
     observed_platform = required_object_field(observed_platforms, platform_name, error_context="observed platforms")
     if "host_environment_error" in observed_platform:
-        source_error = required_scalar_field(
+        result["outcome"] = "source-skipped"
+        result["skip_reason"] = required_scalar_field(
             observed_platform,
             "host_environment_error",
             error_context=f"observed platform {platform_name}",
         )
-        result["status"] = "manual-review-required"
-        result["outcome"] = "source-error"
-        result["source_error"] = source_error
-        result["review_needed_findings"].append(
-            {
-                "kind": "source-unavailable",
-                "message": source_error,
-            }
-        )
-        return result, 1
+        return result, 0
 
     host_environment = required_object_field(
         observed_platform,
@@ -1316,6 +1313,11 @@ def enrich_source_rule_groups(
                 ):
                     group_outcome = "source-review-needed"
                     group_status = "manual-review-required"
+                elif (
+                    platform_result["outcome"] == "source-skipped"
+                    and group_outcome == "source-match"
+                ):
+                    group_outcome = "source-skipped"
 
             if group_outcome in {"source-error", "source-review-needed"} and source_reason is None:
                 source_reason = "source-review-needed"
@@ -1489,8 +1491,10 @@ def render_markdown(summary: dict[str, Any]) -> str:
                             )
                         else:
                             lines.append(f"      - `{finding['kind']}`")
-                if platform_result["source_error"]:
+                if platform_result.get("source_error"):
                     lines.append(f"    - Source error: {sanitize_cell(platform_result['source_error'])}")
+                if platform_result.get("skip_reason"):
+                    lines.append(f"    - Source skipped: {sanitize_cell(platform_result['skip_reason'])}")
     lines.append("")
     for platform_name in ("android", "ios"):
         platform = summary["platforms"][platform_name]

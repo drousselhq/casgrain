@@ -53,7 +53,7 @@
 ## 3. Promote the checked-in `ios-xcode` source rule from placeholder to active contract
 - [ ] 3.1 Update `.github/runner-host-advisory-sources.json` so `ios-xcode` uses `rule_kind: apple-xcode-support-matrix`.
 - [ ] 3.2 Add only the rule-specific source metadata needed for the Apple Xcode support-matrix evaluator while preserving `follow_up_issue: 164` and the existing watched fact paths.
-- [ ] 3.3 Keep `ios-simulator-runtime`, `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` as their existing separate `manual-review-required` follow-up groups.
+- [ ] 3.3 Keep `ios-simulator-runtime`, `android-java`, and `android-emulator-runtime` as their existing separate `manual-review-required` follow-up groups, while preserving `runner-images` and `android-gradle` as the already-delivered source-backed groups on current `main`.
 - [ ] 3.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` and still treats `xcode.app_path` as a watched drift/supporting fact rather than a source-backed comparison field.
 - Goal: Make the repo-owned manifest describe one bounded active Xcode source rule without reopening the simulator-runtime or non-iOS follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`

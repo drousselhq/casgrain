@@ -24,7 +24,7 @@ Already delivered on `main`:
   - `reason=baseline-match`
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
-  - every current source-rule group, including the combined iOS group, remains `manual-review-required`
+  - `runner-images` and `android-gradle` are already source-backed on current `main`, while `android-java`, `android-emulator-runtime`, and the combined iOS placeholder remain `manual-review-required`
 - The checked-in iOS baseline on current `main` watches these Xcode facts:
   - `xcode.app_path=/Applications/Xcode_16.4.app`
   - `xcode.version=16.4`

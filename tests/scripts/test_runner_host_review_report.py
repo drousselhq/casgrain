@@ -184,6 +184,87 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("#155", markdown)
         self.assertIn("#156", markdown)
 
+    def test_build_summary_does_not_add_new_gradle_advisories_when_android_evidence_is_missing(self) -> None:
+        baseline, _ = load_case("baseline-match")
+        runner_images_only = load_source_rules_case("runner-images-promoted")
+        gradle_promoted = load_source_rules_case("android-gradle-promoted")
+        observed_platforms = {
+            "android": {
+                "run": {"id": None, "url": None},
+                "host_environment_error": "no successful android-emulator-smoke.yml run found on main",
+            },
+            "ios": {
+                "run": {"id": 24600433713, "url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713"},
+                "host_environment": {
+                    "generated_at": "2026-04-19T08:00:00Z",
+                    "workflow_run": {
+                        "repository": "drousselhq/casgrain",
+                        "workflow": "ios-simulator-smoke",
+                        "run_id": "24600433713",
+                        "run_attempt": "1",
+                        "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713",
+                    },
+                    "runner": {
+                        "label": "macos-15",
+                        "image_name": "macos-15-arm64",
+                        "image_version": "20260414.0270.1",
+                        "os_name": "macOS",
+                        "os_version": "15.7.4",
+                        "os_build": "24G517",
+                    },
+                    "xcode": {
+                        "app_path": "/Applications/Xcode_16.4.app",
+                        "version": "16.4",
+                        "simulator_sdk_version": "18.5",
+                    },
+                    "simulator": {
+                        "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+                        "runtime_name": "iOS 26.2",
+                        "device_name": "iPhone 16",
+                    },
+                },
+            },
+        }
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("clean"),
+            create=True,
+        ):
+            runner_images_summary = MODULE.build_summary(
+                repo="drousselhq/casgrain",
+                baseline=baseline,
+                source_rules=runner_images_only,
+                observed_platforms=json.loads(json.dumps(observed_platforms)),
+                generated_at="2026-04-19T09:00:00Z",
+            )
+            gradle_summary = MODULE.build_summary(
+                repo="drousselhq/casgrain",
+                baseline=baseline,
+                source_rules=gradle_promoted,
+                observed_platforms=json.loads(json.dumps(observed_platforms)),
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertEqual(runner_images_summary["reason"], "missing-evidence")
+        self.assertEqual(gradle_summary["reason"], "missing-evidence")
+        self.assertEqual(gradle_summary["advisory_count"], runner_images_summary["advisory_count"])
+        android_gradle = {group["key"]: group for group in gradle_summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "no review-needed")
+        self.assertEqual(android_gradle["outcome"], "source-skipped")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "no review-needed")
+        self.assertEqual(platform_result["outcome"], "source-skipped")
+        self.assertEqual(platform_result["skip_reason"], "no successful android-emulator-smoke.yml run found on main")
+        self.assertEqual(platform_result["review_needed_findings"], [])
+        self.assertNotIn("source_error", platform_result)
+
     def test_build_summary_accepts_checked_in_source_rules_manifest(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_repo_source_rules()
@@ -464,6 +545,40 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(platform_result["outcome"], "source-error")
         self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
         self.assertIn("multiple current stable releases", platform_result["source_error"])
+
+    def test_build_summary_fails_closed_when_android_gradle_source_uses_conflicting_duplicate_stable_records(self) -> None:
+        payload = [
+            {
+                "version": "8.7",
+                "current": True,
+                "snapshot": False,
+                "nightly": False,
+                "releaseNightly": False,
+                "broken": False,
+                "activeRc": False,
+                "rcFor": None,
+                "milestoneFor": None,
+            },
+            {
+                "version": "8.7",
+                "current": False,
+                "snapshot": False,
+                "nightly": False,
+                "releaseNightly": False,
+                "broken": True,
+                "activeRc": False,
+                "rcFor": None,
+                "milestoneFor": None,
+            },
+        ]
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.normalize_gradle_release_catalog_payload(
+                payload,
+                error_context="Gradle release catalog",
+            )
+
+        self.assertIn("conflicting stable release records for 8.7", str(error.exception))
 
     def test_build_summary_fails_closed_when_android_gradle_source_is_unavailable(self) -> None:
         baseline, fixture_input = load_case("baseline-match")

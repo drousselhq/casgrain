@@ -24,7 +24,7 @@ Already delivered on `main`:
   - `reason=runner-images-source-drift`
   - issue title `security: runner-host review needed`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
-  - `runner-images` now evaluates as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder remain `manual-review-required`
+  - `runner-images` now evaluates as `runner-image-release-metadata`, `android-gradle` now evaluates as `gradle-release-catalog`, while `android-java`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder remain `manual-review-required`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` already describe a later iOS split into `#164` and `#165`, but current `main` still keeps the combined `ios-xcode-simulator` placeholder mapped to `follow_up_issue: 144`; this slice must preserve that live placeholder contract instead of pretending the iOS split already landed.
 - `tests/test-support/scripts/runner_host_review_report.py` still has no active Android Java source-backed rule, so current `main` cannot yet evaluate the watched Java facts beyond the placeholder/manual entry.
 - `.github/runner-host-watch.json` watches only these Android Java facts on current `main`:
