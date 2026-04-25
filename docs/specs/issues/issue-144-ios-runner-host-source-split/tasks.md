@@ -12,7 +12,7 @@
 
 ## 1. Confirm the current split is still needed
 
-- [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group mapped to `#144`.
+- [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group key, while live later iOS ownership now belongs to `#164` / `#165` rather than closed issue `#144`.
 - [ ] 1.2 Confirm follow-up issues `#164` and `#165` are still the intended later implementation slices for Xcode and simulator-runtime source-backed work.
 
 Goal: Prove the repo still needs the contract split described in `spec.md` before changing manifests, tests, or docs.
@@ -32,7 +32,7 @@ Hand back if:
 
 ## 2. Split the checked-in iOS source-rule inventory
 
-- [ ] 2.1 Update `.github/runner-host-advisory-sources.json` to replace `ios-xcode-simulator` with `ios-xcode` and `ios-simulator-runtime`.
+- [ ] 2.1 Historical split target (now superseded by `#164` / `#165`): update `.github/runner-host-advisory-sources.json` to replace `ios-xcode-simulator` with `ios-xcode` and `ios-simulator-runtime`.
 - [ ] 2.2 Keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` unchanged while ensuring every watched iOS fact remains owned exactly once.
 
 Goal: Make the checked-in source-rule manifest declare two bounded iOS promotion backlogs instead of one umbrella group.
@@ -91,8 +91,8 @@ Hand back if:
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, and source-rule keys `ios-xcode` / `ios-simulator-runtime` mapped to `#164` / `#165`.
-- [ ] 5.5 Prepare the implementation PR summary with exact validation evidence and honest closure semantics: `Closes #144` for the split contract, while `#164` and `#165` stay open for the later source-backed implementations.
+- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports the combined `ios-xcode-simulator` placeholder key while surfacing later iOS ownership through `#164` / `#165` rather than closed issue `#144`.
+- [ ] 5.5 Record the closure boundary honestly: `#144` is superseded by `#164` and `#165`, so current-main validation should keep the combined `ios-xcode-simulator` placeholder truthful rather than claiming the split already landed.
 
 Goal: Prove the split lands without changing current drift behavior and hand QA a bounded, verifiable slice.
 
@@ -107,10 +107,10 @@ from pathlib import Path
 summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encoding='utf-8'))
 assert summary['verdict'] == 'no review-needed', summary
 assert summary['reason'] == 'baseline-match', summary
-issue_map = {group['key']: group['follow_up_issue'] for group in summary['source_rule_groups']}
-assert issue_map['ios-xcode'] == 164, issue_map
-assert issue_map['ios-simulator-runtime'] == 165, issue_map
-print('runner-host iOS source split summary present')
+ios_placeholder = next(group for group in summary['source_rule_groups'] if group['key'] == 'ios-xcode-simulator')
+assert ios_placeholder['follow_up_issues'] == [164, 165], ios_placeholder
+assert 'follow_up_issue' not in ios_placeholder, ios_placeholder
+print('runner-host iOS placeholder ownership remains split under #164 / #165')
 PY`
 
 Non-goals:

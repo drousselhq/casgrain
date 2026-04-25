@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdk:sdk-repository xmlns:sdk="http://schemas.android.com/sdk/android/repo/repository2/01">
+  <remotePackage path="platforms;android-34">
+    <display-name>Android SDK Platform 34-ext12</display-name>
+    <revision><major>99</major></revision>
+  </remotePackage>
+  <remotePackage path="platforms;android-35">
+    <display-name>Android SDK Platform 35</display-name>
+    <revision><major>1</major></revision>
+  </remotePackage>
+</sdk:sdk-repository>

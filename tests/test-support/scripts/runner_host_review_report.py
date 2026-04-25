@@ -7,8 +7,10 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -81,7 +83,18 @@ RUNNER_IMAGE_RELEASE_TAG_PREFIXES = {
     "ubuntu-24.04": "ubuntu24",
     "macos-15-arm64": "macos-15-arm64",
 }
-ALLOWED_SOURCE_RULE_KINDS = {"manual-review-required", "runner-image-release-metadata"}
+ALLOWED_SOURCE_RULE_KINDS = {
+    "manual-review-required",
+    "runner-image-release-metadata",
+    "android-system-image-catalog",
+}
+LIVE_FOLLOW_UP_ISSUES = {
+    "ios-xcode-simulator": [164, 165],
+}
+ANDROID_VERSION_MAPPING_ROW_RE = re.compile(
+    r"Android[^<]*</td>\s*<td>(?P<version>\d+(?:\.\d+)?)</td>\s*<td>API level (?P<api>\d+)</td>",
+    re.IGNORECASE,
+)
 
 
 class RunnerHostWatchError(Exception):
@@ -331,6 +344,27 @@ def normalize_runner_image_source_streams(entry: dict[str, Any], *, error_contex
     return normalized_streams
 
 
+def normalize_android_system_image_catalogs(entry: dict[str, Any], *, error_context: str) -> dict[str, str]:
+    source_catalogs = required_object_field(entry, "source_catalogs", error_context=error_context)
+    return {
+        "platform_catalog_url": required_string_field(
+            source_catalogs,
+            "platform_catalog_url",
+            error_context=f"{error_context} source_catalogs",
+        ),
+        "system_image_catalog_url": required_string_field(
+            source_catalogs,
+            "system_image_catalog_url",
+            error_context=f"{error_context} source_catalogs",
+        ),
+        "version_mapping_url": required_string_field(
+            source_catalogs,
+            "version_mapping_url",
+            error_context=f"{error_context} source_catalogs",
+        ),
+    }
+
+
 def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise RunnerHostWatchError("runner-host source rules JSON root must be an object")
@@ -373,7 +407,17 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             raise RunnerHostWatchError(
                 f"{error_context} field 'rule_kind' must be one of {sorted(ALLOWED_SOURCE_RULE_KINDS)}"
             )
-        if key != "runner-images" and rule_kind != "manual-review-required":
+        if key == "runner-images":
+            if rule_kind not in {"manual-review-required", "runner-image-release-metadata"}:
+                raise RunnerHostWatchError(
+                    f"{error_context} source-rule group '{key}' must use manual-review-required or runner-image-release-metadata"
+                )
+        elif key == "android-emulator-runtime":
+            if rule_kind not in {"manual-review-required", "android-system-image-catalog"}:
+                raise RunnerHostWatchError(
+                    f"{error_context} source-rule group '{key}' must use manual-review-required or android-system-image-catalog"
+                )
+        elif rule_kind != "manual-review-required":
             raise RunnerHostWatchError(
                 f"{error_context} source-rule group '{key}' must stay manual-review-required on current main"
             )
@@ -429,6 +473,8 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                 f"missing={missing} unexpected={unexpected}"
             )
 
+        live_follow_up_issues = LIVE_FOLLOW_UP_ISSUES.get(key, [follow_up_issue])
+
         normalized_group = {
             "key": key,
             "surface": required_string_field(entry, "surface", error_context=error_context),
@@ -441,11 +487,18 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
                 "managed_issue_behavior",
                 error_context=error_context,
             ),
-            "follow_up_issue": follow_up_issue,
             "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
+            "follow_up_issues": live_follow_up_issues,
         }
+        if len(live_follow_up_issues) == 1:
+            normalized_group["follow_up_issue"] = follow_up_issue
         if rule_kind == "runner-image-release-metadata":
             normalized_group["source_streams"] = normalize_runner_image_source_streams(
+                entry,
+                error_context=f"{error_context} source-rule group '{key}'",
+            )
+        elif rule_kind == "android-system-image-catalog":
+            normalized_group["source_catalogs"] = normalize_android_system_image_catalogs(
                 entry,
                 error_context=f"{error_context} source-rule group '{key}'",
             )
@@ -508,12 +561,83 @@ def fetch_json_url(url: str) -> Any:
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:  # type: ignore[attr-defined]
+    except urllib.error.HTTPError as exc:
         raise RunnerHostWatchError(f"runner-image source fetch failed for {url}: HTTP {exc.code}") from exc
-    except urllib.error.URLError as exc:  # type: ignore[attr-defined]
+    except urllib.error.URLError as exc:
         raise RunnerHostWatchError(f"runner-image source fetch failed for {url}: {exc.reason}") from exc
     except json.JSONDecodeError as exc:
         raise RunnerHostWatchError(f"runner-image source fetch did not return valid JSON for {url}") from exc
+
+
+def fetch_text_url(url: str) -> str:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "text/plain, text/html, application/xml, text/xml;q=0.9, */*;q=0.8",
+            "User-Agent": "Hermes-Agent",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            charset = response.headers.get_content_charset() or "utf-8"
+            return response.read().decode(charset, "replace")
+    except urllib.error.HTTPError as exc:
+        raise RunnerHostWatchError(f"source fetch failed for {url}: HTTP {exc.code}") from exc
+    except urllib.error.URLError as exc:
+        raise RunnerHostWatchError(f"source fetch failed for {url}: {exc.reason}") from exc
+
+
+def parse_remote_package_index(xml_text: str, *, error_context: str) -> dict[str, dict[str, str]]:
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise RunnerHostWatchError(f"{error_context} did not return valid XML") from exc
+    packages: dict[str, dict[str, str]] = {}
+    for remote_package in root.findall('.//{*}remotePackage'):
+        path = remote_package.attrib.get("path")
+        if not isinstance(path, str) or not path:
+            continue
+        package_info: dict[str, str] = {}
+        display_name = remote_package.findtext('{*}display-name', default='').strip()
+        if display_name:
+            package_info["display_name"] = display_name
+        revision = remote_package.find('{*}revision')
+        if revision is not None:
+            revision_parts = []
+            for segment_name in ("major", "minor", "micro"):
+                segment_value = revision.findtext(f'{{*}}{segment_name}', default='').strip()
+                if segment_value:
+                    revision_parts.append(segment_value)
+            if revision_parts:
+                package_info["revision"] = ".".join(revision_parts)
+        packages[path] = package_info
+    if not packages:
+        raise RunnerHostWatchError(f"{error_context} did not contain any remotePackage entries")
+    return packages
+
+
+def parse_android_version_mapping(html_text: str, *, error_context: str) -> dict[str, str]:
+    api_to_version: dict[str, str] = {}
+    for match in ANDROID_VERSION_MAPPING_ROW_RE.finditer(html_text):
+        api_to_version[match.group("api")] = match.group("version")
+    if not api_to_version:
+        raise RunnerHostWatchError(f"{error_context} did not expose any Android version/API mappings")
+    return api_to_version
+
+
+def fetch_android_emulator_source_catalogs(group: dict[str, Any]) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]], dict[str, str]]:
+    source_catalogs = required_object_field(group, "source_catalogs", error_context="android-emulator-runtime source rule")
+    try:
+        platform_catalog_text = fetch_text_url(source_catalogs["platform_catalog_url"])
+        system_image_catalog_text = fetch_text_url(source_catalogs["system_image_catalog_url"])
+        version_mapping_text = fetch_text_url(source_catalogs["version_mapping_url"])
+        return (
+            parse_remote_package_index(platform_catalog_text, error_context="Android platform catalog"),
+            parse_remote_package_index(system_image_catalog_text, error_context="Android system image catalog"),
+            parse_android_version_mapping(version_mapping_text, error_context="Android version mapping catalog"),
+        )
+    except RunnerHostWatchError:
+        raise
 
 
 def fetch_latest_runner_image_release_tag(tag_prefix: str) -> str:
@@ -966,6 +1090,113 @@ def build_runner_image_platform_result(
     return result, (len(result["changed_facts"]) if result["changed_facts"] else 0)
 
 
+def build_android_emulator_runtime_group_result(
+    group: dict[str, Any],
+    observed_platforms: dict[str, Any],
+) -> tuple[dict[str, Any], int]:
+    result = {
+        "status": "no review-needed",
+        "outcome": "source-match",
+        "observed": {},
+        "source": {},
+        "findings": [],
+        "source_error": "",
+    }
+    observed_platform = required_object_field(
+        observed_platforms,
+        "android",
+        error_context="observed platforms",
+    )
+    if "host_environment_error" in observed_platform:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = required_scalar_field(
+            observed_platform,
+            "host_environment_error",
+            error_context="observed platform android",
+        )
+        return result, 1
+
+    host_environment = required_object_field(
+        observed_platform,
+        "host_environment",
+        error_context="observed platform android",
+    )
+    emulator = required_object_field(host_environment, "emulator", error_context="observed platform android host_environment")
+    observed_api_level = required_scalar_field(emulator, "api_level", error_context="observed android emulator")
+    observed_os_version = required_scalar_field(emulator, "os_version", error_context="observed android emulator")
+    observed_target = optional_scalar_field(emulator, "target")
+    observed_arch = optional_scalar_field(emulator, "arch")
+    observed_profile = optional_scalar_field(emulator, "profile")
+    result["observed"] = {
+        "emulator.api_level": observed_api_level,
+        "emulator.os_version": observed_os_version,
+        "emulator.target": observed_target,
+        "emulator.arch": observed_arch,
+    }
+    if observed_profile:
+        result["observed"]["emulator.profile"] = observed_profile
+    if not observed_target or not observed_arch:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = "observed Android emulator support fields target/arch are missing"
+        return result, 1
+
+    try:
+        platform_catalog, system_image_catalog, version_mapping = fetch_android_emulator_source_catalogs(group)
+    except RunnerHostWatchError as exc:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = str(exc)
+        return result, 1
+
+    platform_package_path = f"platforms;android-{observed_api_level}"
+    system_image_package_path = f"system-images;android-{observed_api_level};{observed_target};{observed_arch}"
+    mapped_os_version = version_mapping.get(observed_api_level, "")
+    result["source"] = {
+        "platform_package_path": platform_package_path,
+        "system_image_package_path": system_image_package_path,
+        "mapped_os_version": mapped_os_version,
+    }
+    platform_revision = platform_catalog.get(platform_package_path, {}).get("revision", "")
+    if platform_revision:
+        result["source"]["platform_revision"] = platform_revision
+    system_image_revision = system_image_catalog.get(system_image_package_path, {}).get("revision", "")
+    if system_image_revision:
+        result["source"]["system_image_revision"] = system_image_revision
+
+    if platform_package_path not in platform_catalog:
+        result["findings"].append(
+            {
+                "code": "platform-package-missing",
+                "message": f"Android platform catalog is missing {platform_package_path}",
+            }
+        )
+    if not mapped_os_version or mapped_os_version != observed_os_version:
+        result["findings"].append(
+            {
+                "code": "android-version-mismatch",
+                "message": (
+                    f"Android version mapping disagrees with observed API level/runtime pair: "
+                    f"api_level={observed_api_level} observed_os_version={observed_os_version} mapped_os_version={mapped_os_version or 'missing'}"
+                ),
+            }
+        )
+    if system_image_package_path not in system_image_catalog:
+        result["findings"].append(
+            {
+                "code": "system-image-package-missing",
+                "message": f"Android system image catalog is missing {system_image_package_path}",
+            }
+        )
+
+    if result["findings"]:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-review-needed"
+        return result, 1
+    return result, 0
+
+
 def enrich_source_rule_groups(
     normalized_source_rules: dict[str, Any],
     observed_platforms: dict[str, Any],
@@ -975,52 +1206,65 @@ def enrich_source_rule_groups(
     source_reason: str | None = None
 
     for group in normalized_source_rules["groups"]:
-        if group["rule_kind"] != "runner-image-release-metadata":
-            enriched_groups.append(group)
+        if group["rule_kind"] == "runner-image-release-metadata":
+            fetch_error = ""
+            source_by_platform: dict[str, dict[str, str]] = {}
+            try:
+                source_by_platform = fetch_runner_image_source_for_group(group, observed_platforms)
+            except RunnerHostWatchError as exc:
+                fetch_error = str(exc)
+
+            platform_results: list[dict[str, Any]] = []
+            group_outcome = "source-match"
+            group_status = "no review-needed"
+            group_advisory_count = 0
+            for platform_name in group["platforms"]:
+                platform_result, advisory_count = build_runner_image_platform_result(
+                    platform_name,
+                    group["source_streams"][platform_name],
+                    observed_platforms,
+                    source_by_platform,
+                    fetch_error=fetch_error,
+                )
+                platform_results.append(platform_result)
+                group_advisory_count += advisory_count
+                if platform_result["outcome"] == "source-error":
+                    group_outcome = "source-error"
+                    group_status = "manual-review-required"
+                elif platform_result["outcome"] == "source-drift" and group_outcome != "source-error":
+                    group_outcome = "source-drift"
+                    group_status = "manual-review-required"
+
+            if group_outcome == "source-error":
+                source_reason = "runner-images-source-error"
+            elif group_outcome == "source-drift" and source_reason != "runner-images-source-error":
+                source_reason = "runner-images-source-drift"
+
+            enriched_groups.append(
+                {
+                    **group,
+                    "status": group_status,
+                    "outcome": group_outcome,
+                    "platform_results": platform_results,
+                }
+            )
+            source_advisory_count += group_advisory_count
             continue
 
-        fetch_error = ""
-        source_by_platform: dict[str, dict[str, str]] = {}
-        try:
-            source_by_platform = fetch_runner_image_source_for_group(group, observed_platforms)
-        except RunnerHostWatchError as exc:
-            fetch_error = str(exc)
-
-        platform_results: list[dict[str, Any]] = []
-        group_outcome = "source-match"
-        group_status = "no review-needed"
-        group_advisory_count = 0
-        for platform_name in group["platforms"]:
-            platform_result, advisory_count = build_runner_image_platform_result(
-                platform_name,
-                group["source_streams"][platform_name],
-                observed_platforms,
-                source_by_platform,
-                fetch_error=fetch_error,
+        if group["rule_kind"] == "android-system-image-catalog":
+            emulator_result, group_advisory_count = build_android_emulator_runtime_group_result(group, observed_platforms)
+            enriched_groups.append(
+                {
+                    **group,
+                    **emulator_result,
+                }
             )
-            platform_results.append(platform_result)
-            group_advisory_count += advisory_count
-            if platform_result["outcome"] == "source-error":
-                group_outcome = "source-error"
-                group_status = "manual-review-required"
-            elif platform_result["outcome"] == "source-drift" and group_outcome != "source-error":
-                group_outcome = "source-drift"
-                group_status = "manual-review-required"
+            source_advisory_count += group_advisory_count
+            if group_advisory_count > 0 and source_reason is None:
+                source_reason = "android-emulator-runtime-source-review-needed"
+            continue
 
-        if group_outcome == "source-error":
-            source_reason = "runner-images-source-error"
-        elif group_outcome == "source-drift" and source_reason != "runner-images-source-error":
-            source_reason = "runner-images-source-drift"
-
-        enriched_groups.append(
-            {
-                **group,
-                "status": group_status,
-                "outcome": group_outcome,
-                "platform_results": platform_results,
-            }
-        )
-        source_advisory_count += group_advisory_count
+        enriched_groups.append(group)
 
     return enriched_groups, source_advisory_count, source_reason
 
@@ -1103,6 +1347,7 @@ def render_markdown(summary: dict[str, Any]) -> str:
         "missing-evidence": "required runner-host evidence is missing or unreadable.",
         "runner-images-source-drift": "source-backed runner-images metadata disagrees with the observed watched facts.",
         "runner-images-source-error": "runner-images source-backed evaluation could not be trusted and failed closed.",
+        "android-emulator-runtime-source-review-needed": "Android emulator-runtime source-backed evaluation requires review.",
     }.get(summary["reason"], summary["reason"])
     lines = [
         REPORT_MARKER,
@@ -1120,9 +1365,11 @@ def render_markdown(summary: dict[str, Any]) -> str:
         watched_fact_list = ", ".join(
             f"{entry['platform']}:{entry['path']}" for entry in group["watched_fact_paths"]
         )
+        follow_up_numbers = group.get("follow_up_issues") or [group["follow_up_issue"]]
+        follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
         lines.extend(
             [
-                f"- `{group['key']}` — `{group['rule_kind']}` via #{group['follow_up_issue']}",
+                f"- `{group['key']}` — `{group['rule_kind']}` via {follow_up_display}",
                 f"  - Surface: {group['surface']}",
                 f"  - Candidate source: {group['candidate_source']}",
                 f"  - Rationale: {group['rationale']}",
@@ -1158,6 +1405,29 @@ def render_markdown(summary: dict[str, Any]) -> str:
                         )
                 if platform_result["source_error"]:
                     lines.append(f"    - Source error: {sanitize_cell(platform_result['source_error'])}")
+        elif group["rule_kind"] == "android-system-image-catalog":
+            lines.extend(
+                [
+                    f"  - Status: `{group['status']}`",
+                    f"  - Outcome: `{group['outcome']}`",
+                ]
+            )
+            if group["observed"]:
+                observed_text = ", ".join(
+                    f"{path}={sanitize_cell(value)}" for path, value in group["observed"].items()
+                )
+                lines.append(f"  - Observed: {observed_text}")
+            if group["source"]:
+                source_text = ", ".join(
+                    f"{path}={sanitize_cell(value)}" for path, value in group["source"].items()
+                )
+                lines.append(f"  - Source: {source_text}")
+            if group["findings"]:
+                lines.append("  - Findings:")
+                for finding in group["findings"]:
+                    lines.append(f"    - `{finding['code']}` {sanitize_cell(finding['message'])}")
+            if group["source_error"]:
+                lines.append(f"  - Source error: {sanitize_cell(group['source_error'])}")
     lines.append("")
     for platform_name in ("android", "ios"):
         platform = summary["platforms"][platform_name]

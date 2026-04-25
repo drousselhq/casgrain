@@ -16,23 +16,11 @@
         {"platform": "ios", "path": "runner.os_version"},
         {"platform": "ios", "path": "runner.os_build"}
       ],
-      "rule_kind": "runner-image-release-metadata",
-      "rationale": "Current main compares emitted runner facts against the checked-in baseline and now evaluates authoritative GitHub-hosted runner image release metadata for the watched runner-images facts.",
-      "managed_issue_behavior": "Actionable runner-image findings must reuse the existing managed issue title.",
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main compares emitted runner facts against the checked-in baseline but does not yet evaluate authoritative GitHub-hosted runner image metadata or advisories.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
       "follow_up_issue": 143,
-      "candidate_source": "GitHub-hosted runner image release metadata",
-      "source_streams": {
-        "android": {
-          "runner_label": "ubuntu-latest",
-          "image_name": "ubuntu-24.04",
-          "compared_facts": ["runner.image_version", "runner.os_version"]
-        },
-        "ios": {
-          "runner_label": "macos-15",
-          "image_name": "macos-15-arm64",
-          "compared_facts": ["runner.image_version", "runner.os_version", "runner.os_build"]
-        }
-      }
+      "candidate_source": "GitHub-hosted runner image release metadata"
     },
     {
       "key": "android-java",
@@ -77,9 +65,9 @@
       "follow_up_issue": 156,
       "candidate_source": "Android platform catalog, Google APIs system-image catalog, and Android version/API mapping metadata",
       "source_catalogs": {
-        "platform_catalog_url": "https://dl.google.com/android/repository/repository2-1.xml",
-        "system_image_catalog_url": "https://dl.google.com/android/repository/sys-img/google_apis/sys-img2-5.xml",
-        "version_mapping_url": "https://source.android.com/docs/setup/reference/build-numbers"
+        "platform_catalog_url": "https://example.invalid/android/platforms.xml",
+        "system_image_catalog_url": "https://example.invalid/android/sys-img-google-apis.xml",
+        "version_mapping_url": "https://example.invalid/android/build-numbers.html"
       }
     },
     {

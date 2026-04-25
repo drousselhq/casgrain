@@ -6,7 +6,7 @@
 ## 1. Add failing regression coverage for Android Java source-backed evaluation
 - [ ] 1.1 Add deterministic Java source payload fixtures under `tests/test-support/fixtures/runner-host-watch/java-source/` for a supported release line, an unsupported/unrecognized release line, and an unavailable/malformed source response.
 - [ ] 1.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `android-java` remains `manual-review-required` instead of an active source-backed rule.
-- [ ] 1.3 Prove the new assertions distinguish source-backed findings from drift counts by keeping `advisory_count` at zero for Java-only source findings.
+- [ ] 1.3 Prove the new assertions keep Java-only source-backed findings on the same top-level `advisory_count` path current `main` already uses for source-backed results.
 - [ ] 1.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
 - Goal: Prove the missing Android Java source-backed contract before touching the checked-in manifest or report logic.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
@@ -16,7 +16,7 @@
 ## 2. Promote the checked-in `android-java` source rule from placeholder to active contract
 - [ ] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-java` uses `rule_kind: java-release-support`.
 - [ ] 2.2 Add only the rule-specific source metadata needed for the Java release/support evaluator while preserving `follow_up_issue: 154` and the existing watched fact paths.
-- [ ] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, keep `android-gradle` and `android-emulator-runtime` as `manual-review-required` follow-up groups, and leave the current combined `ios-xcode-simulator` placeholder unchanged in this slice.
+- [ ] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, keep `android-gradle` as the remaining `manual-review-required` Android follow-up, treat `android-emulator-runtime` as already source-backed on current `main`, and leave the current combined `ios-xcode-simulator` placeholder unchanged in this slice while later ownership stays with `#164` / `#165`.
 - [ ] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `java.distribution` or any other new Java fact.
 - Goal: Make the repo-owned manifest describe one bounded active Java source rule without reopening the other runner-host follow-up scopes.
 - Validation:
@@ -29,9 +29,10 @@
   groups = {group['key']: group for group in manifest['groups']}
   assert groups['runner-images']['rule_kind'] == 'runner-image-release-metadata', groups['runner-images']
   assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
-  for key in ['android-gradle', 'android-emulator-runtime', 'ios-xcode-simulator']:
-      assert groups[key]['rule_kind'] == 'manual-review-required', (key, groups[key])
-  print('android-java is promoted while runner-images stays delivered and the other follow-up groups stay unchanged at this checkpoint')
+  assert groups['android-gradle']['rule_kind'] == 'manual-review-required', groups['android-gradle']
+  assert groups['android-emulator-runtime']['rule_kind'] == 'android-system-image-catalog', groups['android-emulator-runtime']
+  assert groups['ios-xcode-simulator']['rule_kind'] == 'manual-review-required', groups['ios-xcode-simulator']
+  print('android-java is promoted while runner-images and android-emulator-runtime stay delivered and the remaining follow-up groups stay unchanged at this checkpoint')
   PY
   ```
 - Non-goals: No Gradle/emulator/iOS source activation, no runner-images rework, no new managed issue title.
@@ -41,7 +42,7 @@
 - [ ] 3.1 Normalize and validate the new `java-release-support` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
 - [ ] 3.2 Load authoritative machine-readable Java release/support data for live runs while keeping deterministic fixture injection for unit tests.
 - [ ] 3.3 Evaluate only `java.configured_major` and `java.resolved_version`, and emit explicit review-needed findings when the configured line is unsupported, the resolved version is unrecognized for that line, or the source payload is unavailable/malformed.
-- [ ] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` scoped to changed/missing watched facts, with a separate source-backed finding count/list for Java findings.
+- [ ] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` on the shared current-main contract: it remains the total actionable finding count across drift/missing evidence and source-backed results, without adding a separate top-level field.
 - [ ] 3.5 Update the rendered markdown/summary so Android Java source findings are explicit while `runner-images` stays source-backed and the remaining follow-up groups stay otherwise unchanged.
 - Goal: Activate one trustworthy Java-only source-backed path without changing the baseline drift contract for the rest of the runner-host watch or rewriting the unchanged iOS placeholder ownership on current `main`.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
@@ -49,10 +50,10 @@
 - Hand back if: The bounded Java evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the managed-issue sync path instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
-- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-java` is newly source-backed in this slice, `android-gradle` / `android-emulator-runtime` remain manual-review follow-ups, and the current combined `ios-xcode-simulator` placeholder still remains `manual-review-required` under `#144` on current `main`.
-- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` so they no longer read as if current `main` still has only one delivered source-backed runner-host slice or still presents `#154` as a later follow-up after this slice lands, while preserving the unchanged `ios-xcode-simulator -> #144` placeholder as the live iOS contract on current `main`.
+- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains the delivered source-backed group, `android-emulator-runtime` is already source-backed on current `main`, `android-java` becomes source-backed in this slice, `android-gradle` remains manual-review, and the current combined `ios-xcode-simulator` placeholder still remains `manual-review-required` on current `main` while later iOS ownership lives under `#164` / `#165`.
+- [ ] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` so they no longer read as if current `main` still has only one delivered source-backed runner-host slice or still presents `#154` as a later follow-up after this slice lands, while preserving the unchanged `ios-xcode-simulator` placeholder on current `main` and the later iOS ownership contract under `#164` / `#165`.
 - [ ] 4.3 Keep `java.distribution` explicitly out of scope in every touched doc/spec artifact unless a later issue adds it to `.github/runner-host-watch.json`.
-- [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group except `runner-images` is manual-only on current `main`, still says `#154` remains future work in `docs/specs/issues/issue-124-runner-host-drift-watch.md`, still says the shipped runner-host automation evaluates only drift / missing evidence in `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, or still tells implementers in `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` to expect split `ios-xcode` / `ios-simulator-runtime` summary keys mapped to `#164` / `#165` instead of the live combined `ios-xcode-simulator -> #144` placeholder on current `main`.
+- [ ] 4.4 Run a targeted search for stale wording that still claims every runner-host group except `runner-images` is manual-only on current `main`, still says `#154` remains future work in `docs/specs/issues/issue-124-runner-host-drift-watch.md`, still says the shipped runner-host automation evaluates only drift / missing evidence in `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, or still tells implementers in `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` to expect split iOS summary keys instead of the live combined `ios-xcode-simulator` placeholder plus later ownership `#164` / `#165` on current `main`.
 - Goal: Leave one truthful repo-owned contract instead of a live Java-source-backed story colliding with older drift-only wording or a fictional iOS split that current `main` has not landed yet.
 - Validation:
 
@@ -63,13 +64,13 @@
     'docs/development/cve-watch-operations.md': ['android-java', 'source-backed'],
     'docs/development/security-automation-plan.md': ['android-java', 'source-backed'],
     'docs/development/security-owasp-baseline.md': ['android-java', 'source-backed'],
-    'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['android-java', '#144'],
+    'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['android-java', '#164', '#165'],
     'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-java'],
     'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-java'],
     'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-java'],
     'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['runner-images', 'android-java'],
     'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['runner-images', 'android-java'],
-    'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['historical', 'ios-xcode-simulator', '#144'],
+    'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['historical', 'ios-xcode-simulator', '#164', '#165'],
   }
   for rel, needles in checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
@@ -86,7 +87,7 @@
 - [ ] 5.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `android-java` now renders as `java-release-support` while `runner-images` remains `runner-image-release-metadata`.
-- [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #154`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that the current combined `ios-xcode-simulator` placeholder still remains mapped to `#144` on current `main`.
+- [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #154`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that the current combined `ios-xcode-simulator` placeholder still remains on current `main` while later iOS ownership is tracked by `#164` / `#165`.
 - Goal: Leave QA with one honest picture of the Java-only source-backed change, its validation evidence, and its closure boundary without reopening the delivered runner-images or the unchanged iOS placeholder slice.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.

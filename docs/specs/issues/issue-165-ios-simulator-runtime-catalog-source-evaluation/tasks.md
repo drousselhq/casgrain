@@ -59,7 +59,7 @@
 ## 3. Promote the checked-in `ios-simulator-runtime` source rule from placeholder to active contract
 - [ ] 3.1 Update `.github/runner-host-advisory-sources.json` so `ios-simulator-runtime` uses `rule_kind: apple-simulator-runtime-catalog`.
 - [ ] 3.2 Add only the rule-specific source metadata needed for the Apple simulator runtime-catalog evaluator while preserving `follow_up_issue: 165` and the existing watched fact paths.
-- [ ] 3.3 Keep `ios-xcode`, `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` as their existing separate follow-up groups.
+- [ ] 3.3 Keep `ios-xcode` as the remaining separate follow-up under `#164`, keep `runner-images` and `android-emulator-runtime` on their already-delivered source-backed groups, and keep `android-java` / `android-gradle` as the remaining separate follow-up groups.
 - [ ] 3.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` and still treats `simulator.device_name` as a watched drift/supporting fact rather than a runtime-catalog comparison field.
 - Goal: Make the repo-owned manifest describe one bounded active simulator runtime rule without reopening device-availability, Xcode, or non-iOS follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
