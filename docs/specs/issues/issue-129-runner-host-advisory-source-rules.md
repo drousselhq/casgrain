@@ -9,7 +9,7 @@
   - `#154` — Android Java host version facts
   - `#155` — Android Gradle host version facts
   - `#156` — Android emulator-runtime host facts
-  - `#144` — iOS Xcode / simulator-runtime host surfaces
+  - `#144` — historical umbrella issue for the later iOS Xcode / simulator-runtime host surfaces; current follow-up ownership now lives in `#164` / `#165`
 
 ## Why this slice exists
 
@@ -150,7 +150,7 @@ Those docs updates must explicitly say:
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
 - the current source groups were initially `manual-review-required` in this contract; current `main` now has `runner-images` and `android-gradle` source-backed while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-ups
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
-- later source-specific promotion work is split across the delivered `#143` / `#155` slices plus the remaining follow-ups `#154`, `#156`, and `#144` after the narrowing contract in `#142` lands
+- later source-specific promotion work is split across the delivered `#143` / `#155` slices plus the remaining Android follow-ups `#154` / `#156` and the later iOS follow-up ownership under `#164` / `#165`, while the current combined manifest placeholder still maps to historical issue `#144`
 
 ## Acceptance criteria
 
@@ -174,7 +174,7 @@ Those docs updates must explicitly say:
 - **no** changes to `.github/runner-host-watch.json` watched-fact coverage beyond any tiny schema link needed for validation
 - **no** direct advisory implementation for GitHub-hosted runner images (`#143`)
 - **no** direct advisory implementation for Android host surfaces in this slice; the later narrowing contract in `#142` splits those source-backed follow-ups into `#154`, `#155`, and `#156`
-- **no** direct advisory implementation for iOS Xcode / simulator-runtime surfaces (`#144`)
+- **no** direct advisory implementation for the later iOS Xcode / simulator-runtime surfaces in this slice; that later work now lives in `#164` / `#165` after the historical umbrella issue `#144`
 - **no** broad scraping of hosted-runner package inventories or release-note text
 
 ## Validation contract for the later implementation PR
@@ -219,5 +219,5 @@ After that PR merges:
 - `#154` remains the bounded follow-up for Android Java host version source-backed automation after that narrowing lands
 - `#155` is the delivered bounded Android Gradle host version source-backed automation after that narrowing landed
 - `#156` remains the bounded follow-up for Android emulator-runtime source-backed automation after that narrowing lands
-- `#144` remains the bounded follow-up for any iOS Xcode / simulator-runtime source-backed automation
+- `#164` / `#165` remain the bounded later follow-ups for iOS Xcode / simulator-runtime source-backed automation, while the current combined `ios-xcode-simulator` placeholder on `main` still maps to historical issue `#144`
 - the shipped runner-host lane on `main` now includes the delivered `runner-images` and `android-gradle` source-backed exceptions while the remaining follow-ups stay manual-review-only until their own slices land
