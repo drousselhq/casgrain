@@ -49,7 +49,7 @@
 ## 2. Add failing regression coverage for simulator runtime-catalog evaluation
 - [ ] 2.1 Add deterministic Apple simulator runtime fixtures under `tests/test-support/fixtures/runner-host-watch/simulator-runtime-source/` for a clean match, a missing-runtime-row case, a runtime-name mismatch case, a newer-upstream-runtime-but-non-alerting case, and an unavailable/malformed source response.
 - [ ] 2.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `ios-simulator-runtime` remains `manual-review-required` instead of an active source-backed rule.
-- [ ] 2.3 Prove the new assertions distinguish simulator-runtime source-backed findings from drift counts by keeping `advisory_count` at zero for runtime-only source findings and by leaving `simulator.device_name` in drift-only/supporting status.
+- [ ] 2.3 Prove the new assertions keep simulator-runtime source-backed findings on the same top-level `advisory_count` path current `main` already uses for source-backed findings instead of introducing a separate top-level `source_advisory_count` field, while leaving `simulator.device_name` in drift-only/supporting status.
 - [ ] 2.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
 - Goal: Prove the missing simulator-runtime source-backed contract before touching the checked-in manifest or report logic.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
@@ -70,7 +70,7 @@
 - [ ] 4.1 Normalize and validate the new `apple-simulator-runtime-catalog` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
 - [ ] 4.2 Load Apple’s simulator runtime catalog for live runs while keeping deterministic fixture injection for unit tests.
 - [ ] 4.3 Evaluate only `simulator.runtime_identifier` and `simulator.runtime_name`, and emit explicit review-needed findings when the runtime row is missing, the runtime name does not match the authoritative row, or the source payload is unavailable/malformed.
-- [ ] 4.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` scoped to changed/missing watched facts, with a separate source-backed finding count/list for simulator-runtime findings.
+- [ ] 4.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` on the shared current-main contract: it remains the total actionable finding count across drift/missing evidence and source-backed results, without adding a separate top-level `source_advisory_count` field.
 - [ ] 4.5 Keep `simulator.device_name` in the existing drift path only; do not create a second source-only alert dimension for device availability in this slice.
 - [ ] 4.6 Ensure a newer upstream runtime row can be rendered as context without becoming a review-needed condition by itself on current `main`.
 - Goal: Activate one trustworthy simulator runtime-catalog path without changing the baseline drift contract for the rest of the runner-host watch.
@@ -81,12 +81,12 @@
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-simulator-runtime` is now source-backed while `ios-xcode`, `#172`, and the non-iOS groups remain on their own follow-up issues.
 - [ ] 5.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, and the other named adjacent issue-spec artifacts so they no longer read as if current `main` still has no active iOS source-backed evaluation, still leaves `#144` as the live umbrella owner, or still preserves closed `#144` as the remaining iOS follow-up after this slice lands.
-- [ ] 5.3 Reconcile `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` so they stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work and all source-backed review findings still flow only through the shared top-level `advisory_count`; after `#165` lands, those older artifacts must treat `ios-simulator-runtime` as already source-backed on current `main` and preserve the separate simulator-runtime source finding/count surface instead of forbidding `source_advisory_count`.
-- [ ] 5.4 Reconcile `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split prerequisite is on current `main`, and so they keep the post-`#165` shared summary contract truthful by preserving a separate simulator-runtime source finding/count surface instead of collapsing those findings into a drift-only top-level count.
-- [ ] 5.5 Reconcile `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` so they stop requiring all source-backed review findings to live only in the shared top-level `advisory_count` with no separate source-backed finding/count field once this slice lands.
-- [ ] 5.6 Reconcile `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` so they stop requiring that shared top-level-count-only contract, and rewrite `issue-156/spec.md` so it no longer says the later iOS work has open spec-entry PRs `#171` and `#173` after this slice lands.
+- [ ] 5.3 Reconcile `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` so they stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work; after `#165` lands, those older artifacts must treat `ios-simulator-runtime` as already source-backed on current `main` and preserve the shared current-main contract where source-backed findings still increment the same top-level `advisory_count` while remaining explicit through source-rule group details.
+- [ ] 5.4 Reconcile `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` so they stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split prerequisite is on current `main`, and so they keep the post-`#165` shared summary contract truthful by preserving that same shared current-main contract instead of reviving either a drift-only top-level count or a separate top-level `source_advisory_count`.
+- [ ] 5.5 Reconcile `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` so they preserve the shared current-main contract where simulator-runtime source findings increment the same top-level `advisory_count` while remaining explicit through source-rule group details, instead of requiring a separate source-backed finding/count field.
+- [ ] 5.6 Reconcile `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` so they keep that same shared current-main contract for simulator-runtime source findings, and rewrite `issue-156/spec.md` so it no longer says the later iOS work has open spec-entry PRs `#171` and `#173` after this slice lands.
 - [ ] 5.7 Make the docs explicit that `simulator.device_name` remains a drift-only supporting fact in this slice and that any future device-availability source automation belongs to `#172`.
-- [ ] 5.8 Run a targeted search for stale wording that still claims `ios-simulator-runtime` is manual-only future work, that `#144` still owns the live iOS umbrella contract after the split prerequisite, that `issue-143/tasks.md` still says `#154`, `#155`, `#156`, and `#144` remain future work instead of the split `#164` / `#165` ownership, that `issue-164/{spec,tasks}.md` still preserves the post-`#164` top-level-`advisory_count`-only contract or keeps `ios-simulator-runtime` manual-only, that adjacent `#154` / `#155` / `#156` specs/tasks still encode conflicting shared summary/count expectations about `source_advisory_count`, or that `issue-156/spec.md` still preserves `#173` as an open spec-entry PR.
+- [ ] 5.8 Run a targeted search for stale wording that still claims `ios-simulator-runtime` is manual-only future work, that `#144` still owns the live iOS umbrella contract after the split prerequisite, that `issue-143/tasks.md` still says `#154`, `#155`, `#156`, and `#144` remain future work instead of the split `#164` / `#165` ownership, that `issue-164/{spec,tasks}.md` still preserves `ios-simulator-runtime` as manual-only, that adjacent `#154` / `#155` / `#156` specs/tasks still encode conflicting shared summary/count expectations about a drift-only top-level `advisory_count` or a separate top-level `source_advisory_count` for simulator-runtime findings, or that `issue-156/spec.md` still preserves `#173` as an open spec-entry PR.
 - Goal: Leave one truthful repo-owned contract instead of a live simulator-runtime source-backed story colliding with older drift-only or umbrella-work wording.
 - Validation:
   ```bash
@@ -103,14 +103,14 @@
       'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['#164', '#165', 'ios-simulator-runtime'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['#172', '#165'],
       'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': ['#165', 'ios-simulator-runtime'],
-      'docs/specs/issues/issue-164-ios-xcode-source-evaluation/spec.md': ['#165', 'ios-simulator-runtime', 'source_advisory_count'],
-      'docs/specs/issues/issue-164-ios-xcode-source-evaluation/tasks.md': ['#165', 'ios-simulator-runtime', 'source_advisory_count'],
-      'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': ['#165', 'source_advisory_count'],
-      'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': ['#165', 'source_advisory_count'],
-      'docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md': ['source_advisory_count', 'ios-simulator-runtime'],
-      'docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md': ['source_advisory_count', 'ios-simulator-runtime'],
-      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md': ['source_advisory_count', '#165', '#164'],
-      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md': ['source_advisory_count', '#165'],
+      'docs/specs/issues/issue-164-ios-xcode-source-evaluation/spec.md': ['#165', 'ios-simulator-runtime', 'same top-level `advisory_count`'],
+      'docs/specs/issues/issue-164-ios-xcode-source-evaluation/tasks.md': ['#165', 'ios-simulator-runtime', 'same top-level `advisory_count`'],
+      'docs/specs/issues/issue-154-android-java-source-evaluation/spec.md': ['#165', 'ios-simulator-runtime'],
+      'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': ['#165', 'ios-simulator-runtime'],
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/spec.md': ['#165', 'ios-simulator-runtime'],
+      'docs/specs/issues/issue-155-android-gradle-source-evaluation/tasks.md': ['#165', 'ios-simulator-runtime'],
+      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md': ['#165', '#164', 'ios-simulator-runtime'],
+      'docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md': ['#165', 'ios-simulator-runtime'],
   }
   for rel, needles in checks.items():
       text = Path(rel).read_text(encoding='utf-8').lower()
@@ -121,10 +121,10 @@
   issue_143_tasks = Path('docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md').read_text(encoding='utf-8')
   assert '`#154`, `#155`, `#156`, and `#144` remain future work' not in issue_143_tasks, issue_143_tasks
   assert '`#154`, `#155`, `#156`, and `#144` remain the open follow-ups' not in issue_143_tasks, issue_143_tasks
-  assert "assert 'source_advisory_count' not in summary" not in issue_164_spec, issue_164_spec
+  assert "assert 'source_advisory_count' not in summary" in issue_164_spec, issue_164_spec
   assert 'remains separate follow-up work under `#165`' not in issue_164_spec, issue_164_spec
   assert 'preserve `ios-simulator-runtime` as `manual-review-required` and mapped to `#165`' not in issue_164_spec, issue_164_spec
-  assert 'without adding a separate top-level `source_advisory_count` field' not in issue_164_tasks, issue_164_tasks
+  assert 'without adding a separate top-level `source_advisory_count` field' in issue_164_tasks, issue_164_tasks
   issue_156_spec = Path('docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md').read_text(encoding='utf-8')
   assert '#173' not in issue_156_spec, 'issue-156 spec must not preserve PR #173 as still open after #165 lands'
   assert 'open spec-entry prs `#171` and `#173`' not in issue_156_spec.lower(), issue_156_spec
