@@ -3,8 +3,9 @@
 - Issue: `#80`
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #80`
-- Downstream dependency that stays blocked until this slice lands: `#79` (`Promote android-smoke to a required merge gate on main`)
+- Historical downstream dependency at shaping time: `#79` (`Promote android-smoke to a required merge gate on main`)
 - Supersedes the legacy one-file issue artifact previously stored at `docs/specs/issues/issue-80-android-smoke-docs-and-policy-reconciliation.md`
+- Historical note: this closed issue artifact records the tracker-retirement slice before issue `#79` and later issue `#135` finished the live Android / shared-mobile merge-gate reconciliation. Read current-state merge-gate ownership from the canonical docs plus the issue-79 and issue-135 artifacts, not from this closed issue alone.
 
 ## Why this slice exists
 
@@ -28,7 +29,7 @@ That means the honest remaining gap is no longer a broad docs rewrite. The repo-
 
 ## Scope of this slice
 
-Retire the stale Android tracker-sync path so current `main` matches the no-separate-tracker Android advisory contract.
+Retire the stale Android tracker-sync path so the then-current `main` matched the no-separate-tracker Android advisory contract.
 
 This slice must:
 1. remove the hardcoded live tracker dependency from the Android reliability sync path
@@ -92,8 +93,8 @@ Do **not** broaden this into another repo-wide Android docs sweep. The canonical
 2. `android_smoke_issue_sync.py --dry-run` on the current live summary no longer plans any tracker mutation when the only reason is `schedule_main_runs_below_threshold`.
 3. The managed blocker path still works for concrete non-threshold blockers and does not create duplicate blocker issues for the same blocker class.
 4. A previously managed blocker issue is closed when a later report no longer justifies keeping it open.
-5. Repo-owned docs/spec artifacts on `main` no longer depend on a live tracker issue `#132` as part of the current Android advisory contract.
-6. The implementation PR for this slice can honestly say `Closes #80`, leaving `#79` as the remaining follow-up for Android merge-gate promotion.
+5. Repo-owned docs/spec artifacts on `main` no longer depended on a live tracker issue `#132` as part of the then-current Android advisory contract.
+6. The implementation PR for this slice can honestly say `Closes #80`; at the time this spec landed, `#79` still tracked the later Android merge-gate promotion, but current `main` has since completed that follow-up.
 
 ## Explicit non-goals
 
@@ -140,5 +141,5 @@ The implementation PR for this spec should be able to close `#80` because it rem
 
 After that PR merges:
 - Android smoke may still remain `not_qualified` for live reliability-window reasons, but that state should live in the report output and any bounded blocker issue rather than in a dedicated tracker issue
-- `#79` becomes the remaining follow-up for later Android merge-gate promotion
+- at the time this slice landed, `#79` still tracked the later Android merge-gate promotion; current `main` has since completed that follow-up, so this closed spec no longer defines a live downstream owner
 - if future work needs richer advisory reporting beyond blocker-only GitHub state, open a new bounded follow-up issue instead of reopening this slice
