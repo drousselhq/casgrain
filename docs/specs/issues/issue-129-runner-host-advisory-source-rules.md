@@ -146,9 +146,9 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- current shipped runner-host automation still evaluates drift / missing evidence only
+- current shipped runner-host automation now evaluates drift / missing evidence plus the delivered source-backed promotions for `runner-images` and `android-emulator-runtime`
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
-- the current source groups remain `manual-review-required` on `main` after this slice unless a later follow-up lands
+- the current source groups on `main` keep `runner-images` and `android-emulator-runtime` delivered while `android-java`, `android-gradle`, and the combined iOS placeholder remain `manual-review-required` follow-ups until their later slices land
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
 - later source-specific promotion work is split across delivered `#143` / `#156` plus open follow-ups `#154`, `#155`, `#164`, and `#165` after the narrowing contract in `#142` lands
 

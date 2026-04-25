@@ -73,8 +73,8 @@ Implementation contract:
   - the resolved version cannot be matched to authoritative metadata for that configured major
   - the authoritative Java source response is unavailable, malformed, or contradictory for the Java slice
 - keep the current drift / missing-evidence evaluation for watched facts authoritative and unchanged for both platforms
-- preserve the existing meaning of top-level `advisory_count`: it remains the count of changed or missing watched facts from the baseline contract
-- keep source-backed findings explicit in group-level details without inventing a separate top-level count beyond `advisory_count`
+- preserve the existing meaning of top-level `advisory_count` on current `main`: it is the total number of review-needed baseline drift / missing-evidence facts plus any review-needed source-backed findings already counted by delivered source-backed groups
+- make Android Java source findings contribute to that same top-level `advisory_count` instead of inventing a separate top-level field
 - set top-level `alert` / `verdict` to review-needed when either:
   - drift / missing evidence requires review, or
   - Android Java source findings require review
@@ -82,7 +82,7 @@ Implementation contract:
   - `baseline-match` when there is no drift and no Android Java source finding
   - existing drift reasons keep winning when drift or missing evidence exists
   - use a dedicated source-backed reason (for example `source-review-needed`) when drift count is zero but Android Java source findings require review
-- render markdown that clearly distinguishes Android Java source-backed findings from drift / missing-evidence findings and states that the non-Java runner-host groups still remain `manual-review-required` follow-ups
+- render markdown that clearly distinguishes Android Java source-backed findings from drift / missing-evidence findings and states that `runner-images` and `android-emulator-runtime` are already delivered source-backed groups while `android-gradle` and the current combined iOS placeholder remain follow-up work
 - fail closed on checked-in manifest/schema violations, but degrade authoritative-source retrieval/normalization failures into explicit review-needed Android Java findings rather than a silent pass
 
 ### 3. Deterministic fixtures and tests
@@ -95,8 +95,8 @@ Required coverage:
 - supported/current Android Java source payload + baseline-match host facts → `alert=false`, `advisory_count=0`, and `android-java` is reported as `java-release-support`
 - unsupported or unrecognized Android Java version → `alert=true` with a source-backed review-needed reason while the drift counter remains zero
 - authoritative-source payload unavailable or malformed → explicit review-needed Android Java source finding instead of silent success
-- existing drift and missing-evidence fixtures still preserve their current `advisory_count` behavior
-- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `android-java` rule while the non-Java groups stay manual-only
+- existing drift and missing-evidence fixtures still preserve their current overall `advisory_count` behavior on current `main`
+- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `android-java` rule while `runner-images` and `android-emulator-runtime` stay delivered and the remaining follow-up groups stay unchanged
 
 ### 4. Canonical docs and live-contract reconciliation
 
@@ -128,9 +128,9 @@ Those updates must explicitly say:
 
 1. `.github/runner-host-advisory-sources.json` exposes `android-java` as `java-release-support` while preserving its watched fact paths and `follow_up_issue: 154`.
 2. A supported/baseline-match Android Java evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Java source findings requiring review.
-3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
-4. The rendered JSON and markdown distinguish Android Java source-backed findings from drift / missing-evidence findings, preserve `runner-images` as the delivered source-backed group, and leave `android-gradle`, `android-emulator-runtime`, and the current combined iOS placeholder as unchanged follow-up entries.
-5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, no longer claim that only drift / missing-evidence checks or only `runner-images` are source-backed on current `main`, no longer present `#154` as a later follow-up once this slice lands, and still keep the unchanged combined `ios-xcode-simulator -> #144` placeholder truthful on current `main`.
+3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/managed-issue path into `manual-review-required`.
+4. The rendered JSON and markdown distinguish Android Java source-backed findings from drift / missing-evidence findings, preserve `runner-images` and `android-emulator-runtime` as delivered source-backed groups, and leave `android-gradle` plus the current combined iOS placeholder as the unchanged follow-up entries.
+5. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, no longer claim that only drift / missing-evidence checks or only `runner-images` are source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only wording, no longer present `#154` as a later follow-up once this slice lands, and still keep the unchanged combined `ios-xcode-simulator` placeholder truthful on current `main` under later ownership `#164` / `#165`.
 6. The implementation PR for this slice can honestly say `Closes #154` because the Android Java source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals

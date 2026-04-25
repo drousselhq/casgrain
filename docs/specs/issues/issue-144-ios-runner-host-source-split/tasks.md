@@ -32,7 +32,7 @@ Hand back if:
 
 ## 2. Split the checked-in iOS source-rule inventory
 
-- [ ] 2.1 Update `.github/runner-host-advisory-sources.json` to replace `ios-xcode-simulator` with `ios-xcode` and `ios-simulator-runtime`.
+- [ ] 2.1 Historical split target (now superseded by `#164` / `#165`): update `.github/runner-host-advisory-sources.json` to replace `ios-xcode-simulator` with `ios-xcode` and `ios-simulator-runtime`.
 - [ ] 2.2 Keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` unchanged while ensuring every watched iOS fact remains owned exactly once.
 
 Goal: Make the checked-in source-rule manifest declare two bounded iOS promotion backlogs instead of one umbrella group.
@@ -92,7 +92,7 @@ Hand back if:
 - [ ] 5.2 Run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports the combined `ios-xcode-simulator` placeholder key while surfacing later iOS ownership through `#164` / `#165` rather than closed issue `#144`.
-- [ ] 5.5 Prepare the implementation PR summary with exact validation evidence and honest closure semantics: `Closes #144` for the split contract, while `#164` and `#165` stay open for the later source-backed implementations.
+- [ ] 5.5 Record the closure boundary honestly: `#144` is superseded by `#164` and `#165`, so current-main validation should keep the combined `ios-xcode-simulator` placeholder truthful rather than claiming the split already landed.
 
 Goal: Prove the split lands without changing current drift behavior and hand QA a bounded, verifiable slice.
 

@@ -6,7 +6,7 @@
 ## 1. Add failing regression coverage for Android Java source-backed evaluation
 - [ ] 1.1 Add deterministic Java source payload fixtures under `tests/test-support/fixtures/runner-host-watch/java-source/` for a supported release line, an unsupported/unrecognized release line, and an unavailable/malformed source response.
 - [ ] 1.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `android-java` remains `manual-review-required` instead of an active source-backed rule.
-- [ ] 1.3 Prove the new assertions distinguish source-backed findings from drift counts by keeping `advisory_count` at zero for Java-only source findings.
+- [ ] 1.3 Prove the new assertions keep Java-only source-backed findings on the same top-level `advisory_count` path current `main` already uses for source-backed results.
 - [ ] 1.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
 - Goal: Prove the missing Android Java source-backed contract before touching the checked-in manifest or report logic.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
@@ -29,8 +29,9 @@
   groups = {group['key']: group for group in manifest['groups']}
   assert groups['runner-images']['rule_kind'] == 'runner-image-release-metadata', groups['runner-images']
   assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
-  for key in ['android-gradle', 'android-emulator-runtime', 'ios-xcode-simulator']:
-      assert groups[key]['rule_kind'] == 'manual-review-required', (key, groups[key])
+  assert groups['android-gradle']['rule_kind'] == 'manual-review-required', groups['android-gradle']
+  assert groups['android-emulator-runtime']['rule_kind'] == 'android-system-image-catalog', groups['android-emulator-runtime']
+  assert groups['ios-xcode-simulator']['rule_kind'] == 'manual-review-required', groups['ios-xcode-simulator']
   print('android-java is promoted while runner-images and android-emulator-runtime stay delivered and the remaining follow-up groups stay unchanged at this checkpoint')
   PY
   ```
@@ -41,7 +42,7 @@
 - [ ] 3.1 Normalize and validate the new `java-release-support` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
 - [ ] 3.2 Load authoritative machine-readable Java release/support data for live runs while keeping deterministic fixture injection for unit tests.
 - [ ] 3.3 Evaluate only `java.configured_major` and `java.resolved_version`, and emit explicit review-needed findings when the configured line is unsupported, the resolved version is unrecognized for that line, or the source payload is unavailable/malformed.
-- [ ] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` scoped to changed/missing watched facts, with source-backed Java findings kept explicit in group-level details without a separate top-level count.
+- [ ] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` on the shared current-main contract: it remains the total actionable finding count across drift/missing evidence and source-backed results, without adding a separate top-level field.
 - [ ] 3.5 Update the rendered markdown/summary so Android Java source findings are explicit while `runner-images` stays source-backed and the remaining follow-up groups stay otherwise unchanged.
 - Goal: Activate one trustworthy Java-only source-backed path without changing the baseline drift contract for the rest of the runner-host watch or rewriting the unchanged iOS placeholder ownership on current `main`.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`

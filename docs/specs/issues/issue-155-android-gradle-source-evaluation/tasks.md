@@ -129,7 +129,7 @@
 - [ ] 5.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `android-gradle` now renders as `gradle-release-catalog`.
-- [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #155`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `runner-images` stayed source-backed while the remaining follow-up groups stayed manual-only.
+- [ ] 5.5 In the PR summary/comment, say the implementation PR `Closes #155`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `runner-images` and `android-emulator-runtime` stayed source-backed while `android-java` and the current combined iOS placeholder remained the follow-up groups.
 - Goal: Leave QA with one honest picture of the Gradle-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.

@@ -126,7 +126,7 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation still evaluates drift / missing evidence only
+- the shipped runner-host automation already includes the delivered `runner-images` and `android-emulator-runtime` source-backed exceptions while the remaining Android follow-ups stay separate
 - the Android backlog is no longer one combined `android-java-gradle` umbrella after this slice
 - later source-backed Android promotion is split across `#154`, `#155`, and `#156`
 - those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles

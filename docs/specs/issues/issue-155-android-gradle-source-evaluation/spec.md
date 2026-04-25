@@ -82,7 +82,7 @@ Implementation contract:
   - `baseline-match` when there is no drift and no Android Gradle source finding
   - existing drift reasons keep winning when drift or missing evidence exists
   - use a dedicated source-backed reason (for example `source-review-needed`) when drift count is zero but Android Gradle source findings require review
-- render markdown that clearly distinguishes Android Gradle source-backed findings from drift / missing-evidence findings and states that `runner-images` remains the already-delivered source-backed exception while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` stay follow-up groups
+- render markdown that clearly distinguishes Android Gradle source-backed findings from drift / missing-evidence findings and states that `runner-images` and `android-emulator-runtime` remain the already-delivered source-backed exceptions while `android-java` and `ios-xcode-simulator` stay follow-up groups
 - do **not** auto-alert solely because a newer Gradle release exists; until the repo defines a separate upgrade policy, newer upstream releases may be rendered as informational context but must not by themselves open or reopen the runner-host review lane on current `main`
 - fail closed on checked-in manifest/schema violations, but degrade authoritative-source retrieval/normalization failures into explicit review-needed Android Gradle findings rather than a silent pass
 
@@ -183,5 +183,5 @@ The implementation PR for this spec should be able to close `#155` because it tu
 
 After that PR merges:
 - Android Gradle facts are evaluated from authoritative machine-readable release metadata through the existing runner-host watch
-- `runner-images` remains on its existing source-backed path, while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain separate manual-review follow-ups
+- `runner-images` and `android-emulator-runtime` remain on their existing source-backed paths, while `android-java` and `ios-xcode-simulator` remain separate manual-review follow-ups
 - any future Gradle upgrade-policy, wrapper-integrity, or dependency-surface expansion must land as a new bounded follow-up issue instead of being smuggled into `#155`
