@@ -649,6 +649,53 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(platform_result["outcome"], "source-error")
         self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
 
+    def test_build_summary_fails_closed_when_android_gradle_source_response_bytes_are_not_utf8(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        class FakeResponse:
+            def __init__(self, payload: bytes) -> None:
+                self.payload = payload
+
+            def read(self) -> bytes:
+                return self.payload
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> bool:
+                return False
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE.urllib.request,
+            "urlopen",
+            return_value=FakeResponse(b"\xff\xfe\xfa"),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+        self.assertIn("did not return valid UTF-8 JSON", platform_result["source_error"])
+
     def test_build_summary_promotes_runner_images_with_clean_source_match(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("runner-images-promoted")

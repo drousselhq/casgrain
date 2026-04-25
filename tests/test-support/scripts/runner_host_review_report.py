@@ -1082,6 +1082,8 @@ def fetch_gradle_release_catalog_json(url: str) -> Any:
         raise RunnerHostWatchError(f"Gradle release catalog fetch failed for {url}: HTTP {exc.code}") from exc
     except urllib.error.URLError as exc:  # type: ignore[attr-defined]
         raise RunnerHostWatchError(f"Gradle release catalog fetch failed for {url}: {exc.reason}") from exc
+    except UnicodeDecodeError as exc:
+        raise RunnerHostWatchError(f"Gradle release catalog did not return valid UTF-8 JSON for {url}") from exc
     except json.JSONDecodeError as exc:
         raise RunnerHostWatchError(f"Gradle release catalog did not return valid JSON for {url}") from exc
 
