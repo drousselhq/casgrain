@@ -91,7 +91,7 @@ Hand back if:
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.4 Historical validation note: render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, the live combined `ios-xcode-simulator` placeholder mapped to `#144`, and the already-delivered source-backed groups `runner-images` plus `android-gradle`.
+- [ ] 5.4 Historical validation note from when this split lands: render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, the live combined `ios-xcode-simulator` placeholder mapped to `#144`, and the already-delivered source-backed groups `runner-images` plus `android-gradle`.
 - [ ] 5.5 Prepare the implementation PR summary with exact validation evidence and honest closure semantics: `Closes #144` for the split contract, while `#164` and `#165` stay open for the later source-backed implementations.
 
 Goal: Prove the split lands without changing current drift behavior and hand QA a bounded, verifiable slice.

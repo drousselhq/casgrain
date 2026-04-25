@@ -95,7 +95,7 @@ Implementation contract for this slice:
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
 - the new source-rule section must make it explicit that Xcode and simulator-runtime promotion are still future follow-up work
-- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands
+- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands, while still staying truthful that current `main` already includes the delivered `runner-images` and `android-gradle` source-backed slices
 
 ### 3. Tests and fixtures
 
@@ -120,7 +120,7 @@ The implementation PR for this spec must update these docs:
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation still evaluates drift / missing evidence only
+- the shipped runner-host automation still keeps drift / missing evidence authoritative for watched-fact mismatches, but current `main` already includes the delivered `runner-images` and `android-gradle` source-backed slices even though this iOS split does not yet add an iOS source-backed evaluator
 - the iOS backlog is no longer one combined `ios-xcode-simulator` umbrella after this slice
 - later source-backed iOS promotion is split across `#164` and `#165`
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a current summary key or `#144` as the remaining iOS umbrella owner once this slice lands

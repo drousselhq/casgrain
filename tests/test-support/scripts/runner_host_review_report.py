@@ -1046,12 +1046,18 @@ def normalize_gradle_release_catalog_payload(payload: Any, *, error_context: str
     if not stable_versions:
         raise RunnerHostWatchError(f"{error_context} does not contain any stable releases")
 
+    current_stable_versions = sorted(current_stable_versions, key=gradle_version_sort_key)
+    if len(current_stable_versions) > 1:
+        raise RunnerHostWatchError(
+            f"{error_context} contains multiple current stable releases: {current_stable_versions}"
+        )
+
     stable_version_list = sorted(stable_versions, key=gradle_version_sort_key)
     return {
         "stable_versions": stable_versions,
         "stable_version_list": stable_version_list,
         "latest_stable_version": stable_version_list[-1],
-        "current_stable_versions": sorted(current_stable_versions, key=gradle_version_sort_key),
+        "current_stable_versions": current_stable_versions,
     }
 
 

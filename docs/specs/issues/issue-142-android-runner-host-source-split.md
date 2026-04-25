@@ -103,8 +103,8 @@ Implementation contract for this slice:
 
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
-- the new source-rule section must make it explicit that Android Java, Gradle, and emulator-runtime promotion are still future follow-up work
-- the report must not imply that any Android source-backed advisory evaluation is already active until `#154`, `#155`, or `#156` lands
+- historical note: when this Android split landed, the new source-rule section had to make it explicit that Android Java, Gradle, and emulator-runtime promotion were still future follow-up work
+- current `main` now has `#155` delivered, so this historical spec must not be read as claiming that every Android source-backed advisory evaluation is still inactive
 
 ### 3. Tests and fixtures
 
@@ -126,7 +126,7 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation still evaluates drift / missing evidence only
+- historical note: when `#142` landed, the shipped runner-host automation still evaluated drift / missing evidence only for the split Android follow-up groups; current `main` now keeps drift / missing-evidence authoritative while also including the delivered `android-gradle` source-backed slice
 - the Android backlog is no longer one combined `android-java-gradle` umbrella after this slice
 - historical note: later source-backed Android promotion was split across `#154`, `#155`, and `#156`; current `main` now has `#155` delivered while `#154` and `#156` remain follow-ups
 - those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles

@@ -113,8 +113,8 @@ Implementation contract for this slice:
 
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
-- the new source-rule section must make it explicit that current runner-host automation is still drift-triggered review only
-- the report must not imply that any source-backed advisory evaluation is already active until a later follow-up issue lands
+- historical note: when this contract landed, the new source-rule section had to make it explicit that runner-host automation was still drift-triggered review only while every source group remained `manual-review-required`
+- current `main` now includes the delivered `runner-images` and `android-gradle` source-backed slices, so this historical spec must not be read as claiming that every source group on current `main` is still manual-only
 
 ### 3. Tests and fixtures
 
@@ -146,7 +146,7 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- current shipped runner-host automation still evaluates drift / missing evidence only
+- historical note: when `#129` landed, shipped runner-host automation still evaluated drift / missing evidence only; current `main` now keeps that drift / missing-evidence path authoritative while also including the delivered `runner-images` and `android-gradle` source-backed slices
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
 - the current source groups were initially `manual-review-required` in this contract; current `main` now has `runner-images` and `android-gradle` source-backed while `android-java`, `android-emulator-runtime`, and `ios-xcode-simulator` remain `manual-review-required` follow-ups
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles

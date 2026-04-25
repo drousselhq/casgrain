@@ -4,7 +4,7 @@
 - Source contract: `./spec.md`
 
 ## 1. Add failing regression coverage for Android Gradle source-backed evaluation
-- [x] 1.1 Add deterministic Gradle source payload fixtures under `tests/test-support/fixtures/runner-host-watch/gradle-source/` for a recognized non-broken release, a broken or unrecognized release, a newer-release-available-but-non-alerting case, and an unavailable/malformed source response.
+- [x] 1.1 Add deterministic Gradle source payload fixtures under `tests/test-support/fixtures/runner-host-watch/gradle-source/` for a recognized non-broken release, a broken or unrecognized release, a newer-release-available-but-non-alerting case, and unavailable/malformed/contradictory source responses.
 - [x] 1.2 Extend `tests/scripts/test_runner_host_review_report.py` so current `main` fails when `android-gradle` remains `manual-review-required` instead of an active source-backed rule.
 - [x] 1.3 Prove the new assertions distinguish Android Gradle source-backed findings from baseline drift / missing-evidence findings without inventing a new top-level `source_advisory_count` field.
 - [x] 1.4 Verify the new or updated tests fail on the pre-change implementation before editing production behavior.
@@ -40,7 +40,7 @@
 ## 3. Implement bounded Android Gradle source evaluation in `runner_host_review_report.py`
 - [x] 3.1 Normalize and validate the new `gradle-release-catalog` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
 - [x] 3.2 Load authoritative machine-readable Gradle release data for live runs while keeping deterministic fixture injection for unit tests.
-- [x] 3.3 Evaluate only `gradle.configured_version` and `gradle.resolved_version`, and emit explicit review-needed findings when a watched Gradle version is unrecognized, the resolved version is marked `broken`, or the source payload is unavailable/malformed.
+- [x] 3.3 Evaluate only `gradle.configured_version` and `gradle.resolved_version`, and emit explicit review-needed findings when a watched Gradle version is unrecognized, the resolved version is marked `broken`, or the authoritative source payload is unavailable, malformed, or contradictory.
 - [x] 3.4 Preserve the existing drift / missing-evidence behavior and keep top-level `advisory_count` consistent with current `main` by counting review-needed source-backed findings there too, while still making Android Gradle source findings explicit in the source-rule group details.
 - [x] 3.5 Ensure a newer upstream Gradle release can be rendered as context without becoming a review-needed condition by itself on current `main`.
 - [x] 3.6 Update the rendered markdown/summary so Android Gradle source findings are explicit, `runner-images` still renders as the already-delivered source-backed group, and the remaining follow-up groups stay manual-review-only.
