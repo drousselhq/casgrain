@@ -19,12 +19,13 @@
 Already delivered on `main`:
 - PR #145 added the repo-owned runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
 - PR #166 merged the analyst contract for `#144`, which froze the later iOS source-backed work into two separate follow-up issues: `#164` for Xcode host facts and `#165` for simulator-runtime host facts.
-- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against current `main` still reports:
+- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against then-current `main` reported:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
-  - every current source-rule group, including the combined iOS group, remains `manual-review-required`
+  - at that handoff point, every source-rule group, including the combined iOS group, still remained `manual-review-required`
+- current `main` has since promoted `runner-images` and `android-emulator-runtime` to delivered source-backed groups, while `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder remain later follow-up work until their bounded slices land
 - The checked-in iOS baseline on current `main` watches these Xcode facts:
   - `xcode.app_path=/Applications/Xcode_16.4.app`
   - `xcode.version=16.4`
@@ -142,7 +143,7 @@ Update:
 Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-xcode`
 - `ios-simulator-runtime` remains separate follow-up work under `#165`
-- `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` remain on their own separate source-backed follow-up issues until those slices land
+- `runner-images` and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`, while `android-java` and `android-gradle` remain the separate non-iOS follow-up issues
 - actionable iOS Xcode findings continue to reuse `security: runner-host review needed`
 - `xcode.app_path` remains part of the drift guard / supporting context for the iOS smoke artifact contract in this slice rather than a source-backed comparison field
 - a newer Apple Xcode release or newer SDK row alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized release/support metadata for the observed Xcode version and bundled SDK facts, not a general freshness policy
@@ -167,7 +168,7 @@ Those updates must explicitly say:
 - **no** source-backed evaluation for `runner-images` (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
 - **no** source-backed evaluation for `android-gradle` (`#155`)
-- **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
+- **no** changes to the already-delivered `android-emulator-runtime` source-backed evaluation (`#156`)
 - **no** source-backed evaluation for `ios-simulator-runtime` (`#165`)
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched Xcode facts
 - **no** second source-only alert dimension for `xcode.app_path`

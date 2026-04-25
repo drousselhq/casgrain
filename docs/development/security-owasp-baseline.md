@@ -192,8 +192,7 @@ Tracked gap:
 - #73 — activate the Renovate lane by enabling the app/runner outside the repo
 - #154 — evaluate source-backed advisory automation for Android Java host surfaces
 - #155 — evaluate source-backed advisory automation for Android Gradle host surfaces
-- #156 — evaluate source-backed advisory automation for Android emulator-runtime host surfaces
-- #143 — delivered source-backed runner-image release-metadata automation for GitHub-hosted runner image surfaces
+- delivered source-backed runner-host slices on current `main`: #143 (`runner-images`) and #156 (`android-emulator-runtime`)
 - #164 / #165 — evaluate source-backed advisory automation for iOS Xcode and simulator-runtime host surfaces
 - #82 — pin remaining mutable GitHub Actions references to immutable commit SHAs
 
