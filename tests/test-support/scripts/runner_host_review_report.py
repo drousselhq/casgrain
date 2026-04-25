@@ -81,6 +81,7 @@ RUNNER_IMAGE_RELEASE_TAG_PREFIXES = {
     "ubuntu-24.04": "ubuntu24",
     "macos-15-arm64": "macos-15-arm64",
 }
+GRADLE_RELEASE_CATALOG_URL = "https://services.gradle.org/versions/all"
 GRADLE_RELEASE_CATALOG_STABLE_POLICY = "stable-releases-only"
 ALLOWED_SOURCE_RULE_KINDS = {
     "manual-review-required",
@@ -346,6 +347,10 @@ def normalize_runner_image_source_streams(entry: dict[str, Any], *, error_contex
 def normalize_gradle_source_metadata(entry: dict[str, Any], *, error_context: str) -> dict[str, str]:
     source_catalog_url = required_string_field(entry, "source_catalog_url", error_context=error_context)
     stable_channel_policy = required_string_field(entry, "stable_channel_policy", error_context=error_context)
+    if source_catalog_url != GRADLE_RELEASE_CATALOG_URL:
+        raise RunnerHostWatchError(
+            f"{error_context} source_catalog_url must be {GRADLE_RELEASE_CATALOG_URL!r}"
+        )
     if stable_channel_policy != GRADLE_RELEASE_CATALOG_STABLE_POLICY:
         raise RunnerHostWatchError(
             f"{error_context} stable_channel_policy must be {GRADLE_RELEASE_CATALOG_STABLE_POLICY!r}"

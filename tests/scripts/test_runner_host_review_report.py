@@ -368,6 +368,26 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             ],
         )
 
+    def test_normalize_source_rules_rejects_non_official_android_gradle_catalog_url(self) -> None:
+        baseline, _ = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+        source_rules = json.loads(json.dumps(source_rules))
+        for group in source_rules["groups"]:
+            if group["key"] == "android-gradle":
+                group["source_catalog_url"] = "https://example.invalid/not-gradle"
+                break
+        else:
+            self.fail("android-gradle source rule fixture missing")
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.normalize_source_rules(
+                source_rules,
+                normalized_baseline=MODULE.normalize_baseline(baseline),
+            )
+
+        self.assertIn("source_catalog_url must be", str(error.exception))
+        self.assertIn("https://services.gradle.org/versions/all", str(error.exception))
+
     def test_build_summary_promotes_android_gradle_with_recognized_stable_versions(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("android-gradle-promoted")

@@ -14,13 +14,13 @@ Already delivered on `main`:
   - `tests/test-support/scripts/runner_host_review_report.py`
   - `.github/workflows/cve-watch.yml`
   - `tests/test-support/scripts/cve_watch_issue_sync.py`
-- A fresh analyst dry-run on current `main` still reports:
+- At issue #143 shaping time, a fresh analyst dry-run reported:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
-  - `runner-images` still marked `manual-review-required`
+  - `runner-images` marked `manual-review-required`
 
-That means the repo already owns the drift / missing-evidence runner-host lane honestly, but the `runner-images` source group is still only a placeholder for future source-backed evaluation.
+That meant the repo already owned the drift / missing-evidence runner-host lane honestly, but the `runner-images` source group was only a placeholder before PR #143 promoted it to source-backed evaluation.
 
 ## Scope of this slice
 
