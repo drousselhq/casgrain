@@ -51,13 +51,19 @@
 - Non-goals: No repo-wide cleanup unrelated to the CLI module boundary.
 - Hand back if: The targeted CLI validation fails for a reason that requires behavior changes rather than a pure module move.
 
-## 5. Run full validation and hand back with honest closure semantics
+## 5. Run the full non-docs merge gate and hand back with honest closure semantics
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run `cargo fmt --all --check`.
 - [ ] 5.3 Run `cargo test --workspace`.
-- [ ] 5.4 In the PR summary/comment, state that the implementation PR `Closes #94`, note that this is the final remaining slice after PR #114 and PR #118, and call out that CI on the candidate head must still report both shared-surface mobile smoke checks.
-- [ ] 5.5 State that no docs gate is needed for the implementation PR if the final diff stays limited to the internal CLI module/test layout.
-- Goal: Leave QA with one honest picture of what changed, what validated locally, and why `#94` is complete once the extracted test module lands.
-- Validation: `git diff --check && cargo fmt --all --check && cargo test --workspace`
-- Non-goals: No docs/policy edits, no new follow-up issue unless the module split exposes genuinely new remaining scope.
+- [ ] 5.4 Run `cargo clippy --workspace --all-targets -- -D warnings`.
+- [ ] 5.5 Run `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`.
+- [ ] 5.6 Run `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`.
+- [ ] 5.7 Run `cargo audit`.
+- [ ] 5.8 Run `gitleaks dir .`.
+- [ ] 5.9 Run `cargo deny check licenses sources`.
+- [ ] 5.10 In the PR summary/comment, state that the implementation PR `Closes #94`, note that this is the final remaining slice after PR #114 and PR #118, and call out that CI on the candidate head must still report both shared-surface mobile smoke checks.
+- [ ] 5.11 State that no docs gate is needed for the implementation PR if the final diff stays limited to the internal CLI module/test layout.
+- Goal: Leave QA with one honest picture of what changed, what validated locally, and why `#94` is complete once the extracted test module lands without narrowing the canonical merge gate from `docs/validation.md`.
+- Validation: `git diff --check && cargo fmt --all --check && cargo test --workspace && cargo clippy --workspace --all-targets -- -D warnings && RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps && cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only && cargo audit && gitleaks dir . && cargo deny check licenses sources`
+- Non-goals: No docs/policy edits, no new follow-up issue unless the module split exposes genuinely new remaining scope, and no repo-local exception to the canonical validation policy.
 - Hand back if: The final diff no longer stays internal-only, the shared-surface validation regresses, or the implementation PR cannot honestly `Closes #94`.

@@ -60,18 +60,24 @@ Contract:
 - Run targeted local validation that proves the extracted test module still owns the existing CLI behavior contract:
   - `cargo test -p casgrain`
   - `cargo clippy -p casgrain --all-targets -- -D warnings`
-- Run the full shared-surface validation expected before handoff:
+- Run the full non-docs merge gate from `docs/validation.md` before handoff because this still touches the shared `casgrain` execution surface:
   - `git diff --check`
   - `cargo fmt --all --check`
   - `cargo test --workspace`
-- Because this touches the shared `casgrain` execution surface, the implementation PR must still let CI report both mobile smoke checks on the candidate head; do **not** invent new local mobile-smoke commands inside this issue.
+  - `cargo clippy --workspace --all-targets -- -D warnings`
+  - `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`
+  - `cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only`
+  - `cargo audit`
+  - `gitleaks dir .`
+  - `cargo deny check licenses sources`
+- CI on the implementation PR must still report both mobile smoke checks on the candidate head; do **not** invent new local mobile-smoke commands inside this issue.
 - Docs assessment for the implementation PR: no docs gate is needed if the diff remains limited to CLI module/test layout and preserves current behavior.
 
 ## Acceptance criteria
 
 1. `crates/casgrain/src/cli.rs` no longer embeds the large inline `#[cfg(test)] mod tests` block, and `crates/casgrain/src/cli/tests.rs` becomes the home of the extracted CLI tests.
 2. The extracted tests still preserve the existing CLI behavior contracts for usage text, compile output, mock runs, iOS smoke runs, Android smoke runs, and their trace/failure rendering paths.
-3. `cargo test -p casgrain` and `cargo clippy -p casgrain --all-targets -- -D warnings` pass after the move.
+3. The implementation PR passes the targeted `casgrain` checks (`cargo test -p casgrain`, `cargo clippy -p casgrain --all-targets -- -D warnings`) and the full non-docs merge gate from `docs/validation.md` for shared-surface work.
 4. The implementation PR can honestly say `Closes #94` because PR #114 and PR #118 already landed the earlier slices, and this test-module extraction removes the final oversized CLI surface named by the issue without widening into new CLI behavior.
 
 ## Explicit non-goals
@@ -93,6 +99,12 @@ cargo fmt --all --check
 cargo test -p casgrain
 cargo clippy -p casgrain --all-targets -- -D warnings
 cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+cargo llvm-cov --workspace --all-features --fail-under-lines 75 --summary-only
+cargo audit
+gitleaks dir .
+cargo deny check licenses sources
 ```
 
 ## Completion boundary
