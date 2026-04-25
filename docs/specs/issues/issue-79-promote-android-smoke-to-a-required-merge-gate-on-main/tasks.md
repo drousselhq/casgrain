@@ -36,7 +36,7 @@ PY`
 - [x] 3.1 Update `docs/validation.md` so it describes the live Android merge gate, explains the always-reporting/self-skip model, and stops treating the live `main` ruleset flip as a future close-out step.
 - [x] 3.2 Update `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, and `docs/development/merge-and-validation-policy.md` so they no longer describe Android as advisory-only or iOS as the sole mobile gate.
 - [x] 3.3 Update `docs/development/security-owasp-baseline.md` so the protected-branch evidence snapshot is truthful with both live mobile smoke gates enforced.
-- Goal: Leave one truthful repo-owned policy/spec story for the shipped `#79` rollout and a clean follow-up seam for `#135`.
+- Goal: Leave one truthful repo-owned policy/spec story for the shipped `#79` rollout, while recording `#135` only as the separate historical contract-freeze follow-up that closes through its own PR.
 - Validation: `python3 - <<'PY'
 from pathlib import Path
 needles = {

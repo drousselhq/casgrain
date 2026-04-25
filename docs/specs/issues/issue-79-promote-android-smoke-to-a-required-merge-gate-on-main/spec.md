@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Part of #79`
 - Upstream slice already landed on `main`: `#80` (`Retire stale Android tracker sync path and align the Android smoke contract`)
-- Downstream contract-freeze follow-up issue: `#135` (`Freeze the shared iOS/Android vertical-slice contract`)
+- Historical downstream follow-up created after `#79`: `#135` (`Freeze the shared iOS/Android vertical-slice contract`); that follow-up closes through its own PR, not by reopening this merge-gate slice.
 
 ## Why this slice exists
 
@@ -87,7 +87,7 @@ Ruleset contract:
 
 - **no** new Android product/runtime behavior changes
 - **no** new reliability-window math, tracker logic, or blocker-issue redesign
-- **no** broader shared mobile contract-freeze work beyond the separate `#135` follow-up that documents the already-shipped dual-platform slice
+- **no** broader shared mobile contract-freeze work inside `#79`; the separate `#135` follow-up owns that contract freeze and closes through its own implementation PR
 - **no** repo-wide docs sweep beyond the named contradictory policy/spec artifacts
 - **no** change to the stable `android-smoke` job/context name
 
@@ -123,7 +123,7 @@ gh api repos/drousselhq/casgrain/rulesets/$RULESET_ID --jq '.rules[] | select(.t
 
 The implementation PRs for this spec were correctly `Part of #79`, not `Closes #79`, because the issue only became honestly complete once the merged workflow was on `main` **and** the live `main-protection-ruleset` had been updated to require `android-smoke`.
 
-Current repo-owned contract state this artifact points at:
+Historical repo-owned contract state this artifact records:
 - `#79` is the shipped Android merge-gate promotion slice
-- `#135` is the docs/test contract-freeze follow-up issue on top of the already-required Android gate
+- `#135` was the separate docs/test contract-freeze follow-up created on top of the already-required Android gate, and its own closing PR owns completion of that follow-up
 - any future Android smoke scope expansion should be opened as a new bounded follow-up issue rather than reopening this promotion slice
