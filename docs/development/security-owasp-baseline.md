@@ -16,9 +16,9 @@ It does **not** claim that every desired control is fully enforced in-repo today
 ## Evidence snapshot
 
 Current repository evidence checked for this baseline:
-- `main` branch protection currently requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, `ios-smoke`, and `android-smoke`
+- the active `main-protection-ruleset` requires `validate`, `coverage`, `gitleaks`, `cargo-audit`, `cargo-deny-policy`, `analyze (actions)`, `analyze (rust)`, `ios-smoke`, and `android-smoke`
 - both mobile smoke workflows always report a PR status while self-skipping unaffected diffs, so the live required mobile contexts stay enforceable without paying full simulator/emulator cost on unrelated changes
-- `main` enforces strict up-to-date checks, linear history, admin enforcement, and resolved review conversations
+- `main` is governed by an active ruleset that enforces strict required status checks, linear history, and resolved review conversations
 - force pushes and branch deletions are disabled on `main`
 - repository default workflow token permissions are `read`
 - `.github/workflows/security.yml` uses job-scoped least-privilege permissions and disables checkout credential persistence
@@ -42,13 +42,12 @@ Required baseline:
 
 Current repo status:
 - **meets baseline** for protected-branch merge discipline
-- enforced by `main` branch protection plus the repo's merge/validation policy docs
+- enforced by the active `main-protection-ruleset` plus the repo's merge/validation policy docs
 
 Evidence:
-- branch protection requires the documented validation gate and keeps `strict: true`
-- `required_conversation_resolution` is enabled
-- `enforce_admins` is enabled
-- `allow_force_pushes` and `allow_deletions` are disabled
+- the active `main-protection-ruleset` targets `refs/heads/main` and keeps `strict_required_status_checks_policy: true`
+- the ruleset's `pull_request` rule requires review-thread resolution
+- the ruleset also enables `required_linear_history`, `non_fast_forward`, and `deletion` protections
 
 ### 2. Workflow least privilege and runner hygiene
 
@@ -64,17 +63,16 @@ Required baseline:
 - downloaded security tooling should use explicit versions and integrity verification where practical
 
 Current repo status:
-- **partially meets baseline**
+- **meets baseline**
 
 Evidence:
 - repository default workflow permissions are `read`
 - `security.yml` declares explicit top-level permissions and uses `persist-credentials: false`
 - the `gitleaks` install path verifies the release tarball SHA-256 before execution
-- CodeQL workflow actions are SHA-pinned
-- several other workflows still use mutable action tags such as `actions/checkout@v6`, `actions/setup-java@v4`, `Swatinem/rust-cache@v2`, and `actions/upload-artifact@v4`
+- checked-in workflows pin external actions to immutable SHAs with version comments, including `actions/checkout` (`# v6`), `actions/setup-java` (`# v5`), `Swatinem/rust-cache` (`# v2`), and `actions/upload-artifact` (`# v7`)
 
-Tracked gap:
-- follow-up issue #82 tracks SHA pinning of the remaining workflow action references so the repo's baseline is consistent across the workflow fleet
+Note:
+- the earlier workflow SHA-pinning follow-up is already complete; issue `#82` is closed and remains historical context only
 
 ### 3. Secret and sensitive-data exposure controls
 
@@ -139,7 +137,7 @@ Current repo status:
 
 Evidence:
 - CodeQL runs on pull requests and `main`
-- branch protection requires `analyze (actions)` and `analyze (rust)` on `main`
+- the active `main-protection-ruleset` requires `analyze (actions)` and `analyze (rust)` on `main`
 - `docs/development/security-automation-plan.md` records the rollout history and supported Rust-mode considerations
 
 ### 6. CVE monitoring and triage cadence
@@ -195,7 +193,6 @@ Tracked gap:
 - #156 — evaluate source-backed advisory automation for Android emulator-runtime host surfaces
 - #143 — delivered source-backed runner-image release-metadata automation for GitHub-hosted runner image surfaces
 - #144 — evaluate source-backed advisory automation for iOS Xcode and simulator-runtime host surfaces
-- #82 — pin remaining mutable GitHub Actions references to immutable commit SHAs
 
 ## Triage rules for security findings
 
