@@ -5,7 +5,7 @@
 - Expected implementation PR linkage: `Closes #80`
 - Historical downstream dependency at shaping time: `#79` (`Promote android-smoke to a required merge gate on main`)
 - Supersedes the legacy one-file issue artifact previously stored at `docs/specs/issues/issue-80-android-smoke-docs-and-policy-reconciliation.md`
-- Historical note: this closed issue artifact records the tracker-retirement slice before issue `#79` and later issue `#135` finished the live Android / shared-mobile merge-gate reconciliation. Read current-state merge-gate ownership from the canonical docs plus the issue-79 and issue-135 artifacts, not from this closed issue alone.
+- Historical note: this closed issue artifact records the tracker-retirement slice before the later merge-gate reconciliation work tracked in issues `#79` and `#135`. Read current-state merge-gate ownership from the canonical docs plus the issue-79 and issue-135 artifacts, not from this closed issue alone.
 
 ## Why this slice exists
 

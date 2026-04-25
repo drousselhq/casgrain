@@ -287,11 +287,17 @@ mod tests {
 
     fn normalized_shared_smoke_summary_contract(summary: &str) -> Value {
         let mut in_artifacts = false;
+        let mut in_diagnostics = false;
         let lines = summary
             .lines()
             .filter_map(|line| {
+                if line.trim().is_empty() {
+                    return None;
+                }
+
                 if line.starts_with("Casgrain ") {
                     in_artifacts = false;
+                    in_diagnostics = false;
                     let (_, plan_name) = line
                         .split_once(": ")
                         .expect("summary title should expose a plan name");
@@ -302,12 +308,16 @@ mod tests {
                 }
 
                 if line.starts_with("Source: ") {
+                    in_artifacts = false;
+                    in_diagnostics = false;
                     return Some(json!({
                         "kind": "source",
                     }));
                 }
 
                 if line.starts_with("Device: ") {
+                    in_artifacts = false;
+                    in_diagnostics = false;
                     return Some(json!({
                         "kind": "device",
                     }));
@@ -315,18 +325,30 @@ mod tests {
 
                 if line == "Steps:" {
                     in_artifacts = false;
+                    in_diagnostics = false;
                     return Some(json!({
                         "kind": "section",
                         "name": line,
                     }));
                 }
 
+                if line == "Compiler diagnostics:" {
+                    in_artifacts = false;
+                    in_diagnostics = true;
+                    return None;
+                }
+
                 if line == "Artifacts:" {
                     in_artifacts = true;
+                    in_diagnostics = false;
                     return Some(json!({
                         "kind": "section",
                         "name": line,
                     }));
+                }
+
+                if in_diagnostics {
+                    return None;
                 }
 
                 if in_artifacts && line.starts_with("- ") {
@@ -1041,6 +1063,18 @@ mod tests {
             normalized_shared_smoke_summary_contract(&android_success_summary_with_extra_artifact)
         );
 
+        let android_success_summary_with_extra_diagnostics = android_success_summary.replacen(
+            "\n\nArtifacts:\n",
+            "\n\nCompiler diagnostics:\n- Warning: Android emitted an extra compile note\n\nArtifacts:\n",
+            1,
+        );
+        assert_eq!(
+            normalized_shared_smoke_summary_contract(&ios_success_summary),
+            normalized_shared_smoke_summary_contract(
+                &android_success_summary_with_extra_diagnostics
+            )
+        );
+
         let ios_failure_summary = run_smoke_summary_with_fake_runner(
             "run-ios-smoke",
             include_str!(
@@ -1072,6 +1106,18 @@ mod tests {
         assert_eq!(
             ios_failure_summary_contract,
             android_failure_summary_contract
+        );
+
+        let android_failure_summary_with_extra_diagnostics = android_failure_summary.replacen(
+            "\n\nArtifacts:\n",
+            "\n\nCompiler diagnostics:\n- Warning: Android emitted an extra compile note\n\nArtifacts:\n",
+            1,
+        );
+        assert_eq!(
+            ios_failure_summary_contract,
+            normalized_shared_smoke_summary_contract(
+                &android_failure_summary_with_extra_diagnostics
+            )
         );
 
         let drifted_failure_summary =

@@ -29,7 +29,7 @@
 
 ## 3. Add failing CLI trace-contract parity coverage for the two smoke entrypoints
 - [x] 3.1 Extend `crates/casgrain/src/cli.rs` with one test that compares normalized iOS and Android smoke output on the existing fake-runner path.
-- [x] 3.2 Make that test assert the shared passed/failed run semantics, per-step failure structure, and artifact-to-step linkage while allowing truthful platform metadata and additive artifact differences.
+- [x] 3.2 Make that test assert the shared passed/failed run semantics, per-step failure structure, and artifact-to-step linkage while allowing truthful platform metadata plus additive artifact/diagnostic differences.
 - [x] 3.3 Keep the comparison bounded to the current smoke commands `run-ios-smoke` and `run-android-smoke`; do not invent a new runtime interface in this slice.
 - Goal: Freeze the user-facing smoke summary / `--trace-json` contract at the CLI boundary for both platforms.
 - Validation: `cargo test -p casgrain`
