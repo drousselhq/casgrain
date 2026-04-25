@@ -137,7 +137,7 @@ Those updates must explicitly say:
 ## Explicit non-goals
 
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
-- **no** source-backed evaluation for `android-gradle` (`#155`)
+- **no** further behavior or ownership changes to the already-delivered `android-gradle` source-backed slice (`#155`)
 - **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
 - **no** iOS source-rule split rework or source-backed evaluation; the current combined `ios-xcode-simulator -> #144` placeholder stays unchanged in this slice
 - **no** widening of `.github/runner-host-watch.json` to include `java.distribution` or any new Java fact

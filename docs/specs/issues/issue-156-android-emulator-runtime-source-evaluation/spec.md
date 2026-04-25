@@ -163,7 +163,7 @@ Those updates must explicitly say:
 
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
-- **no** source-backed evaluation for `android-gradle` (`#155`)
+- **no** further behavior or ownership changes to the already-delivered `android-gradle` source-backed slice (`#155`)
 - **no** source-backed evaluation or iOS ownership/split implementation work; later iOS follow-up work remains with `#164` and `#165`
 - **no** widening of `.github/runner-host-watch.json` to add `emulator.target`, `emulator.arch`, `emulator.profile`, extension levels, package revisions, or any other new watched fact
 - **no** separate source-only alert policy for the generated `emulator.device_name` string in this slice
