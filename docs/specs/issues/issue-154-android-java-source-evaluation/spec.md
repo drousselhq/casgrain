@@ -93,7 +93,7 @@ Update:
 
 Required coverage:
 - supported/current Android Java source payload + baseline-match host facts → `alert=false`, `advisory_count=0`, and `android-java` is reported as `java-release-support`
-- unsupported or unrecognized Android Java version → `alert=true` with a source-backed review-needed reason while the drift counter remains zero
+- unsupported or unrecognized Android Java version → `alert=true` with a source-backed review-needed reason and a non-zero top-level `advisory_count` even when the underlying watched-fact drift count remains zero
 - authoritative-source payload unavailable or malformed → explicit review-needed Android Java source finding instead of silent success
 - existing drift and missing-evidence fixtures still preserve their current overall `advisory_count` behavior on current `main`
 - a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `android-java` rule while `runner-images` and `android-emulator-runtime` stay delivered and the remaining follow-up groups stay unchanged
@@ -121,7 +121,7 @@ Those updates must explicitly say:
 - the older issue-spec artifacts are historical and must not keep claiming that current `main` still has no source-backed runner-host evaluation at all
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that current `main` still has delivered only `#143` while `#154`, `#155`, `#156`, and `#144` all remain later follow-ups; after this slice lands it must treat `#154` as delivered while keeping the unchanged combined iOS placeholder truthful
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md` and `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` must be reconciled as historical artifacts so they no longer claim that only `runner-images` is source-backed after `#154` lands
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` must stop saying that the shipped runner-host automation still evaluates only drift / missing evidence; after `#154` lands it must describe `runner-images`, `android-emulator-runtime`, and `android-java` as the already-delivered source-backed exceptions while keeping the current combined iOS placeholder truthful under later ownership `#164` / `#165`
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md` must stop saying that the shipped runner-host automation still evaluates only drift / missing evidence; after `#154` lands it must describe `runner-images`, `android-gradle`, `android-emulator-runtime`, and `android-java` as the already-delivered source-backed exceptions while keeping the current combined iOS placeholder truthful under later ownership `#164` / `#165`
 - `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md` must stop telling implementers to expect split current-main iOS keys; until a later iOS split ships, that historical task artifact must preserve the live combined `ios-xcode-simulator` placeholder while pointing later ownership at `#164` / `#165`
 
 ## Acceptance criteria
@@ -137,7 +137,7 @@ Those updates must explicitly say:
 
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
 - **no** further behavior or ownership changes to the delivered `android-gradle` slice (`#155`)
-- **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
+- **no** further behavior or ownership changes to the delivered `android-emulator-runtime` slice (`#156`)
 - **no** iOS source-rule split rework or source-backed evaluation; the current combined `ios-xcode-simulator` placeholder stays unchanged in this slice while later ownership remains `#164` / `#165`
 - **no** widening of `.github/runner-host-watch.json` to include `java.distribution` or any new Java fact
 - **no** new managed issue title or parallel runner-host issue-sync lane

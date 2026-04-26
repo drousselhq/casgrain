@@ -71,7 +71,7 @@ The implementation PR must replace the current combined iOS group with exactly t
 
 Contract requirements:
 - `runner-images` must remain mapped to `#143`
-- `android-java` and `android-gradle` remain open follow-ups under `#154` / `#155`, while `android-emulator-runtime` is already delivered as a source-backed slice under `#156`
+- `android-java` remains the open Android follow-up under `#154`, while `android-gradle` and `android-emulator-runtime` are already delivered source-backed slices under `#155` / `#156`
 - every watched fact path in `.github/runner-host-watch.json` must still be owned by exactly one source-rule group after the split
 - the manifest must fail closed if any watched iOS fact path is dropped, duplicated, or assigned to the wrong follow-up issue
 

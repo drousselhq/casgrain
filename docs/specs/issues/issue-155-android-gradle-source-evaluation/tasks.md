@@ -67,8 +67,8 @@ positive_checks = {
 'docs/development/security-automation-plan.md': ['android-gradle', 'source-backed'],
 'docs/development/security-owasp-baseline.md': ['android-gradle', 'source-backed'],
 'docs/specs/issues/issue-124-runner-host-drift-watch.md': ['historical', 'android-gradle'],
-'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['historical', 'android-gradle'],
-'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['historical', 'android-gradle'],
+'docs/specs/issues/issue-129-runner-host-advisory-source-rules.md': ['android-gradle', 'source-backed'],
+'docs/specs/issues/issue-142-android-runner-host-source-split.md': ['android-gradle', 'source-backed'],
 'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': ['historical', 'android-gradle'],
 'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': ['android-gradle', 'source-backed'],
 'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': ['android-gradle', 'source-backed'],
@@ -88,6 +88,7 @@ stale_checks = {
 ],
 'docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md': [
 'the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, while the ios groups in this spec remain manual-review-only until their own follow-up slices land',
+'`android-java` and `android-gradle` remain open follow-ups under `#154` / `#155`, while `android-emulator-runtime` is already delivered as a source-backed slice under `#156`',
 ],
 'docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md': [
 'render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports `verdict=no review-needed`, `reason=baseline-match`, and source-rule keys `ios-xcode` / `ios-simulator-runtime` mapped to `#164` / `#165`.',
@@ -98,6 +99,8 @@ stale_checks = {
 'add a separate source-backed finding count/list (for example `source_advisory_count` plus detailed source findings) instead of overloading the drift counter',
 'supported/current android java source payload + baseline-match host facts → `alert=false`, `advisory_count=0`, `source_advisory_count=0`, and `android-java` is reported as `java-release-support`',
 'unsupported or unrecognized android java version → `alert=true` with a source-backed review-needed reason while the drift counter remains zero',
+'after `#154` lands it must describe `runner-images`, `android-emulator-runtime`, and `android-java` as the already-delivered source-backed exceptions while keeping the current combined iOS placeholder truthful under later ownership `#164` / `#165`',
+'**no** source-backed evaluation for `android-emulator-runtime` (`#156`)',
 "assert 'source_advisory_count' in summary, summary",
 ],
 'docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md': [
@@ -109,14 +112,14 @@ stale_checks = {
 }
 
 for rel, needles in positive_checks.items():
-text = Path(rel).read_text(encoding='utf-8').lower()
-for needle in needles:
-assert needle in text, (rel, needle)
+    text = Path(rel).read_text(encoding='utf-8').lower()
+    for needle in needles:
+        assert needle in text, (rel, needle)
 
 for rel, stale_needles in stale_checks.items():
-text = Path(rel).read_text(encoding='utf-8').lower()
-for needle in stale_needles:
-assert needle not in text, (rel, needle)
+    text = Path(rel).read_text(encoding='utf-8').lower()
+    for needle in stale_needles:
+        assert needle not in text, (rel, needle)
 
 print('runner-host docs/specs reflect the android-gradle source-backed contract')
 PY
