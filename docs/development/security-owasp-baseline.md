@@ -164,15 +164,15 @@ Current automated cadence:
    - `gitleaks` stays explicit `manual-review-required` until the repo adopts a trustworthy machine-readable advisory source for its downloaded release-tarball path
 4. the workflow also evaluates `.github/runner-host-watch.json`, the checked-in inventory of watched runner-image / host-toolchain facts for the Android and iOS smoke workflows:
    - both mobile smoke artifacts now include `host-environment.json` as the normalized runner/toolchain evidence source, with `emulator.json`, `simulator.json`, and `xcodebuild.log` remaining supporting evidence
-   - the watch compares only the inventoried runner image, OS, Java, Gradle, Xcode, simulator, and emulator facts against the baseline and opens `security: runner-host review needed` when a watched fact drifts, when required host evidence is missing/unreadable, or when the promoted `runner-images` release metadata disagrees with the observed runner-image facts
-   - `.github/runner-host-advisory-sources.json` is the repo-owned source-rule contract for runner-host promotion decisions; `runner-images`, `android-java`, and `android-emulator-runtime` are now the delivered source-backed groups on `main`, `android-gradle` remains `manual-review-required`, and the current combined `ios-xcode-simulator` placeholder stays manual-only while later iOS ownership lives in `#164` / `#165` rather than closed issue `#144`
-   - the Android backlog now stays split across `#154`, `#155`, and `#156` rather than one combined `android-java-gradle` umbrella; `java.distribution` remains outside the watched runner-host inventory on current `main`; and the later iOS split is tracked in open `#164` / `#165` even though current `main` still publishes the combined placeholder above
+   - the watch compares only the inventoried runner image, OS, Java, Gradle, Xcode, simulator, and emulator facts against the baseline and opens `security: runner-host review needed` when a watched fact drifts, when required host evidence is missing/unreadable, when the promoted `runner-images` release metadata disagrees with the observed runner-image facts, when the promoted `android-gradle` release-catalog evaluator reports a review-needed finding, or when Android emulator-runtime source-backed evaluation needs review
+   - `.github/runner-host-advisory-sources.json` is the repo-owned source-rule contract for runner-host promotion decisions; `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` are now the delivered source-backed groups on `main`, and the current combined `ios-xcode-simulator` placeholder stays manual-only while later iOS ownership lives in `#164` / `#165` rather than closed issue `#144`
+   - the Android backlog landed as delivered slices `#154`, `#155`, and `#156` rather than one combined `android-java-gradle` umbrella; `java.distribution` remains outside the watched runner-host inventory on current `main`; and the later iOS split is tracked in open `#164` / `#165` even though current `main` still publishes the combined placeholder above
 5. all four slices render triage-friendly markdown, sync a managed GitHub findings issue only when their slice-specific alert condition is active, and close that managed issue again on later clean runs
 
 Remaining manual review:
 1. review authoritative sources for surfaces that are still outside the automated dependency graph, explicit security-tooling inventory, and drift-based runner-host watch, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
 2. compare findings only against Casgrain's actual remaining manual surface area:
-   - source-backed host-toolchain advisory evaluation beyond the delivered `runner-images` / `android-java` / `android-emulator-runtime` slices, as split across `#155`, `#164`, and `#165` in repo docs and follow-up issue specs; current `main` still keeps one combined `ios-xcode-simulator` manifest placeholder until that later split lands
+   - source-backed host-toolchain advisory evaluation beyond the delivered `runner-images` / `android-gradle` / `android-emulator-runtime` slices, as split across `#154`, `#164`, and `#165` in repo docs and follow-up issue specs; current `main` still keeps one combined `ios-xcode-simulator` manifest placeholder until that later split lands
    - repo-security tooling or settings-side gaps that require maintainer/platform action rather than an in-repo diff
    - any downloaded tooling not yet represented in `.github/security-tooling-watch.json` with a trustworthy source rule
 3. classify each finding as one of:
@@ -183,13 +183,13 @@ Remaining manual review:
 5. if the safe fix depends on settings, billing, unavailable runners, or maintainer-only activation, use `blocked` and/or `waiting-on-human` explicitly instead of inventing a fake in-repo resolution
 
 Tracked gap:
-- later source-backed promotion work for the runner-host watch now stays split across the delivered `#143` (`runner-images`), `#154` (`android-java`), and `#156` (`android-emulator-runtime`) slices plus the remaining follow-ups `#155` (`android-gradle`), `#164` (`ios-xcode`), and `#165` (`ios-simulator-runtime`); current `main` still keeps one combined `ios-xcode-simulator` manifest placeholder until that later split lands
+- later source-backed promotion work for the runner-host watch now stays split across the delivered `#143` (`runner-images`), `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`) slices plus the remaining follow-ups `#164` (`ios-xcode`) and `#165` (`ios-simulator-runtime`); current `main` still keeps one combined `ios-xcode-simulator` manifest placeholder until that later split lands
 
 ## Known gaps and tracked follow-up
 
 - #73 — activate the Renovate lane by enabling the app/runner outside the repo
-- #155 — evaluate source-backed advisory automation for Android Gradle host surfaces
-- delivered source-backed runner-host slices on current `main`: #143 (`runner-images`), #154 (`android-java`), and #156 (`android-emulator-runtime`)
+- #154 — evaluate source-backed advisory automation for Android Java host surfaces
+- delivered source-backed runner-host slices on current `main`: #143 (`runner-images`), #155 (`android-gradle`), and #156 (`android-emulator-runtime`)
 - #164 — evaluate source-backed advisory automation for iOS Xcode host surfaces
 - #165 — evaluate source-backed advisory automation for iOS simulator runtime-catalog host surfaces
 

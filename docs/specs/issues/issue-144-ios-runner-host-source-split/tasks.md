@@ -33,7 +33,7 @@ Hand back if:
 ## 2. Split the checked-in iOS source-rule inventory
 
 - [ ] 2.1 Historical split target (now superseded by `#164` / `#165`): update `.github/runner-host-advisory-sources.json` to replace `ios-xcode-simulator` with `ios-xcode` and `ios-simulator-runtime`.
-- [ ] 2.2 Keep the delivered `runner-images`, `android-java`, and `android-emulator-runtime` groups plus the remaining `android-gradle` follow-up unchanged while ensuring every watched iOS fact remains owned exactly once.
+- [ ] 2.2 Keep the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` groups unchanged while ensuring every watched iOS fact remains owned exactly once.
 
 Goal: Make the checked-in source-rule manifest declare two bounded iOS promotion backlogs instead of one umbrella group.
 

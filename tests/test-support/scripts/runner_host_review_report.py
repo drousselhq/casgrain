@@ -92,10 +92,13 @@ JAVA_VERSION_LOOKUP_URL_TEMPLATE = (
 JAVA_SUPPORTED_MAJOR_POLICY = "available_lts_plus_latest_feature"
 JAVA_SOURCE_DISTRIBUTION = "temurin"
 JAVA_SOURCE_VENDOR = "eclipse"
+GRADLE_RELEASE_CATALOG_URL = "https://services.gradle.org/versions/all"
+GRADLE_RELEASE_CATALOG_STABLE_POLICY = "stable-releases-only"
 ALLOWED_SOURCE_RULE_KINDS = {
     "manual-review-required",
     "runner-image-release-metadata",
     "java-release-support",
+    "gradle-release-catalog",
     "android-system-image-catalog",
 }
 ANDROID_VERSION_MAPPING_ROW_RE = re.compile(
@@ -185,6 +188,13 @@ def required_int_field(container: dict[str, Any], field_name: str, *, error_cont
     value = container.get(field_name, ...)
     if type(value) is not int:
         raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be an integer")
+    return value
+
+
+def required_bool_field(container: dict[str, Any], field_name: str, *, error_context: str) -> bool:
+    value = container.get(field_name, ...)
+    if type(value) is not bool:
+        raise RunnerHostWatchError(f"{error_context} field '{field_name}' must be a boolean")
     return value
 
 
@@ -351,6 +361,23 @@ def normalize_runner_image_source_streams(entry: dict[str, Any], *, error_contex
     return normalized_streams
 
 
+def normalize_gradle_source_metadata(entry: dict[str, Any], *, error_context: str) -> dict[str, str]:
+    source_catalog_url = required_string_field(entry, "source_catalog_url", error_context=error_context)
+    stable_channel_policy = required_string_field(entry, "stable_channel_policy", error_context=error_context)
+    if source_catalog_url != GRADLE_RELEASE_CATALOG_URL:
+        raise RunnerHostWatchError(
+            f"{error_context} source_catalog_url must be {GRADLE_RELEASE_CATALOG_URL!r}"
+        )
+    if stable_channel_policy != GRADLE_RELEASE_CATALOG_STABLE_POLICY:
+        raise RunnerHostWatchError(
+            f"{error_context} stable_channel_policy must be {GRADLE_RELEASE_CATALOG_STABLE_POLICY!r}"
+        )
+    return {
+        "source_catalog_url": source_catalog_url,
+        "stable_channel_policy": stable_channel_policy,
+    }
+
+
 def normalize_android_system_image_catalogs(entry: dict[str, Any], *, error_context: str) -> dict[str, str]:
     source_catalogs = required_object_field(entry, "source_catalogs", error_context=error_context)
     return {
@@ -418,6 +445,8 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             allowed_rule_kinds = {"manual-review-required", "runner-image-release-metadata"}
         elif key == "android-java":
             allowed_rule_kinds = {"manual-review-required", "java-release-support"}
+        elif key == "android-gradle":
+            allowed_rule_kinds = {"manual-review-required", "gradle-release-catalog"}
         elif key == "android-emulator-runtime":
             allowed_rule_kinds = {"manual-review-required", "android-system-image-catalog"}
         else:
@@ -514,6 +543,13 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             normalized_group["source_metadata"] = normalize_java_release_support_metadata(
                 entry,
                 error_context=f"{error_context} source-rule group '{key}'",
+            )
+        elif rule_kind == "gradle-release-catalog":
+            normalized_group.update(
+                normalize_gradle_source_metadata(
+                    entry,
+                    error_context=f"{error_context} source-rule group '{key}'",
+                )
             )
         elif rule_kind == "android-system-image-catalog":
             normalized_group["source_catalogs"] = normalize_android_system_image_catalogs(
@@ -1315,6 +1351,228 @@ def build_runner_image_platform_result(
     return result, (len(result["changed_facts"]) if result["changed_facts"] else 0)
 
 
+def gradle_version_sort_key(version: str) -> tuple[int, ...]:
+    numeric_parts = [int(match) for match in re.findall(r"\d+", version)]
+    return tuple(numeric_parts + [0] * (4 - len(numeric_parts)))
+
+
+def normalize_gradle_release_catalog_payload(payload: Any, *, error_context: str) -> dict[str, Any]:
+    if not isinstance(payload, list):
+        raise RunnerHostWatchError(f"{error_context} must be a list")
+
+    stable_versions: dict[str, dict[str, Any]] = {}
+    current_stable_versions: set[str] = set()
+    for index, entry in enumerate(payload):
+        if not isinstance(entry, dict):
+            raise RunnerHostWatchError(f"{error_context}[{index}] must be an object")
+        entry_context = f"{error_context}[{index}]"
+        version = required_string_field(entry, "version", error_context=entry_context)
+        current = required_bool_field(entry, "current", error_context=entry_context)
+        snapshot = required_bool_field(entry, "snapshot", error_context=entry_context)
+        nightly = required_bool_field(entry, "nightly", error_context=entry_context)
+        release_nightly = required_bool_field(entry, "releaseNightly", error_context=entry_context)
+        broken = required_bool_field(entry, "broken", error_context=entry_context)
+        active_rc = required_bool_field(entry, "activeRc", error_context=entry_context)
+        rc_for = optional_scalar_field(entry, "rcFor")
+        milestone_for = optional_scalar_field(entry, "milestoneFor")
+        is_stable = not any([snapshot, nightly, release_nightly, active_rc, rc_for, milestone_for, "-" in version])
+        if not is_stable:
+            continue
+        normalized_entry = {
+            "version": version,
+            "current": current,
+            "broken": broken,
+        }
+        existing_entry = stable_versions.get(version)
+        if existing_entry is not None and existing_entry != normalized_entry:
+            raise RunnerHostWatchError(
+                f"{error_context} contains conflicting stable release records for {version}"
+            )
+        stable_versions[version] = normalized_entry
+        if current:
+            current_stable_versions.add(version)
+
+    if not stable_versions:
+        raise RunnerHostWatchError(f"{error_context} does not contain any stable releases")
+
+    current_stable_versions_list = sorted(current_stable_versions, key=gradle_version_sort_key)
+    if len(current_stable_versions_list) > 1:
+        raise RunnerHostWatchError(
+            f"{error_context} contains multiple current stable releases: {current_stable_versions_list}"
+        )
+
+    stable_version_list = sorted(stable_versions, key=gradle_version_sort_key)
+    latest_stable_version = stable_version_list[-1]
+    if current_stable_versions_list and current_stable_versions_list[0] != latest_stable_version:
+        raise RunnerHostWatchError(
+            f"{error_context} current stable release {current_stable_versions_list[0]} does not match latest stable release {latest_stable_version}"
+        )
+    return {
+        "stable_versions": stable_versions,
+        "stable_version_list": stable_version_list,
+        "latest_stable_version": latest_stable_version,
+        "current_stable_versions": current_stable_versions_list,
+    }
+
+
+def fetch_gradle_release_catalog_json(url: str) -> Any:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/json",
+            "User-Agent": "Hermes-Agent",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise RunnerHostWatchError(f"Gradle release catalog fetch failed for {url}: HTTP {exc.code}") from exc
+    except urllib.error.URLError as exc:
+        raise RunnerHostWatchError(f"Gradle release catalog fetch failed for {url}: {exc.reason}") from exc
+    except UnicodeDecodeError as exc:
+        raise RunnerHostWatchError(f"Gradle release catalog did not return valid UTF-8 JSON for {url}") from exc
+    except json.JSONDecodeError as exc:
+        raise RunnerHostWatchError(f"Gradle release catalog did not return valid JSON for {url}") from exc
+
+
+def fetch_gradle_release_catalog_for_group(group: dict[str, Any]) -> dict[str, Any]:
+    source_catalog_url = required_string_field(group, "source_catalog_url", error_context="android-gradle source rule")
+    payload = fetch_gradle_release_catalog_json(source_catalog_url)
+    return normalize_gradle_release_catalog_payload(payload, error_context="Gradle release catalog")
+
+
+def build_gradle_platform_result(
+    platform_name: str,
+    group: dict[str, Any],
+    observed_platforms: dict[str, Any],
+    gradle_catalog: dict[str, Any],
+    *,
+    fetch_error: str = "",
+) -> tuple[dict[str, Any], int]:
+    result = {
+        "platform": platform_name,
+        "status": "no review-needed",
+        "outcome": "source-match",
+        "observed": {},
+        "source": {},
+        "review_needed_findings": [],
+        "informational_findings": [],
+    }
+    observed_platform = required_object_field(observed_platforms, platform_name, error_context="observed platforms")
+    if "host_environment_error" in observed_platform:
+        result["outcome"] = "source-skipped"
+        result["skip_reason"] = required_scalar_field(
+            observed_platform,
+            "host_environment_error",
+            error_context=f"observed platform {platform_name}",
+        )
+        return result, 0
+
+    if fetch_error:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = fetch_error
+        result["review_needed_findings"].append(
+            {
+                "kind": "source-unavailable",
+                "message": fetch_error,
+            }
+        )
+        return result, 1
+
+    host_environment = required_object_field(
+        observed_platform,
+        "host_environment",
+        error_context=f"observed platform {platform_name}",
+    )
+    gradle = required_object_field(host_environment, "gradle", error_context=f"observed platform {platform_name} host_environment")
+    configured_version = required_scalar_field(
+        gradle,
+        "configured_version",
+        error_context=f"observed platform {platform_name} gradle",
+    )
+    resolved_version = required_scalar_field(
+        gradle,
+        "resolved_version",
+        error_context=f"observed platform {platform_name} gradle",
+    )
+    result["observed"] = {
+        "gradle.configured_version": configured_version,
+        "gradle.resolved_version": resolved_version,
+    }
+
+    stable_versions = required_object_field(gradle_catalog, "stable_versions", error_context="Gradle release catalog")
+    configured_record = stable_versions.get(configured_version)
+    resolved_record = stable_versions.get(resolved_version)
+    if configured_record is not None:
+        result["source"]["gradle.configured_version"] = required_string_field(
+            configured_record,
+            "version",
+            error_context="Gradle configured source record",
+        )
+    if resolved_record is not None:
+        result["source"]["gradle.resolved_version"] = required_string_field(
+            resolved_record,
+            "version",
+            error_context="Gradle resolved source record",
+        )
+
+    if configured_record is None:
+        result["review_needed_findings"].append(
+            {
+                "kind": "unrecognized-configured-version",
+                "observed": configured_version,
+                "expected_source": group["candidate_source"],
+            }
+        )
+    if resolved_record is None:
+        result["review_needed_findings"].append(
+            {
+                "kind": "unrecognized-resolved-version",
+                "observed": resolved_version,
+                "expected_source": group["candidate_source"],
+            }
+        )
+    elif required_bool_field(resolved_record, "broken", error_context="Gradle resolved source record"):
+        result["review_needed_findings"].append(
+            {
+                "kind": "broken-resolved-version",
+                "observed": resolved_version,
+            }
+        )
+
+    latest_stable_version = required_string_field(
+        gradle_catalog,
+        "latest_stable_version",
+        error_context="Gradle release catalog",
+    )
+    current_stable_versions = required_list_field(
+        gradle_catalog,
+        "current_stable_versions",
+        error_context="Gradle release catalog",
+    )
+    if (
+        configured_record is not None
+        and resolved_record is not None
+        and not result["review_needed_findings"]
+        and latest_stable_version != resolved_version
+    ):
+        result["informational_findings"].append(
+            {
+                "kind": "newer-stable-release-available",
+                "observed": resolved_version,
+                "latest_stable_version": latest_stable_version,
+                "current_stable_versions": current_stable_versions,
+            }
+        )
+
+    if result["review_needed_findings"]:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-review-needed"
+    return result, len(result["review_needed_findings"])
+
+
 def build_android_emulator_runtime_group_result(
     group: dict[str, Any],
     observed_platforms: dict[str, Any],
@@ -1537,8 +1795,61 @@ def enrich_source_rule_groups(
                 }
             )
             source_advisory_count += group_advisory_count
-            if group_advisory_count > 0 and source_reason is None:
+            if group_advisory_count > 0 and source_reason not in {
+                "runner-images-source-error",
+                "runner-images-source-drift",
+            }:
                 source_reason = "android-emulator-runtime-source-review-needed"
+            continue
+
+        if group["rule_kind"] == "gradle-release-catalog":
+            fetch_error = ""
+            gradle_catalog: dict[str, Any] = {}
+            try:
+                gradle_catalog = fetch_gradle_release_catalog_for_group(group)
+                if not isinstance(gradle_catalog, dict) or "stable_versions" not in gradle_catalog:
+                    gradle_catalog = normalize_gradle_release_catalog_payload(
+                        gradle_catalog,
+                        error_context="Gradle release catalog",
+                    )
+            except RunnerHostWatchError as exc:
+                fetch_error = str(exc)
+
+            platform_results: list[dict[str, Any]] = []
+            group_outcome = "source-match"
+            group_status = "no review-needed"
+            group_advisory_count = 0
+            for platform_name in group["platforms"]:
+                platform_result, advisory_count = build_gradle_platform_result(
+                    platform_name,
+                    group,
+                    observed_platforms,
+                    gradle_catalog,
+                    fetch_error=fetch_error,
+                )
+                platform_results.append(platform_result)
+                group_advisory_count += advisory_count
+                if platform_result["outcome"] == "source-error":
+                    group_outcome = "source-error"
+                    group_status = "manual-review-required"
+                elif platform_result["outcome"] == "source-review-needed" and group_outcome == "source-match":
+                    group_outcome = "source-review-needed"
+                    group_status = "manual-review-required"
+                elif platform_result["outcome"] == "source-skipped" and group_outcome == "source-match":
+                    group_outcome = "source-skipped"
+
+            if group_outcome in {"source-error", "source-review-needed"} and source_reason is None:
+                source_reason = "source-review-needed"
+
+            enriched_groups.append(
+                {
+                    **group,
+                    "status": group_status,
+                    "outcome": group_outcome,
+                    "platform_results": platform_results,
+                }
+            )
+            source_advisory_count += group_advisory_count
             continue
 
         enriched_groups.append(group)
@@ -1624,7 +1935,7 @@ def render_markdown(summary: dict[str, Any]) -> str:
         "missing-evidence": "required runner-host evidence is missing or unreadable.",
         "runner-images-source-drift": "source-backed runner-images metadata disagrees with the observed watched facts.",
         "runner-images-source-error": "runner-images source-backed evaluation could not be trusted and failed closed.",
-        "source-review-needed": "source-backed runner-host evaluation found Java release/support findings that need review.",
+        "source-review-needed": "source-backed Android Java or Gradle evaluation requires manual review.",
         "android-emulator-runtime-source-review-needed": "Android emulator-runtime source-backed evaluation requires review.",
     }.get(summary["reason"], summary["reason"])
     lines = [
@@ -1687,8 +1998,31 @@ def render_markdown(summary: dict[str, Any]) -> str:
                         message = sanitize_cell(finding.get("message", finding.get("code", "finding")))
                         code = sanitize_cell(finding.get("code", "finding"))
                         lines.append(f"      - `{code}`: {message}")
+                if platform_result.get("review_needed_findings"):
+                    lines.append("    - Review-needed findings:")
+                    for finding in platform_result["review_needed_findings"]:
+                        if finding["kind"] == "source-unavailable":
+                            lines.append(f"      - `{finding['kind']}`: {sanitize_cell(finding['message'])}")
+                        elif "observed" in finding:
+                            lines.append(
+                                f"      - `{finding['kind']}`: observed `{sanitize_cell(finding['observed'])}`"
+                            )
+                        else:
+                            lines.append(f"      - `{finding['kind']}`")
+                if platform_result.get("informational_findings"):
+                    lines.append("    - Informational findings:")
+                    for finding in platform_result["informational_findings"]:
+                        if finding["kind"] == "newer-stable-release-available":
+                            lines.append(
+                                "      - `newer-stable-release-available`: "
+                                f"observed `{sanitize_cell(finding['observed'])}`, latest stable `{sanitize_cell(finding['latest_stable_version'])}`"
+                            )
+                        else:
+                            lines.append(f"      - `{finding['kind']}`")
                 if platform_result.get("source_error"):
                     lines.append(f"    - Source error: {sanitize_cell(platform_result['source_error'])}")
+                if platform_result.get("skip_reason"):
+                    lines.append(f"    - Source skipped: {sanitize_cell(platform_result['skip_reason'])}")
         elif group["rule_kind"] == "android-system-image-catalog":
             lines.extend(
                 [

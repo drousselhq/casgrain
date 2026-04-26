@@ -116,11 +116,13 @@
           "path": "gradle.resolved_version"
         }
       ],
-      "rule_kind": "manual-review-required",
-      "rationale": "Current main captures Android Gradle host version facts from smoke evidence only; it does not yet evaluate authoritative source metadata for those versions.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "rule_kind": "gradle-release-catalog",
+      "rationale": "Current main compares the watched Android Gradle version facts against the official Gradle release catalog and fails closed when the source cannot be trusted.",
+      "managed_issue_behavior": "Actionable Gradle findings must reuse the existing managed issue title.",
       "follow_up_issue": 155,
-      "candidate_source": "Authoritative Gradle release/support metadata for the configured and resolved version facts"
+      "candidate_source": "Gradle release catalog stable-version metadata",
+      "source_catalog_url": "https://services.gradle.org/versions/all",
+      "stable_channel_policy": "stable-releases-only"
     },
     {
       "key": "android-emulator-runtime",
