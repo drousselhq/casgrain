@@ -126,7 +126,7 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation already includes the delivered `runner-images`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the remaining Android follow-up stays separate
+- the shipped runner-host automation already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the later iOS follow-up ownership remains split under `#164` / `#165`
 - the Android backlog is no longer one combined `android-java-gradle` umbrella after this slice
 - later source-backed Android promotion is split across `#154`, `#155`, and `#156`
 - those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
@@ -203,7 +203,6 @@ PY
 The implementation PR for this spec should be able to close `#142` because it finishes the immediate repo-owned Android source-rule split.
 
 After that PR merges:
-- `#154` remains the bounded follow-up for Android Java host version source-backed promotion
-- delivered `#155` now covers the Android Gradle host version source-backed promotion
-- delivered `#156` now covers the Android emulator-runtime source-backed promotion, while `#154` remains the open Android follow-up
-- the shipped runner-host lane on `main` now includes the delivered `runner-images` source-backed exception from `#143`, the delivered `android-java` source-backed exception from `#154`, the delivered `android-gradle` source-backed exception from `#155`, and the delivered `android-emulator-runtime` source-backed exception from `#156`
+- the Android backlog is split into bounded follow-up issues `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`)
+- current `main` has since delivered all three Android follow-ups as source-backed groups alongside the earlier `runner-images` slice from `#143`
+- the remaining later source-backed follow-up work is the iOS split under `#164` / `#165`, while current `main` still renders one combined `ios-xcode-simulator` placeholder for compatibility

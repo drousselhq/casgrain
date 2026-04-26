@@ -18,9 +18,9 @@ Already delivered on `main`:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
-  - historical note: this slice originally started when `runner-images` was still marked `manual-review-required`; current `main` now keeps `runner-images`, `android-gradle`, and `android-emulator-runtime` source-backed
+  - historical note: this slice originally started when `runner-images` was still marked `manual-review-required`; current `main` now keeps `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed
 
-That means the repo already owns the drift / missing-evidence runner-host lane honestly, and current `main` now keeps `runner-images`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed exceptions.
+That means the repo already owns the drift / missing-evidence runner-host lane honestly, and current `main` now keeps `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed exceptions.
 
 ## Scope of this slice
 

@@ -106,7 +106,7 @@ Update:
 Implementation contract for this slice:
 - read and validate `.github/runner-host-advisory-sources.json`
 - include a machine-readable summary of source-rule status per group in the emitted JSON summary
-- include a concise markdown section that states which groups are still `manual-review-required`, and on current `main` also reflects that `runner-images`, `android-gradle`, and `android-emulator-runtime` are the delivered source-backed promotions
+- include a concise markdown section that states which groups are still `manual-review-required`, and on current `main` also reflects that `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` are the delivered source-backed promotions
 - keep the current top-level drift logic authoritative for alerting in this slice
 - do **not** change the existing `alert`, `advisory_count`, `verdict`, or managed-issue-opening semantics merely because the new source-rule inventory exists
 - if the new manifest is missing, malformed, or references unknown watched fact paths, fail closed rather than silently dropping the source-rule story
@@ -114,7 +114,7 @@ Implementation contract for this slice:
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
 - the new source-rule section must make it explicit that this slice introduced the source-rule inventory contract, while later delivered follow-up slices now add source-backed evaluation on current `main`
-- the report must not imply broader source-backed advisory evaluation than current `main` actually ships; today that means `runner-images`, `android-gradle`, and `android-emulator-runtime` are active while the remaining groups stay manual-only
+- the report must not imply broader source-backed advisory evaluation than current `main` actually ships; today that means `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` are active while only the combined iOS placeholder stays manual-only
 
 ### 3. Tests and fixtures
 
@@ -146,7 +146,7 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- current shipped runner-host automation now evaluates drift / missing evidence plus the delivered source-backed promotions for `runner-images`, `android-gradle`, and `android-emulator-runtime`
+- current shipped runner-host automation now evaluates drift / missing evidence plus the delivered source-backed promotions for `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime`
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
 - the current source groups on `main` keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` delivered while the combined iOS placeholder remains the `manual-review-required` follow-up until its later slices land
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles

@@ -148,6 +148,8 @@ Those updates must explicitly say:
 
 Minimum validation expected in the implementation PR:
 
+Because the live runner-host summary can still surface unrelated drift or missing-evidence alerts on current `main`, the slice-specific check should prove that `android-java` is active on the shared runner-host summary contract rather than forcing a globally clean `advisory_count == 0` render.
+
 ```bash
 git diff --check
 python3 -m py_compile \
@@ -170,8 +172,10 @@ summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encod
 android = next(group for group in summary['source_rule_groups'] if group['key'] == 'android-java')
 assert android['rule_kind'] == 'java-release-support', android
 assert android['follow_up_issue'] == 154, android
-assert summary['advisory_count'] == 0, summary
-print('android-java source-backed rule is present in the runner-host summary')
+assert android['status'] in {'no review-needed', 'manual-review-required'}, android
+assert android['outcome'] in {'source-match', 'source-review-needed', 'source-error'}, android
+assert 'source_advisory_count' not in summary, summary
+print('android-java source-backed rule is active on the shared runner-host summary contract')
 PY
 ```
 

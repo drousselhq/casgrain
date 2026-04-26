@@ -121,7 +121,7 @@ The implementation PR for this spec must update these docs:
 
 Those docs updates must explicitly say:
 - current `main` still keeps one combined `ios-xcode-simulator` placeholder key; `#144` is historical/superseded rather than the live current-main owner
-- shipped runner-host automation already includes the delivered `runner-images`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the later iOS source-backed work is split across `#164` and `#165`
+- shipped runner-host automation already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the later iOS source-backed work is split across `#164` and `#165`
 - later source-backed iOS promotion is split across `#164` and `#165`
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a future `#144` umbrella owner and instead point the later iOS work at `#164` / `#165` while keeping the current combined placeholder truthful
 - those later iOS slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
