@@ -5,12 +5,12 @@
 
 ## 1. Confirm the bounded runner-images slice still matches current `main`
 - [x] 1.1 Verify `.github/runner-host-advisory-sources.json` still maps `runner-images` to `#143` and leaves the other four runner-host groups on their current follow-up issues.
-- [x] 1.2 Historical note: this task originally captured the pre-merge state where `runner-images` was still `manual-review-required`; current `main` now keeps `runner-images` and `android-emulator-runtime` source-backed while reusing the same `security: runner-host review needed` title.
+- [x] 1.2 Historical note: this task originally captured the pre-merge state where `runner-images` was still `manual-review-required`; current `main` now keeps `runner-images`, `android-java`, and `android-emulator-runtime` source-backed while reusing the same `security: runner-host review needed` title.
 - [x] 1.3 Stop and hand the slice back if current `main` already promoted `runner-images` or if another PR changed the source-group split this task list depends on.
 - Goal: Prove the selected work is still the `runner-images` promotion slice rather than stale backlog text.
 - Validation: `python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No production edits yet, no new issue split, no policy rewrite.
-- Hand back if: `runner-images` is no longer owned by `#143`, the runner-host issue title changed, or the current-main contract no longer shows `runner-images` plus `android-emulator-runtime` as the delivered source-backed slices with `android-java` / `android-gradle` still open and later iOS ownership under `#164` / `#165`.
+- Hand back if: `runner-images` is no longer owned by `#143`, the runner-host issue title changed, or the current-main contract no longer shows `runner-images`, `android-java`, and `android-emulator-runtime` as the delivered source-backed slices with `android-gradle` still open and later iOS ownership under `#164` / `#165`.
 
 ## 2. Add failing deterministic coverage for runner-images source-backed outcomes
 - [x] 2.1 Extend `tests/scripts/test_runner_host_review_report.py` with source-backed `runner-images` coverage before changing production code.

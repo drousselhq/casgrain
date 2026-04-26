@@ -157,7 +157,7 @@ Those docs updates must explicitly say:
 1. Current `main` still reports the same honest runner-host drift verdicts as before this slice; the new work does not silently alter alert semantics.
 2. The repo gains a checked-in source-rule inventory that binds each current runner-host surface group to explicit watched fact paths and exactly one follow-up issue.
 3. The runner-host report output now makes the current source-rule status visible and testable instead of leaving it implicit in issue prose.
-4. The canonical security docs stop treating future source-backed promotion as an unstructured umbrella and instead point at the checked-in source-rule contract plus the delivered `#143` / `#156` slices and the open split follow-up issues `#154`, `#155`, `#164`, and `#165`.
+4. The canonical security docs stop treating future source-backed promotion as an unstructured umbrella and instead point at the checked-in source-rule contract plus the delivered `#143` / `#154` / `#156` slices and the open split follow-up issues `#155`, `#164`, and `#165`.
 5. The implementation PR for this slice can honestly say `Closes #129` because it finishes the immediate repo-controlled contract/plumbing work, while the actual source integrations remain in follow-up issues.
 
 ## Bounded design decisions
