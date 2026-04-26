@@ -75,7 +75,7 @@ Contract:
   - Android version / API-level mapping metadata
 - the rule metadata may use the already-emitted `target` / `arch` fields as lookup inputs for source evaluation, but this slice must **not** widen `.github/runner-host-watch.json` to make those support fields newly watched facts
 - preserve `runner-images` as the delivered `runner-image-release-metadata` group
-- preserve `android-java` and `android-gradle` as `manual-review-required` groups mapped to their existing follow-up issues
+- preserve `android-java` as the remaining `manual-review-required` group mapped to its existing follow-up issue, and keep `android-gradle` on its already-delivered source-backed path under `#155`
 - do not use this slice to reopen closed issue `#144` or to invent a new combined iOS owner in touched docs/specs; any later iOS source-backed work remains tracked by `#164` / `#165`
 
 ### 2. Runner-host source evaluation and report plumbing
@@ -115,7 +115,7 @@ Required coverage:
 - authoritative-source payload unavailable or malformed → explicit review-needed Android emulator-runtime source finding instead of silent success
 - a newer official system-image revision or newer Android API exists while the current API 34 / Android 14 runtime is still a recognized match → no automatic alert from the emulator-runtime source path alone
 - existing drift and missing-evidence fixtures still preserve their current overall `advisory_count` behavior while the source-backed findings remain distinguishable in the rendered output
-- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` exercises the active `android-emulator-runtime` rule, keeps `runner-images` on `runner-image-release-metadata`, and leaves the other non-emulator follow-up groups unchanged
+- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` exercises the active `android-emulator-runtime` rule, keeps `runner-images` and `android-gradle` on their already-delivered source-backed paths, and leaves `android-java` plus the later iOS follow-up groups unchanged
 
 ### 4. Canonical docs and live-contract reconciliation
 
@@ -163,7 +163,7 @@ Those updates must explicitly say:
 
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
-- **no** source-backed evaluation for `android-gradle` (`#155`)
+- **no** changes to the already-delivered `android-gradle` source-backed evaluation (`#155`)
 - **no** source-backed evaluation or iOS ownership/split implementation work; later iOS follow-up work remains with `#164` and `#165`
 - **no** widening of `.github/runner-host-watch.json` to add `emulator.target`, `emulator.arch`, `emulator.profile`, extension levels, package revisions, or any other new watched fact
 - **no** separate source-only alert policy for the generated `emulator.device_name` string in this slice

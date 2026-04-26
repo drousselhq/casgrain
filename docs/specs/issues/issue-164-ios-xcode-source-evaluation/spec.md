@@ -25,7 +25,7 @@ Already delivered on `main`:
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
   - at that handoff point, every source-rule group, including the combined iOS group, still remained `manual-review-required`
-- current `main` has since promoted `runner-images` and `android-emulator-runtime` to delivered source-backed groups, while `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder remain later follow-up work until their bounded slices land
+- current `main` has since promoted `runner-images`, `android-gradle`, and `android-emulator-runtime` to delivered source-backed groups, while `android-java` and the current combined `ios-xcode-simulator` placeholder remain later follow-up work until their bounded slices land
 - The checked-in iOS baseline on current `main` watches these Xcode facts:
   - `xcode.app_path=/Applications/Xcode_16.4.app`
   - `xcode.version=16.4`
@@ -70,7 +70,7 @@ Contract:
 - change only the `ios-xcode` rule kind from `manual-review-required` to a stable active kind: `apple-xcode-support-matrix`
 - add only the rule-specific source metadata needed to evaluate the Apple Xcode support matrix row for the observed Xcode version and bundled simulator SDK version
 - preserve `ios-simulator-runtime` as `manual-review-required` and mapped to `#165`
-- preserve `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` as their existing separate groups/follow-up issues
+- preserve `runner-images`, `android-gradle`, and `android-emulator-runtime` on their existing delivered source-backed groups, and preserve `android-java` as its separate follow-up issue
 - do **not** widen `.github/runner-host-watch.json`
 - keep `xcode.app_path` in the watched inventory, but treat it as drift-only/supporting context for this slice rather than as a source-backed mismatch dimension
 
@@ -100,7 +100,7 @@ Implementation contract:
   - `baseline-match` when there is no drift and no iOS Xcode source finding
   - existing drift reasons keep winning when drift or missing evidence exists
   - use a dedicated source-backed reason (for example `ios-xcode-source-review-needed`) when drift count is zero but iOS Xcode source findings require review
-- render markdown that clearly distinguishes iOS Xcode source-backed findings from drift / missing-evidence findings and states that `ios-simulator-runtime` plus the non-iOS groups still remain separate follow-up work
+- render markdown that clearly distinguishes iOS Xcode source-backed findings from drift / missing-evidence findings and states that `ios-simulator-runtime` remains separate follow-up work while the non-iOS groups keep their already-delivered or separately-owned states
 - keep `xcode.app_path` in the existing drift-only path for this slice; do **not** invent a second source-only alert solely because the local app bundle path differs from a naming convention
 - do **not** auto-alert solely because Apple publishes a newer Xcode release or newer SDK row upstream while the observed Xcode version / bundled SDK pair still resolves cleanly in the authoritative matrix
 - fail closed on checked-in manifest/schema violations, but degrade authoritative-source retrieval/normalization failures into explicit review-needed iOS Xcode findings rather than a silent pass
@@ -118,7 +118,7 @@ Required coverage:
 - authoritative-source payload unavailable or malformed → explicit review-needed iOS Xcode source finding instead of silent success, with the same top-level `advisory_count` path used for other source-backed findings on current `main`
 - newer Xcode or SDK rows exist upstream while the observed Xcode version / bundled SDK pair still resolves cleanly → no automatic alert from the iOS Xcode source path alone
 - existing drift and missing-evidence fixtures still preserve their current overall `advisory_count` behavior while source-backed findings remain distinguishable in the rendered output
-- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `ios-xcode` rule while `ios-simulator-runtime` and the non-iOS groups stay manual-only
+- a checked-in manifest regression proves `.github/runner-host-advisory-sources.json` itself exercises the active `ios-xcode` rule while `ios-simulator-runtime` and `android-java` stay manual-only, and `runner-images`, `android-gradle`, and `android-emulator-runtime` stay on their existing delivered source-backed paths
 
 ### 4. Canonical docs and live-contract reconciliation
 
@@ -143,7 +143,7 @@ Update:
 Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-xcode`
 - `ios-simulator-runtime` remains separate follow-up work under `#165`
-- `runner-images` and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`, while `android-java` and `android-gradle` remain the separate non-iOS follow-up issues
+- `runner-images`, `android-gradle`, and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`, while `android-java` remains the separate non-iOS follow-up issue
 - actionable iOS Xcode findings continue to reuse `security: runner-host review needed`
 - `xcode.app_path` remains part of the drift guard / supporting context for the iOS smoke artifact contract in this slice rather than a source-backed comparison field
 - a newer Apple Xcode release or newer SDK row alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized release/support metadata for the observed Xcode version and bundled SDK facts, not a general freshness policy
@@ -159,7 +159,7 @@ Those updates must explicitly say:
 1. Once the split iOS source-rule contract already exists on current `main`, `.github/runner-host-advisory-sources.json` exposes `ios-xcode` as `apple-xcode-support-matrix` while preserving `follow_up_issue: 164`, and `ios-simulator-runtime` remains `manual-review-required` under `#165`.
 2. A recognized Apple support-matrix row for the observed Xcode version / bundled simulator SDK pair still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Xcode source findings requiring review.
 3. A missing row, a simulator-SDK mismatch, or source-unavailable iOS Xcode evaluation produces an explicit source-backed finding for `ios-xcode`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when the watched-fact drift count remains zero.
-4. The rendered JSON and markdown distinguish iOS Xcode source-backed findings from drift / missing-evidence findings through explicit source-rule group details, keep `xcode.app_path` in the drift-only/supporting contract, and leave `ios-simulator-runtime` plus the non-iOS groups as separate manual-review follow-ups.
+4. The rendered JSON and markdown distinguish iOS Xcode source-backed findings from drift / missing-evidence findings through explicit source-rule group details, keep `xcode.app_path` in the drift-only/supporting contract, leave `ios-simulator-runtime` plus `android-java` as separate manual-review follow-ups, and keep `runner-images`, `android-gradle`, and `android-emulator-runtime` on their delivered source-backed paths.
 5. The named canonical docs and older main-branch issue-spec/task artifacts — including `issue-154/{spec,tasks}.md`, `issue-155/{spec,tasks}.md`, and `issue-156/{spec,tasks}.md` — no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer describe post-`#164` current `main` as keeping `ios-xcode` manual-only future work, no longer claim that only `runner-images` is source-backed on current `main`, and no longer require a drift-only top-level `advisory_count` plus a separate top-level `source_advisory_count` for the shared runner-host summary contract.
 6. The implementation PR for this slice can honestly say `Closes #164` because the iOS Xcode source-backed evaluation becomes active on `main` without widening the watched inventory or absorbing the simulator-runtime work.
 
@@ -167,7 +167,7 @@ Those updates must explicitly say:
 
 - **no** source-backed evaluation for `runner-images` (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
-- **no** source-backed evaluation for `android-gradle` (`#155`)
+- **no** changes to the already-delivered `android-gradle` source-backed evaluation (`#155`)
 - **no** changes to the already-delivered `android-emulator-runtime` source-backed evaluation (`#156`)
 - **no** source-backed evaluation for `ios-simulator-runtime` (`#165`)
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched Xcode facts

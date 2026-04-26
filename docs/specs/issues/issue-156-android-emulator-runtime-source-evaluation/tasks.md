@@ -16,7 +16,7 @@
 ## 2. Promote the checked-in `android-emulator-runtime` source rule from placeholder to active contract
 - [x] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-emulator-runtime` uses `rule_kind: android-system-image-catalog`.
 - [x] 2.2 Add only the rule-specific source metadata needed for the Android platform/system-image evaluator while preserving `follow_up_issue: 156` and the existing watched fact paths.
-- [x] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, keep `android-java` and `android-gradle` as `manual-review-required` follow-up groups, and do not widen this Android slice into the separate iOS follow-up ownership already tracked by `#164` / `#165`.
+- [x] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, keep `android-java` as the remaining `manual-review-required` follow-up group, keep `android-gradle` on its already-delivered source-backed path under `#155`, and do not widen this Android slice into the separate iOS follow-up ownership already tracked by `#164` / `#165`.
 - [x] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `emulator.target`, `emulator.arch`, `emulator.profile`, package revisions, extension levels, or any other new watched fact.
 - Goal: Make the repo-owned manifest describe one bounded active emulator-runtime source rule without reopening the delivered `runner-images` slice or the other runner-host follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
