@@ -16,7 +16,7 @@
 ## 2. Promote the checked-in `android-gradle` source rule from placeholder to active contract
 - [x] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-gradle` uses `rule_kind: gradle-release-catalog`.
 - [x] 2.2 Add only the rule-specific source metadata needed for the Gradle release-catalog evaluator while preserving `follow_up_issue: 155` and the existing watched fact paths.
-- [x] 2.3 Keep `runner-images` on its existing `runner-image-release-metadata` contract, keep `android-java` and the current combined `ios-xcode-simulator` placeholder as the remaining `manual-review-required` follow-up groups, and treat `android-emulator-runtime` as already source-backed on current `main` while later iOS ownership stays with `#164` / `#165`.
+- [x] 2.3 Keep `runner-images` on its existing `runner-image-release-metadata` contract, keep `android-java` on its existing separate source-backed path, keep the current combined `ios-xcode-simulator` placeholder as the remaining `manual-review-required` follow-up group, and treat `android-emulator-runtime` as already source-backed on current `main` while later iOS ownership stays with `#164` / `#165`.
 - [x] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include Android Gradle plugin versions, wrapper checksums, dependency manifests, or any other new Gradle fact.
 - Goal: Make the repo-owned manifest describe one bounded active Gradle source rule without reopening the other runner-host follow-up scopes.
 - Validation:
@@ -29,14 +29,14 @@ manifest = json.loads(Path('.github/runner-host-advisory-sources.json').read_tex
 groups = {group['key']: group for group in manifest['groups']}
 assert groups['runner-images']['rule_kind'] == 'runner-image-release-metadata', groups['runner-images']
 assert groups['android-gradle']['rule_kind'] == 'gradle-release-catalog', groups['android-gradle']
-assert groups['android-java']['rule_kind'] == 'manual-review-required', groups['android-java']
+assert groups['android-java']['rule_kind'] == 'java-release-support', groups['android-java']
 assert groups['android-emulator-runtime']['rule_kind'] == 'android-system-image-catalog', groups['android-emulator-runtime']
 assert groups['ios-xcode-simulator']['rule_kind'] == 'manual-review-required', groups['ios-xcode-simulator']
-print('android-gradle is promoted while the non-selected follow-up groups stay unchanged at this checkpoint')
+print('android-gradle is promoted while the remaining iOS follow-up group stays unchanged at this checkpoint')
 PY
 ```
 - Non-goals: No Java/emulator/iOS/runner-image source activation, no new managed issue title.
-- Hand back if: The Gradle slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the already-delivered `runner-images` / `android-emulator-runtime` contracts or the remaining manual-only follow-up groups.
+- Hand back if: The Gradle slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the already-delivered `runner-images` / `android-java` / `android-emulator-runtime` contracts or the remaining manual-only iOS follow-up group.
 
 ## 3. Implement bounded Android Gradle source evaluation in `runner_host_review_report.py`
 - [x] 3.1 Normalize and validate the new `gradle-release-catalog` rule kind in `tests/test-support/scripts/runner_host_review_report.py`.
@@ -51,7 +51,7 @@ PY
 - Hand back if: The bounded Gradle evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the managed-issue sync path instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
-- [x] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images` remains source-backed, `android-emulator-runtime` is already source-backed, `android-gradle` becomes source-backed in this slice, and `android-java` plus the current combined `ios-xcode-simulator` placeholder remain manual-review-required while later iOS ownership lives in `#164` / `#165`.
+- [x] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images`, `android-java`, and `android-emulator-runtime` are already source-backed, `android-gradle` becomes source-backed in this slice, and the current combined `ios-xcode-simulator` placeholder remains `manual-review-required` while later iOS ownership lives in `#164` / `#165`.
 - [x] 4.2 Reconcile `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-142-android-runner-host-source-split.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/spec.md`, `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, `docs/specs/issues/issue-154-android-java-source-evaluation/spec.md`, and `docs/specs/issues/issue-154-android-java-source-evaluation/tasks.md` so they no longer read as if current `main` has no Android Gradle source-backed evaluation, as if only `runner-images` is source-backed or as if `android-emulator-runtime` were still an untouched future/manual-only slice, as if `#155` is still future work after this slice lands, or as if Android source-backed slices still require a drift-only `advisory_count` plus a separate `source_advisory_count`.
 - [x] 4.3 Make the docs explicit that a newer Gradle release alone is informational for this slice unless the repo later adds a separate upgrade-policy contract.
 - [x] 4.4 Remove the stale phrases that currently say `#155` remains future work on current `main`, including the `issue-124` line that lists `#155` among later source-specific follow-ups, the `issue-143` spec/task wording that still limits current-main source-backed status to `runner-images`, the `issue-144` spec/task wording that still frames `runner-images` as the only delivered source-backed exception or validates only that live-summary state, and the `issue-154` spec/task wording that still says `android-gradle` remains an unchanged `manual-review-required` follow-up after this slice lands or that Android source-backed findings must be split into drift-only `advisory_count` plus a separate `source_advisory_count`.
@@ -133,7 +133,7 @@ PY
 - [x] 5.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [x] 5.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
 - [x] 5.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `android-gradle` now renders as `gradle-release-catalog`.
-- [x] 5.5 In the PR summary/comment, say the implementation PR `Closes #155`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `runner-images` and `android-emulator-runtime` stayed source-backed while `android-java` and the current combined iOS placeholder remained the follow-up groups.
+- [x] 5.5 In the PR summary/comment, say the implementation PR `Closes #155`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `runner-images`, `android-java`, and `android-emulator-runtime` stayed source-backed while only the current combined iOS placeholder remained the follow-up group.
 - Goal: Leave QA with one honest picture of the Gradle-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.

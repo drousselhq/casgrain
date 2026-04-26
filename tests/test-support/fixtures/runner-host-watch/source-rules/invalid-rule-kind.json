@@ -157,8 +157,11 @@
       "rule_kind": "manual-review-required",
       "rationale": "Current main records Xcode and simulator-runtime evidence but does not yet evaluate Apple source data for those surfaces.",
       "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
-      "follow_up_issue": 144,
-      "candidate_source": "Apple Xcode and simulator runtime release metadata"
+      "candidate_source": "Apple Xcode and simulator runtime release metadata",
+      "follow_up_issues": [
+        164,
+        165
+      ]
     }
   ]
 }

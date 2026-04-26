@@ -4,10 +4,19 @@
     {
       "key": "runner-images",
       "surface": "GitHub-hosted runner images and OS facts",
-      "platforms": ["android", "ios"],
+      "platforms": [
+        "android",
+        "ios"
+      ],
       "watched_fact_paths": [
-        {"platform": "android", "path": "runner.label"},
-        {"platform": "android", "path": "runner.unknown_field"}
+        {
+          "platform": "android",
+          "path": "runner.label"
+        },
+        {
+          "platform": "android",
+          "path": "runner.unknown_field"
+        }
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet evaluate authoritative runner metadata.",
@@ -18,9 +27,14 @@
     {
       "key": "android-java",
       "surface": "Android Java host version facts",
-      "platforms": ["android"],
+      "platforms": [
+        "android"
+      ],
       "watched_fact_paths": [
-        {"platform": "android", "path": "java.configured_major"}
+        {
+          "platform": "android",
+          "path": "java.configured_major"
+        }
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet query authoritative Java sources.",
@@ -31,9 +45,14 @@
     {
       "key": "android-gradle",
       "surface": "Android Gradle host version facts",
-      "platforms": ["android"],
+      "platforms": [
+        "android"
+      ],
       "watched_fact_paths": [
-        {"platform": "android", "path": "gradle.configured_version"}
+        {
+          "platform": "android",
+          "path": "gradle.configured_version"
+        }
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet query authoritative Gradle sources.",
@@ -44,9 +63,14 @@
     {
       "key": "android-emulator-runtime",
       "surface": "Android emulator runtime host facts",
-      "platforms": ["android"],
+      "platforms": [
+        "android"
+      ],
       "watched_fact_paths": [
-        {"platform": "android", "path": "emulator.api_level"}
+        {
+          "platform": "android",
+          "path": "emulator.api_level"
+        }
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet query authoritative Android runtime sources.",
@@ -57,15 +81,23 @@
     {
       "key": "ios-xcode-simulator",
       "surface": "iOS Xcode and simulator runtime host facts",
-      "platforms": ["ios"],
+      "platforms": [
+        "ios"
+      ],
       "watched_fact_paths": [
-        {"platform": "ios", "path": "xcode.version"}
+        {
+          "platform": "ios",
+          "path": "xcode.version"
+        }
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet evaluate Apple release metadata.",
       "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
-      "follow_up_issue": 144,
-      "candidate_source": "Apple Xcode and simulator runtime release metadata"
+      "candidate_source": "Apple Xcode and simulator runtime release metadata",
+      "follow_up_issues": [
+        164,
+        165
+      ]
     }
   ]
 }

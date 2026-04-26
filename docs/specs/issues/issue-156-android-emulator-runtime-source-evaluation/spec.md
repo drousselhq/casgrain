@@ -75,7 +75,7 @@ Contract:
   - Android version / API-level mapping metadata
 - the rule metadata may use the already-emitted `target` / `arch` fields as lookup inputs for source evaluation, but this slice must **not** widen `.github/runner-host-watch.json` to make those support fields newly watched facts
 - preserve `runner-images` as the delivered `runner-image-release-metadata` group
-- preserve `android-java` as the remaining `manual-review-required` group mapped to its existing follow-up issue, and keep `android-gradle` on its already-delivered source-backed path under `#155`
+- preserve `android-java` and `android-gradle` on their already-delivered source-backed paths under `#154` / `#155`
 - do not use this slice to reopen closed issue `#144` or to invent a new combined iOS owner in touched docs/specs; any later iOS source-backed work remains tracked by `#164` / `#165`
 
 ### 2. Runner-host source evaluation and report plumbing
@@ -137,7 +137,7 @@ Update:
 
 Those updates must explicitly say:
 - current `main` already performs source-backed evaluation for `runner-images`, and after this slice it also performs source-backed evaluation for `android-emulator-runtime`
-- `android-java` remains the manual-review-required follow-up group after this slice, while `android-gradle` is already source-backed on current `main`
+- `android-java` and `android-gradle` are already source-backed on current `main`
 - current `main` still renders one combined `ios-xcode-simulator` placeholder as `manual-review-required`, but touched docs/specs must not preserve closed issue `#144` as the live later-owner because the iOS source-backed follow-up work is already split across `#164` / `#165`
 - actionable Android emulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Android API level, extension level, or system-image revision alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized package/runtime identity, not general freshness policy
@@ -155,14 +155,14 @@ Those updates must explicitly say:
 1. `.github/runner-host-advisory-sources.json` exposes `android-emulator-runtime` as `android-system-image-catalog` while preserving its watched fact paths and `follow_up_issue: 156`, and keeps `runner-images` on `runner-image-release-metadata`.
 2. A recognized Android 14 / API 34 Google APIs x86_64 runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no emulator-runtime source findings requiring review.
 3. Missing package metadata, an API/runtime mismatch, or source-unavailable Android emulator-runtime evaluation produces an explicit source-backed finding for `android-emulator-runtime`, increments the overall `advisory_count`, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when no watched-fact drift exists.
-4. The rendered JSON and markdown distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed groups, keep `android-java` as the remaining Android follow-up, and expose the current `ios-xcode-simulator` placeholder with plural later ownership under `#164` / `#165` rather than reintroducing closed issue `#144` as the live owner.
+4. The rendered JSON and markdown distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed groups, and expose the current `ios-xcode-simulator` placeholder with plural later ownership under `#164` / `#165` rather than reintroducing closed issue `#144` as the live owner.
 5. The named canonical docs and historical issue-spec/task artifacts no longer claim that current runner-host automation is drift-only or that only `runner-images` is source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only / unchanged-ownership wording in the adjacent `#154` / `#155` issue-spec artifacts, and no longer require a top-level `source_advisory_count` for the shared runner-host summary contract.
 6. The implementation PR for this slice can honestly say `Closes #156` because the Android emulator-runtime source-backed evaluation becomes active on `main`.
 
 ## Explicit non-goals
 
 - **no** further behavior or ownership changes to the delivered `runner-images` slice (`#143`)
-- **no** source-backed evaluation for `android-java` (`#154`)
+- **no** changes to the already-delivered `android-java` source-backed evaluation (`#154`)
 - **no** changes to the already-delivered `android-gradle` source-backed evaluation (`#155`)
 - **no** source-backed evaluation or iOS ownership/split implementation work; later iOS follow-up work remains with `#164` and `#165`
 - **no** widening of `.github/runner-host-watch.json` to add `emulator.target`, `emulator.arch`, `emulator.profile`, extension levels, package revisions, or any other new watched fact
@@ -212,5 +212,5 @@ The implementation PR for this spec should be able to close `#156` because it tu
 After that PR merges:
 - Android emulator-runtime identity is evaluated from authoritative Android platform/system-image metadata through the existing runner-host watch
 - `runner-images` remains the delivered source-backed group on current `main`
-- `android-gradle` is already delivered as a source-backed group, `android-java` remains separate bounded follow-up work, and later iOS source-backed work remains under `#164` / `#165` even though current `main` still renders one combined iOS placeholder today
+- `android-java` and `android-gradle` are already delivered as source-backed groups, and later iOS source-backed work remains under `#164` / `#165` even though current `main` still renders one combined iOS placeholder today
 - any future work on device-name policy, profile-level policy, API freshness ratchets, or broader Android runtime semantics must land as a new bounded follow-up issue instead of being smuggled into `#156`
