@@ -19,12 +19,12 @@ Already delivered on `main`:
 - PR #145 added the repo-owned runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
 - PR #158 split the Android runner-host backlog into bounded `android-java`, `android-gradle`, and `android-emulator-runtime` groups.
 - PR #174 already promoted `runner-images` to the active `runner-image-release-metadata` rule on current `main`.
-- A fresh live invocation during analyst repair against current `main` reports:
+- A fresh live invocation at the pre-`#155` analyst-repair checkpoint against then-current `main` reported:
   - `verdict=manual-review-required`
   - `reason=runner-images-source-drift`
   - `advisory_count=2`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
-  - `runner-images` now evaluates as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder still render as `manual-review-required`
+  - `runner-images` evaluated as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder still rendered as `manual-review-required`
 - GitHub issue `#144` is already closed, while the later iOS source-backed work now lives in open follow-up issues `#164` and `#165`; their issue-scoped specs are already merged on `main` via PRs `#171` and `#173`.
 - The latest successful Android smoke artifact on `main` currently emits this emulator evidence:
   - `api_level=34`
