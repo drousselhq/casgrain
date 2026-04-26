@@ -263,7 +263,7 @@ The live invocation above should be treated as a render smoke and contract check
 The implementation PR for this spec should be able to close `#143` because it finishes the bounded `runner-images` source-backed promotion slice.
 
 After that PR merges:
-- `#154`, `#155`, and `#156` remain the bounded Android host-toolchain follow-ups
+- `#154` remains the bounded Android host-toolchain follow-up, while `#155` / `#156` are already delivered source-backed slices on current `main`
 - later iOS source-backed work stays under split follow-ups `#164` / `#165`, while current `main` keeps the combined `ios-xcode-simulator` placeholder until that later split lands
 - the runner-host lane continues to reuse `security: runner-host review needed`
 - any later desire for broader runner-image package or CVE inventory work must be shaped as a new bounded issue rather than smuggled into this slice

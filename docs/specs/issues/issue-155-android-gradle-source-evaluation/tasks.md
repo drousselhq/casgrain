@@ -82,6 +82,7 @@ stale_checks = {
 ],
 'docs/specs/issues/issue-143-runner-image-source-evaluation/spec.md': [
 'the remaining runner-host groups stay explicit future work under `#154`, `#155`, `#156`, and `#144`',
+'`#154`, `#155`, and `#156` remain the bounded android host-toolchain follow-ups',
 ],
 'docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md': [
 'so they state that only `runner-images` is source-backed after this slice',
