@@ -507,6 +507,113 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(android_result["outcome"], "source-error")
         self.assertIn("java version lookup payload must be a list", android_result["source_error"])
 
+    def test_build_summary_fails_closed_when_android_java_release_catalog_bytes_are_not_utf8(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = build_android_java_promoted_source_rules()
+        release_catalog_url = JAVA_SOURCE_METADATA["release_catalog_url"]
+
+        class FakeResponse:
+            def __init__(self, payload: bytes) -> None:
+                self.payload = payload
+
+            def read(self) -> bytes:
+                return self.payload
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> bool:
+                return False
+
+        def fake_urlopen(request: object, timeout: int = 30) -> FakeResponse:
+            url = request.full_url
+            if url == release_catalog_url:
+                return FakeResponse(b"\xff\xfe\xfa")
+            raise AssertionError(f"unexpected Java source URL: {url}")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(MODULE.urllib.request, "urlopen", side_effect=fake_urlopen):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_java = {group["key"]: group for group in summary["source_rule_groups"]}["android-java"]
+        self.assertEqual(android_java["status"], "manual-review-required")
+        self.assertEqual(android_java["outcome"], "source-error")
+        android_result = android_java["platform_results"][0]
+        self.assertEqual(android_result["status"], "manual-review-required")
+        self.assertEqual(android_result["outcome"], "source-error")
+        self.assertIn("did not return valid UTF-8 JSON", android_result["source_error"])
+
+    def test_build_summary_fails_closed_when_android_java_version_lookup_bytes_are_not_utf8(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = build_android_java_promoted_source_rules()
+        supported_source = load_java_source_case("supported")["responses"]
+        release_catalog_url = JAVA_SOURCE_METADATA["release_catalog_url"]
+        resolved_version = fixture_input["platforms"]["android"]["host_environment"]["java"]["resolved_version"]
+        version_lookup_url = JAVA_SOURCE_METADATA["version_lookup_url_template"].format(
+            version=MODULE.urllib.parse.quote(resolved_version, safe="")
+        )
+
+        class FakeResponse:
+            def __init__(self, payload: bytes) -> None:
+                self.payload = payload
+
+            def read(self) -> bytes:
+                return self.payload
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> bool:
+                return False
+
+        def fake_urlopen(request: object, timeout: int = 30) -> FakeResponse:
+            url = request.full_url
+            if url == release_catalog_url:
+                return FakeResponse(json.dumps(supported_source[release_catalog_url]).encode("utf-8"))
+            if url == version_lookup_url:
+                return FakeResponse(b"\xff\xfe\xfa")
+            raise AssertionError(f"unexpected Java source URL: {url}")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(MODULE.urllib.request, "urlopen", side_effect=fake_urlopen):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_java = {group["key"]: group for group in summary["source_rule_groups"]}["android-java"]
+        self.assertEqual(android_java["status"], "manual-review-required")
+        self.assertEqual(android_java["outcome"], "source-error")
+        android_result = android_java["platform_results"][0]
+        self.assertEqual(android_result["status"], "manual-review-required")
+        self.assertEqual(android_result["outcome"], "source-error")
+        self.assertIn("did not return valid UTF-8 JSON", android_result["source_error"])
+
     def test_build_summary_does_not_add_new_android_java_advisories_when_android_evidence_is_missing(self) -> None:
         baseline, _ = load_case("baseline-match")
         runner_images_only = load_source_rules_case("runner-images-promoted")

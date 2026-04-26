@@ -619,6 +619,8 @@ def fetch_json_url(url: str) -> Any:
         raise RunnerHostWatchError(f"source fetch failed for {url}: HTTP {exc.code}") from exc
     except urllib.error.URLError as exc:
         raise RunnerHostWatchError(f"source fetch failed for {url}: {exc.reason}") from exc
+    except UnicodeDecodeError as exc:
+        raise RunnerHostWatchError(f"source fetch did not return valid UTF-8 JSON for {url}") from exc
     except json.JSONDecodeError as exc:
         raise RunnerHostWatchError(f"source fetch did not return valid JSON for {url}") from exc
 

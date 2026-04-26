@@ -37,12 +37,14 @@ That leaves one honest bounded next step once the earlier iOS split contract is 
 
 ## Current-main prerequisite
 
-This slice is only honest after current `main` exposes the split iOS source-rule contract from the earlier `#144` work.
+This slice is only honest after a prior iOS split lands on current `main`.
+
+At the time this historical spec was last reconciled, current `main` still exposed only the combined `ios-xcode-simulator` placeholder while later ownership already lived in `#164` / `#165`.
 
 Required precondition before implementation starts:
-- `.github/runner-host-advisory-sources.json` already exposes `ios-xcode` with `follow_up_issue: 164`
-- `.github/runner-host-advisory-sources.json` already exposes `ios-simulator-runtime` with `follow_up_issue: 165`
-- `tests/test-support/scripts/runner_host_review_report.py` already renders those split group keys in the source-rule summary
+- `.github/runner-host-advisory-sources.json` must expose `ios-xcode` with `follow_up_issue: 164`
+- `.github/runner-host-advisory-sources.json` must expose `ios-simulator-runtime` with `follow_up_issue: 165`
+- `tests/test-support/scripts/runner_host_review_report.py` must render those split group keys in the source-rule summary
 
 If current `main` still exposes only the combined `ios-xcode-simulator` group when Dev begins this issue, hand the slice back instead of re-implementing the earlier split inside `#164`.
 

@@ -4,10 +4,10 @@
 - Source contract: `./spec.md`
 
 ## 1. Confirm the bounded simulator runtime-catalog slice is actually ready on current `main`
-- [ ] 1.1 Re-run the runner-host report and confirm whether current `main` already exposes split `ios-xcode` / `ios-simulator-runtime` groups instead of the old combined `ios-xcode-simulator` group.
-- [ ] 1.2 Confirm `ios-simulator-runtime` is mapped to `#165`, `ios-xcode` is mapped to `#164`, and the separate device-availability follow-up `#172` remains the home for any future `simulator.device_name` source-backed work.
+- [ ] 1.1 Re-run the runner-host report and confirm whether current `main` still exposes the combined `ios-xcode-simulator` placeholder or has finally moved to split `ios-xcode` / `ios-simulator-runtime` groups.
+- [ ] 1.2 Only if the split exists on current `main`, confirm `ios-simulator-runtime` is mapped to `#165`, `ios-xcode` is mapped to `#164`, and the separate device-availability follow-up `#172` remains the home for any future `simulator.device_name` source-backed work.
 - [ ] 1.3 Capture the authoritative Apple simulator runtime row for the currently watched runtime so the implementation stays grounded on the real runtime-catalog source family for this slice.
-- Goal: Prove the repo is on the post-split contract required for the runtime-only promotion work before changing the checked-in manifest, tests, or report logic.
+- Goal: Prove whether the post-split contract exists yet on current `main`; if it does not, hand the slice back before changing the checked-in manifest, tests, or report logic.
 - Validation:
 
   ```bash
