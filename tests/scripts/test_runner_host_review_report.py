@@ -18,6 +18,7 @@ SPEC.loader.exec_module(MODULE)
 FIXTURES_DIR = REPO_ROOT / "tests" / "test-support" / "fixtures" / "runner-host-watch"
 SOURCE_RULES_FIXTURES_DIR = FIXTURES_DIR / "source-rules"
 RUNNER_IMAGE_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "runner-image-source"
+GRADLE_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "gradle-source"
 EMULATOR_SOURCE_FIXTURES_DIR = FIXTURES_DIR / "emulator-source"
 
 
@@ -34,6 +35,10 @@ def load_source_rules_case(name: str) -> dict[str, object]:
 
 def load_runner_image_source_case(name: str) -> dict[str, object]:
     return json.loads((RUNNER_IMAGE_SOURCE_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
+
+
+def load_gradle_source_case(name: str) -> object:
+    return json.loads((GRADLE_SOURCE_FIXTURES_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
 def load_emulator_source_text(case_name: str, file_name: str) -> str:
@@ -215,6 +220,11 @@ class RunnerHostReviewReportTests(unittest.TestCase):
             create=True,
         ), patch.object(
             MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
             "fetch_text_url",
             side_effect=emulator_source_side_effect("clean", source_rules),
         ):
@@ -241,7 +251,29 @@ class RunnerHostReviewReportTests(unittest.TestCase):
 
         android_gradle = source_rule_groups["android-gradle"]
         self.assertEqual(android_gradle["follow_up_issue"], 155)
-        self.assertEqual(android_gradle["rule_kind"], "manual-review-required")
+        self.assertEqual(android_gradle["rule_kind"], "gradle-release-catalog")
+        self.assertEqual(android_gradle["status"], "no review-needed")
+        self.assertEqual(android_gradle["outcome"], "source-match")
+        gradle_platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(gradle_platform_result["platform"], "android")
+        self.assertEqual(gradle_platform_result["status"], "no review-needed")
+        self.assertEqual(gradle_platform_result["outcome"], "source-match")
+        self.assertEqual(
+            gradle_platform_result["observed"],
+            {
+                "gradle.configured_version": "8.7",
+                "gradle.resolved_version": "8.7",
+            },
+        )
+        self.assertEqual(
+            gradle_platform_result["source"],
+            {
+                "gradle.configured_version": "8.7",
+                "gradle.resolved_version": "8.7",
+            },
+        )
+        self.assertEqual(gradle_platform_result["review_needed_findings"], [])
+        self.assertEqual(gradle_platform_result["informational_findings"], [])
 
         android_emulator = source_rule_groups["android-emulator-runtime"]
         self.assertEqual(android_emulator["follow_up_issue"], 156)
@@ -272,6 +304,560 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(ios_placeholder["follow_up_issues"], [164, 165])
         self.assertNotIn("follow_up_issue", ios_placeholder)
         self.assertNotIn("source_advisory_count", summary)
+
+    def test_build_summary_does_not_add_new_gradle_advisories_when_android_evidence_is_missing(self) -> None:
+        baseline, _ = load_case("baseline-match")
+        runner_images_only = load_source_rules_case("runner-images-promoted")
+        gradle_promoted = load_source_rules_case("android-gradle-promoted")
+        observed_platforms = {
+            "android": {
+                "run": {"id": None, "url": None},
+                "host_environment_error": "no successful android-emulator-smoke.yml run found on main",
+            },
+            "ios": {
+                "run": {"id": 24600433713, "url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713"},
+                "host_environment": {
+                    "generated_at": "2026-04-19T08:00:00Z",
+                    "workflow_run": {
+                        "repository": "drousselhq/casgrain",
+                        "workflow": "ios-simulator-smoke",
+                        "run_id": "24600433713",
+                        "run_attempt": "1",
+                        "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713",
+                    },
+                    "runner": {
+                        "label": "macos-15",
+                        "image_name": "macos-15-arm64",
+                        "image_version": "20260414.0270.1",
+                        "os_name": "macOS",
+                        "os_version": "15.7.4",
+                        "os_build": "24G517",
+                    },
+                    "xcode": {
+                        "app_path": "/Applications/Xcode_16.4.app",
+                        "version": "16.4",
+                        "simulator_sdk_version": "18.5",
+                    },
+                    "simulator": {
+                        "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+                        "runtime_name": "iOS 26.2",
+                        "device_name": "iPhone 16",
+                    },
+                },
+            },
+        }
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("clean"),
+            create=True,
+        ):
+            runner_images_summary = MODULE.build_summary(
+                repo="drousselhq/casgrain",
+                baseline=baseline,
+                source_rules=runner_images_only,
+                observed_platforms=json.loads(json.dumps(observed_platforms)),
+                generated_at="2026-04-19T09:00:00Z",
+            )
+            gradle_summary = MODULE.build_summary(
+                repo="drousselhq/casgrain",
+                baseline=baseline,
+                source_rules=gradle_promoted,
+                observed_platforms=json.loads(json.dumps(observed_platforms)),
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertEqual(runner_images_summary["reason"], "missing-evidence")
+        self.assertEqual(gradle_summary["reason"], "missing-evidence")
+        self.assertEqual(gradle_summary["advisory_count"], runner_images_summary["advisory_count"])
+        android_gradle = {group["key"]: group for group in gradle_summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "no review-needed")
+        self.assertEqual(android_gradle["outcome"], "source-skipped")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "no review-needed")
+        self.assertEqual(platform_result["outcome"], "source-skipped")
+        self.assertEqual(platform_result["skip_reason"], "no successful android-emulator-smoke.yml run found on main")
+        self.assertEqual(platform_result["review_needed_findings"], [])
+        self.assertNotIn("source_error", platform_result)
+
+    def test_build_summary_keeps_gradle_skipped_when_android_evidence_is_missing_and_fetch_fails(self) -> None:
+        baseline, _ = load_case("baseline-match")
+        runner_images_only = load_source_rules_case("runner-images-promoted")
+        gradle_promoted = load_source_rules_case("android-gradle-promoted")
+        observed_platforms = {
+            "android": {
+                "run": {"id": None, "url": None},
+                "host_environment_error": "no successful android-emulator-smoke.yml run found on main",
+            },
+            "ios": {
+                "run": {"id": 24600433713, "url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713"},
+                "host_environment": {
+                    "generated_at": "2026-04-19T08:00:00Z",
+                    "workflow_run": {
+                        "repository": "drousselhq/casgrain",
+                        "workflow": "ios-simulator-smoke",
+                        "run_id": "24600433713",
+                        "run_attempt": "1",
+                        "run_url": "https://github.com/drousselhq/casgrain/actions/runs/24600433713",
+                    },
+                    "runner": {
+                        "label": "macos-15",
+                        "image_name": "macos-15-arm64",
+                        "image_version": "20260414.0270.1",
+                        "os_name": "macOS",
+                        "os_version": "15.7.4",
+                        "os_build": "24G517",
+                    },
+                    "xcode": {
+                        "app_path": "/Applications/Xcode_16.4.app",
+                        "version": "16.4",
+                        "simulator_sdk_version": "18.5",
+                    },
+                    "simulator": {
+                        "runtime_identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+                        "runtime_name": "iOS 26.2",
+                        "device_name": "iPhone 16",
+                    },
+                },
+            },
+        }
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ):
+            runner_images_summary = MODULE.build_summary(
+                repo="drousselhq/casgrain",
+                baseline=baseline,
+                source_rules=runner_images_only,
+                observed_platforms=json.loads(json.dumps(observed_platforms)),
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            side_effect=MODULE.RunnerHostWatchError("synthetic gradle fetch failure"),
+            create=True,
+        ):
+            gradle_summary = MODULE.build_summary(
+                repo="drousselhq/casgrain",
+                baseline=baseline,
+                source_rules=gradle_promoted,
+                observed_platforms=json.loads(json.dumps(observed_platforms)),
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertEqual(runner_images_summary["reason"], "missing-evidence")
+        self.assertEqual(gradle_summary["reason"], "missing-evidence")
+        self.assertEqual(gradle_summary["advisory_count"], runner_images_summary["advisory_count"])
+        android_gradle = {group["key"]: group for group in gradle_summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "no review-needed")
+        self.assertEqual(android_gradle["outcome"], "source-skipped")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "no review-needed")
+        self.assertEqual(platform_result["outcome"], "source-skipped")
+        self.assertEqual(platform_result["skip_reason"], "no successful android-emulator-smoke.yml run found on main")
+        self.assertEqual(platform_result["review_needed_findings"], [])
+        self.assertNotIn("source_error", platform_result)
+
+    def test_normalize_source_rules_rejects_non_official_android_gradle_catalog_url(self) -> None:
+        baseline, _ = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+        source_rules = json.loads(json.dumps(source_rules))
+        for group in source_rules["groups"]:
+            if group["key"] == "android-gradle":
+                group["source_catalog_url"] = "https://example.invalid/not-gradle"
+                break
+        else:
+            self.fail("android-gradle source rule fixture missing")
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.normalize_source_rules(
+                source_rules,
+                normalized_baseline=MODULE.normalize_baseline(baseline),
+            )
+
+        self.assertIn("source_catalog_url must be", str(error.exception))
+        self.assertIn("https://services.gradle.org/versions/all", str(error.exception))
+
+    def test_build_summary_promotes_android_gradle_with_recognized_stable_versions(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("clean"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertFalse(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["reason"], "baseline-match")
+        self.assertEqual(summary["verdict"], "no review-needed")
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["rule_kind"], "gradle-release-catalog")
+        self.assertEqual(android_gradle["status"], "no review-needed")
+        self.assertEqual(android_gradle["outcome"], "source-match")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["platform"], "android")
+        self.assertEqual(platform_result["status"], "no review-needed")
+        self.assertEqual(platform_result["outcome"], "source-match")
+        self.assertEqual(platform_result["review_needed_findings"], [])
+        self.assertNotIn("source_advisory_count", summary)
+
+    def test_build_summary_flags_android_gradle_source_review_needed_for_unrecognized_versions(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+        fixture_input["platforms"]["android"]["host_environment"]["gradle"]["configured_version"] = "8.7-local"
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("clean"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "baseline-drift")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        self.assertEqual(summary["advisory_count"], 2)
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-review-needed")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-review-needed")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "unrecognized-configured-version")
+        self.assertEqual(platform_result["review_needed_findings"][0]["observed"], "8.7-local")
+
+    def test_build_summary_flags_android_gradle_source_review_needed_for_broken_versions(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("broken"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["advisory_count"], 1)
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-review-needed")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "broken-resolved-version")
+        self.assertEqual(platform_result["review_needed_findings"][0]["observed"], "8.7")
+
+    def test_build_summary_keeps_newer_gradle_release_informational_only(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("newer-release-available"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertFalse(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 0)
+        self.assertEqual(summary["reason"], "baseline-match")
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "no review-needed")
+        self.assertEqual(platform_result["outcome"], "source-match")
+        self.assertEqual(platform_result["review_needed_findings"], [])
+        self.assertEqual(platform_result["informational_findings"][0]["kind"], "newer-stable-release-available")
+        self.assertEqual(platform_result["informational_findings"][0]["latest_stable_version"], "8.8")
+
+    def test_build_summary_fails_closed_when_android_gradle_source_is_contradictory(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("contradictory-current"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        self.assertEqual(summary["advisory_count"], 1)
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+        self.assertIn("multiple current stable releases", platform_result["source_error"])
+
+    def test_build_summary_fails_closed_when_gradle_current_stable_is_not_latest_stable(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("current-not-latest"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        self.assertEqual(summary["advisory_count"], 1)
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+        self.assertIn("current stable release 8.7", platform_result["source_error"])
+        self.assertIn("latest stable release 8.8", platform_result["source_error"])
+
+    def test_build_summary_fails_closed_when_android_gradle_source_uses_conflicting_duplicate_stable_records(self) -> None:
+        payload = [
+            {
+                "version": "8.7",
+                "current": True,
+                "snapshot": False,
+                "nightly": False,
+                "releaseNightly": False,
+                "broken": False,
+                "activeRc": False,
+                "rcFor": None,
+                "milestoneFor": None,
+            },
+            {
+                "version": "8.7",
+                "current": False,
+                "snapshot": False,
+                "nightly": False,
+                "releaseNightly": False,
+                "broken": True,
+                "activeRc": False,
+                "rcFor": None,
+                "milestoneFor": None,
+            },
+        ]
+
+        with self.assertRaises(MODULE.RunnerHostWatchError) as error:
+            MODULE.normalize_gradle_release_catalog_payload(
+                payload,
+                error_context="Gradle release catalog",
+            )
+
+        self.assertIn("conflicting stable release records for 8.7", str(error.exception))
+
+    def test_build_summary_fails_closed_when_android_gradle_source_is_unavailable(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+        error_payload = load_gradle_source_case("source-error")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            side_effect=MODULE.RunnerHostWatchError(str(error_payload["error"])),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["source_error"], str(error_payload["error"]))
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+
+    def test_build_summary_fails_closed_when_android_gradle_source_payload_is_malformed(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE,
+            "fetch_gradle_release_catalog_for_group",
+            return_value=load_gradle_source_case("malformed"),
+            create=True,
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+
+    def test_build_summary_fails_closed_when_android_gradle_source_response_bytes_are_not_utf8(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = load_source_rules_case("android-gradle-promoted")
+
+        class FakeResponse:
+            def __init__(self, payload: bytes) -> None:
+                self.payload = payload
+
+            def read(self) -> bytes:
+                return self.payload
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> bool:
+                return False
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ), patch.object(
+            MODULE.urllib.request,
+            "urlopen",
+            return_value=FakeResponse(b"\xff\xfe\xfa"),
+        ):
+            summary = MODULE.build_summary(
+                repo=str(fixture_input["repo"]),
+                baseline=baseline,
+                source_rules=source_rules,
+                observed_platforms=fixture_input["platforms"],
+                generated_at="2026-04-19T09:00:00Z",
+            )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_gradle = {group["key"]: group for group in summary["source_rule_groups"]}["android-gradle"]
+        self.assertEqual(android_gradle["status"], "manual-review-required")
+        self.assertEqual(android_gradle["outcome"], "source-error")
+        platform_result = android_gradle["platform_results"][0]
+        self.assertEqual(platform_result["status"], "manual-review-required")
+        self.assertEqual(platform_result["outcome"], "source-error")
+        self.assertEqual(platform_result["review_needed_findings"][0]["kind"], "source-unavailable")
+        self.assertIn("did not return valid UTF-8 JSON", platform_result["source_error"])
 
     def test_build_summary_promotes_runner_images_with_clean_source_match(self) -> None:
         baseline, fixture_input = load_case("baseline-match")

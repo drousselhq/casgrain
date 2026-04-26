@@ -73,16 +73,11 @@
         {"platform": "android", "path": "emulator.device_name"},
         {"platform": "android", "path": "emulator.os_version"}
       ],
-      "rule_kind": "android-system-image-catalog",
-      "rationale": "Current main validates the observed Android emulator runtime identity against authoritative Android platform and Google APIs system-image catalogs while keeping emulator.device_name in the drift-only path.",
-      "managed_issue_behavior": "Actionable Android emulator-runtime source-backed findings must reuse the existing managed issue title.",
+      "rule_kind": "manual-review-required",
+      "rationale": "Current main captures Android emulator runtime facts from smoke evidence only; it does not yet evaluate authoritative source metadata for those runtime surfaces.",
+      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
       "follow_up_issue": 156,
-      "candidate_source": "Android platform catalog, Google APIs system-image catalog, and Android version/API mapping metadata",
-      "source_catalogs": {
-        "platform_catalog_url": "https://dl.google.com/android/repository/repository2-1.xml",
-        "system_image_catalog_url": "https://dl.google.com/android/repository/sys-img/google_apis/sys-img2-5.xml",
-        "version_mapping_url": "https://source.android.com/docs/setup/reference/build-numbers"
-      }
+      "candidate_source": "Authoritative Android emulator / system-image / runtime metadata for the watched emulator facts"
     },
     {
       "key": "ios-xcode-simulator",
