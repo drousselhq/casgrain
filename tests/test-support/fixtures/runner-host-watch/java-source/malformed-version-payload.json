@@ -1,0 +1,15 @@
+{
+  "responses": {
+    "https://api.adoptium.net/v3/info/available_releases": {
+      "available_lts_releases": [8, 11, 17, 21, 25],
+      "available_releases": [8, 11, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+      "most_recent_feature_release": 26,
+      "most_recent_feature_version": 27,
+      "most_recent_lts": 25,
+      "tip_version": 27
+    },
+    "https://api.adoptium.net/v3/assets/version/17.0.18%2B8?architecture=x64&heap_size=normal&image_type=jdk&jvm_impl=hotspot&os=linux&page=0&page_size=1&project=jdk&release_type=ga&vendor=eclipse": {
+      "malformed": true
+    }
+  }
+}

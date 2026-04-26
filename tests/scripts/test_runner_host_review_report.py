@@ -476,6 +476,37 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertEqual(android_result["outcome"], "source-error")
         self.assertIn("metadata unavailable", android_result["source_error"])
 
+    def test_build_summary_fails_closed_when_android_java_version_lookup_payload_is_malformed(self) -> None:
+        baseline, fixture_input = load_case("baseline-match")
+        source_rules = build_android_java_promoted_source_rules()
+
+        with patch.object(
+            MODULE,
+            "fetch_runner_image_source_for_group",
+            return_value=load_runner_image_source_case("clean"),
+            create=True,
+        ):
+            with patch_java_source_case("malformed-version-payload"):
+                summary = MODULE.build_summary(
+                    repo=str(fixture_input["repo"]),
+                    baseline=baseline,
+                    source_rules=source_rules,
+                    observed_platforms=fixture_input["platforms"],
+                    generated_at="2026-04-19T09:00:00Z",
+                )
+
+        self.assertTrue(summary["alert"])
+        self.assertEqual(summary["advisory_count"], 1)
+        self.assertEqual(summary["reason"], "source-review-needed")
+        self.assertEqual(summary["verdict"], "manual-review-required")
+        android_java = {group["key"]: group for group in summary["source_rule_groups"]}["android-java"]
+        self.assertEqual(android_java["status"], "manual-review-required")
+        self.assertEqual(android_java["outcome"], "source-error")
+        android_result = android_java["platform_results"][0]
+        self.assertEqual(android_result["status"], "manual-review-required")
+        self.assertEqual(android_result["outcome"], "source-error")
+        self.assertIn("java version lookup payload must be a list", android_result["source_error"])
+
     def test_build_summary_does_not_add_new_android_java_advisories_when_android_evidence_is_missing(self) -> None:
         baseline, _ = load_case("baseline-match")
         runner_images_only = load_source_rules_case("runner-images-promoted")

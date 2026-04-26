@@ -1024,11 +1024,18 @@ def build_java_release_platform_result(
             result["findings"].append({"code": "source-error", "message": str(exc)})
             return result, 1
 
-    matched_version = normalize_java_version_match(
-        version_payload,
-        configured_major=configured_major,
-        resolved_version=resolved_version,
-    )
+    try:
+        matched_version = normalize_java_version_match(
+            version_payload,
+            configured_major=configured_major,
+            resolved_version=resolved_version,
+        )
+    except RunnerHostWatchError as exc:
+        result["status"] = "manual-review-required"
+        result["outcome"] = "source-error"
+        result["source_error"] = str(exc)
+        result["findings"].append({"code": "source-error", "message": str(exc)})
+        return result, 1
     if matched_version is None:
         result["status"] = "manual-review-required"
         result["outcome"] = "unrecognized-version"
