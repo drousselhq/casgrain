@@ -4,6 +4,7 @@ use domain::{
     ActionKind, AssertionKind, DiagnosticSeverity, Selector, StepIntent, StringMatchKind,
     TargetPlatform, WaitKind,
 };
+use serde_json::{Value, json};
 
 use crate::compile_gherkin;
 
@@ -23,6 +24,32 @@ fn assert_compiled_plan_matches_golden(
         .unwrap_or_else(|error| panic!("failed to read golden file {expected_path:?}: {error}"));
 
     assert_eq!(actual, expected);
+}
+
+fn compile_fixture_plan_value(source: &str, source_name: &str) -> Value {
+    let output = compile_gherkin(source, source_name, "0.1.0")
+        .expect("fixture feature should compile to a shared mobile plan");
+
+    serde_json::to_value(&output.plan).expect("compiled plan should serialize to json")
+}
+
+fn normalize_shared_mobile_tap_counter_plan(plan: &mut Value) {
+    plan["source"]["name"] =
+        json!("tests/test-support/fixtures/mobile-smoke/features/tap_counter.feature");
+    plan["source"]["source_name"] =
+        json!("tests/test-support/fixtures/mobile-smoke/features/tap_counter.feature");
+    plan["target"]["platform"] = json!("mobile");
+    plan["target"]["device_class"] = json!("shared-mobile-smoke");
+    plan["metadata"]["feature_name"] = json!("Shared mobile smoke tap counter");
+
+    let steps = plan["steps"]
+        .as_array_mut()
+        .expect("compiled plan should expose step array");
+    let screenshot_step = steps
+        .iter_mut()
+        .find(|step| step["action"]["kind"] == "take_screenshot")
+        .expect("shared mobile plan should include a screenshot step");
+    screenshot_step["action"]["name"] = json!("tap-counter");
 }
 
 #[test]
@@ -185,6 +212,43 @@ fn android_tap_counter_fixture_matches_the_golden_plan_json() {
         source,
         "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
         "tests/test-support/golden/compiler/android_tap_counter.plan.json",
+    );
+}
+
+#[test]
+fn ios_and_android_tap_counter_fixtures_keep_the_same_shared_mobile_contract() {
+    let ios_source =
+        include_str!("../../../tests/test-support/fixtures/ios-smoke/features/tap_counter.feature");
+    let android_source = include_str!(
+        "../../../tests/test-support/fixtures/android-smoke/features/tap_counter.feature"
+    );
+
+    let mut ios_plan = compile_fixture_plan_value(
+        ios_source,
+        "tests/test-support/fixtures/ios-smoke/features/tap_counter.feature",
+    );
+    let mut android_plan = compile_fixture_plan_value(
+        android_source,
+        "tests/test-support/fixtures/android-smoke/features/tap_counter.feature",
+    );
+
+    normalize_shared_mobile_tap_counter_plan(&mut ios_plan);
+    normalize_shared_mobile_tap_counter_plan(&mut android_plan);
+
+    assert_eq!(ios_plan, android_plan);
+
+    let mut selector_drift = android_plan.clone();
+    selector_drift["steps"][1]["action"]["target"]["value"] = json!("other-button");
+    assert_ne!(
+        ios_plan, selector_drift,
+        "shared mobile parity guard must fail when selector semantics drift"
+    );
+
+    let mut execution_policy_drift = android_plan.clone();
+    execution_policy_drift["defaults"]["step_timeout_ms"] = json!(6_000);
+    assert_ne!(
+        ios_plan, execution_policy_drift,
+        "shared mobile parity guard must fail when execution policy drifts"
     );
 }
 

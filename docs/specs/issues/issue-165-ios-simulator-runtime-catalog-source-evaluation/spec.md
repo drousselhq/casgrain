@@ -20,12 +20,13 @@
 Already delivered on `main`:
 - PR #145 added the repo-owned runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
 - PR #166 merged the analyst contract for `#144`, which froze the later iOS source-backed work into separate follow-up issues instead of one umbrella iOS slice.
-- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against current `main` still reports:
+- A fresh live invocation at analyst handoff (`2026-04-22` UTC) against then-current `main` reported:
   - `verdict=no review-needed`
   - `reason=baseline-match`
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
-  - every current source-rule group, including the combined iOS group, remains `manual-review-required`
+  - at that handoff point, every source-rule group, including the combined iOS group, still remained `manual-review-required`
+- current `main` has since promoted `runner-images` and `android-emulator-runtime` to delivered source-backed groups, while `android-java`, `android-gradle`, and the current combined `ios-xcode-simulator` placeholder remain later follow-up work until their bounded slices land
 - The checked-in iOS baseline on current `main` watches these simulator facts:
   - `simulator.runtime_identifier=com.apple.CoreSimulator.SimRuntime.iOS-26-2`
   - `simulator.runtime_name=iOS 26.2`
@@ -150,7 +151,7 @@ Those updates must explicitly say:
 - current `main` now performs source-backed evaluation for `ios-simulator-runtime`
 - `ios-xcode` remains separate follow-up work under `#164`
 - `simulator.device_name` remains part of the watched drift contract, but any future source-backed device-availability work belongs to `#172` rather than this runtime-catalog slice
-- `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` remain on their own separate source-backed follow-up issues until those slices land
+- `runner-images` and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`, while `android-java` and `android-gradle` remain the separate non-iOS follow-up issues
 - actionable simulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Apple runtime upstream alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized runtime identity/name validation for the observed runtime, not a general upgrade/freshness policy
 - older issue-spec artifacts, including the ordered task lists in `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, must stop claiming that `#144` is still the current or future iOS umbrella owner, must stop preserving closed `#144` as the remaining iOS follow-up after the split prerequisite lands, and must stop claiming that current `main` still has no active iOS source-backed evaluation once this slice lands
@@ -203,7 +204,7 @@ Feature: iOS simulator runtime-catalog evaluation in the runner-host watch
 - **no** source-backed evaluation for `runner-images` (`#143`)
 - **no** source-backed evaluation for `android-java` (`#154`)
 - **no** source-backed evaluation for `android-gradle` (`#155`)
-- **no** source-backed evaluation for `android-emulator-runtime` (`#156`)
+- **no** changes to the already-delivered `android-emulator-runtime` source-backed evaluation (`#156`)
 - **no** source-backed evaluation for `ios-xcode` (`#164`)
 - **no** source-backed evaluation for `simulator.device_name`; that future device-availability work belongs to `#172`
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched iOS facts

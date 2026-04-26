@@ -6,14 +6,12 @@
 - Follow-up source-specific slices after this contract lands:
   - `#143` — delivered GitHub-hosted runner image release-metadata slice
   - `#142` — Android source-rule split contract that narrows the original Android umbrella into `#154`, `#155`, and `#156`
-  - `#154` — delivered Android Java host version source-backed slice on current `main`
+  - `#154` — Android Java host version facts
   - `#155` — Android Gradle host version facts
   - `#156` — Android emulator-runtime host facts
-  - `#144` — iOS Xcode / simulator-runtime host surfaces
+  - `#164` / `#165` — later iOS Xcode / simulator-runtime host surfaces
 
 ## Why this slice exists
-
-Historical note: this contract froze the first repo-owned source-rule manifest before later current-main promotions. Current `main` now includes the delivered `runner-images` and `android-java` source-backed exceptions while `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator -> #144` placeholder remain manual-review follow-ups.
 
 Already delivered on `main`:
 - PR #130 added the spec entry for the runner-host drift-watch baseline.
@@ -88,12 +86,12 @@ Each group entry must declare at minimum:
 - a short `candidate_source` description naming the future authoritative machine-readable source class to evaluate later
 
 Current-slice rule requirement:
-- the honest initial rule kind for **all three groups** in this contract slice was `manual-review-required`; current `main` now promotes `runner-images` via `#143` and `android-java` via `#154`, while `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator -> #144` placeholder remain manual-review follow-ups
-- the rationale must explain why the repo is not yet claiming trustworthy source-backed evaluation for any group that still remains manual-review-required on current `main`
+- the honest initial rule kind for every group in this contract slice was `manual-review-required`; current `main` now promotes `runner-images` via `#143`, `android-java` via `#154`, and `android-emulator-runtime` via `#156`, while `android-gradle` and the current combined iOS placeholder remain manual-review follow-ups
+- the rationale must explain why the repo is not yet claiming trustworthy source-backed evaluation for that group on current `main`
 - the manifest must point to:
   - `#143` for `runner-images`
-  - `#142` for the initial combined `android-java-gradle` group in this slice; the later narrowing contract in `#142` then split that Android ownership into `#154`, `#155`, and `#156`, and `#154` is now delivered on current `main`
-  - `#144` for the current combined `ios-xcode-simulator` placeholder
+  - `#142` for the initial combined `android-java-gradle` group in this slice; the later narrowing contract in `#142` then splits that Android ownership into `#154`, `#155`, and `#156`
+  - later iOS follow-ups `#164` / `#165` for the current combined `ios-xcode-simulator` placeholder
 
 Validation rule:
 - the manifest must fail closed if any listed watched fact path does not exist in `.github/runner-host-watch.json`
@@ -115,8 +113,8 @@ Implementation contract for this slice:
 
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
-- the new source-rule section must make it explicit that current runner-host automation now includes the delivered `runner-images` and `android-java` source-backed exceptions in addition to the original drift-triggered review path
-- the report must not imply that any additional source-backed advisory evaluation is already active for `android-gradle`, `android-emulator-runtime`, or the current combined `ios-xcode-simulator -> #144` placeholder until those later follow-up issues land
+- the new source-rule section must make it explicit that current runner-host automation is still drift-triggered review only
+- the report must not imply broader source-backed advisory evaluation than current `main` actually ships; today that means `runner-images`, `android-java`, and `android-emulator-runtime` are active while `android-gradle` and the combined iOS placeholder stay manual-only
 
 ### 3. Tests and fixtures
 
@@ -148,18 +146,18 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- current shipped runner-host automation is no longer drift / missing-evidence only: current `main` now includes the delivered `runner-images` and `android-java` source-backed exceptions
+- current shipped runner-host automation now evaluates drift / missing evidence plus the delivered source-backed promotions for `runner-images`, `android-java`, and `android-emulator-runtime`
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
-- the current source groups that are still pending (`android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator -> #144` placeholder) remain `manual-review-required` on `main` after this slice unless a later follow-up lands
+- the current source groups on `main` keep `runner-images`, `android-java`, and `android-emulator-runtime` delivered while `android-gradle` and the combined iOS placeholder remain `manual-review-required` follow-ups until their later slices land
 - future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
-- later source-specific promotion work is split across the delivered `#143` and `#154` slices plus the remaining `#155`, `#156`, and `#144` follow-ups after the narrowing contract in `#142` lands
+- later source-specific promotion work is split across delivered `#143` / `#154` / `#156` plus open follow-ups `#155`, `#164`, and `#165` after the narrowing contract in `#142` lands
 
 ## Acceptance criteria
 
 1. Current `main` still reports the same honest runner-host drift verdicts as before this slice; the new work does not silently alter alert semantics.
 2. The repo gains a checked-in source-rule inventory that binds each current runner-host surface group to explicit watched fact paths and exactly one follow-up issue.
 3. The runner-host report output now makes the current source-rule status visible and testable instead of leaving it implicit in issue prose.
-4. The canonical security docs stop treating future source-backed promotion as an unstructured umbrella and instead point at the checked-in source-rule contract plus the three split follow-up issues.
+4. The canonical security docs stop treating future source-backed promotion as an unstructured umbrella and instead point at the checked-in source-rule contract plus the delivered `#143` / `#156` slices and the open split follow-up issues `#154`, `#155`, `#164`, and `#165`.
 5. The implementation PR for this slice can honestly say `Closes #129` because it finishes the immediate repo-controlled contract/plumbing work, while the actual source integrations remain in follow-up issues.
 
 ## Bounded design decisions
@@ -176,7 +174,7 @@ Those docs updates must explicitly say:
 - **no** changes to `.github/runner-host-watch.json` watched-fact coverage beyond any tiny schema link needed for validation
 - **no** direct advisory implementation for GitHub-hosted runner images (`#143`)
 - **no** direct advisory implementation for Android host surfaces in this slice; the later narrowing contract in `#142` splits those source-backed follow-ups into `#154`, `#155`, and `#156`
-- **no** direct advisory implementation for iOS Xcode / simulator-runtime surfaces (`#144`)
+- **no** direct advisory implementation for iOS Xcode / simulator-runtime surfaces now tracked by `#164` / `#165`
 - **no** broad scraping of hosted-runner package inventories or release-note text
 
 ## Validation contract for the later implementation PR
@@ -216,10 +214,9 @@ The live invocation above should still report the same clean drift verdict on cu
 The implementation PR for this spec should be able to close `#129` because it finishes the immediate repo-owned source-rule contract and reporting/doc plumbing.
 
 After that PR merges:
-- the delivered `#143` slice becomes the bounded GitHub-hosted runner image source-backed automation on current `main`
-- `#142` initially owns the Android umbrella follow-up, and the later narrowing contract in `#142` then splits that Android work into `#154`, `#155`, and `#156`
-- the delivered `#154` slice becomes the bounded Android Java host version source-backed automation on current `main`
+- `#143` remains the bounded GitHub-hosted runner image source-backed automation already delivered on current `main`
+- `#142` initially owned the Android umbrella follow-up, and the later narrowing contract in `#142` then split that Android work into `#154`, `#155`, and delivered `#156`
+- `#154` is now the delivered bounded Android Java host version source-backed automation after that narrowing landed
 - `#155` remains the bounded follow-up for Android Gradle host version source-backed automation after that narrowing lands
-- `#156` remains the bounded follow-up for Android emulator-runtime source-backed automation after that narrowing lands
-- `#144` remains the bounded follow-up for the current combined iOS Xcode / simulator-runtime placeholder until a later iOS split lands
-- the shipped runner-host lane on `main` now includes the delivered `runner-images` and `android-java` source-backed exceptions while the remaining follow-ups stay manual-review-only until their own slices land
+- later iOS source-backed work stays split across open follow-up issues `#164` / `#165`, even while current `main` still renders the combined `ios-xcode-simulator` placeholder
+- the shipped runner-host lane on `main` now includes the delivered `runner-images` and `android-emulator-runtime` source-backed exceptions while the remaining follow-ups stay manual-review-only until their own slices land

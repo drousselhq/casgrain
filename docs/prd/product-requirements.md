@@ -44,8 +44,8 @@ Git history, branches, PRs, comments, and specs should provide a clear audit tra
 ## MVP Scope
 
 ### Included
-- iOS simulator support (initial target)
-- Android emulator support (planned in MVP architecture, implementation may follow iOS)
+- iOS simulator support for the current shared mobile MVP slice
+- Android emulator support for the current shared mobile MVP slice
 - executable deterministic plan model
 - Gherkin feature inputs compiled into executable test plans
 - interactive exploration/control interface for agents and developers
@@ -138,8 +138,7 @@ Tracked follow-up:
 
 ## Open Questions
 
-- iOS-first vs dual-platform MVP sequencing
 - canonical executable plan serialization format
 - exact selector precedence model
-- generated-plan bridge for the first iOS vertical slice
+- how the generated-plan bridge should expand beyond the current shared mobile vertical slice
 - how much automated repair is allowed locally vs in CI

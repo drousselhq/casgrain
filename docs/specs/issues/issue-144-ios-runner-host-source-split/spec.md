@@ -2,7 +2,7 @@
 
 - Linked issue: `#144`
 - Spec mode: `technical change contract`
-- Expected implementation PR linkage: `Closes #144`
+- Historical implementation linkage (superseded by `#164` / `#165`): `Closes #144`
 - Later follow-up implementation slices after this contract lands:
   - `#164` — iOS Xcode host facts
   - `#165` — iOS simulator-runtime host facts
@@ -19,7 +19,7 @@ Already delivered on `main`:
   - source-rule groups: `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
   - no managed `security: runner-host review needed` issue is currently open from drift or missing evidence
 
-That means the repo already owns the runner-host slice honestly; current `main` now keeps `runner-images` and `android-java` as delivered source-backed exceptions while the combined `ios-xcode-simulator -> #144` placeholder remains manual-review-only.
+That means the repo already owns the **drift / missing-evidence** runner-host slice honestly.
 
 What still remains is narrower than the current issue wording. The combined iOS group still mixes two different future source families that do not share one honest implementation seam:
 1. watched iOS Xcode host facts (`xcode.app_path`, `xcode.version`, `xcode.simulator_sdk_version`)
@@ -35,7 +35,7 @@ This slice must:
 1. replace the single iOS `ios-xcode-simulator` source-rule group with two bounded iOS groups
 2. bind each new iOS group to exactly one later follow-up issue
 3. keep the current drift / missing-evidence alert semantics and managed issue title unchanged
-4. keep the report/docs truthful that current `main` still uses the combined `ios-xcode-simulator -> #144` placeholder until this later split lands, even though `runner-images` and `android-java` are already source-backed
+4. keep the report/docs truthful that the current combined iOS placeholder still renders `manual-review-required` on current `main`, while later live iOS ownership is `#164` / `#165` rather than closed issue `#144`
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
 This slice is **not** the later source-backed advisory implementation itself. It is the contract change that makes the later iOS source integrations bounded and auditable.
@@ -71,7 +71,7 @@ The implementation PR must replace the current combined iOS group with exactly t
 
 Contract requirements:
 - `runner-images` must remain mapped to `#143`
-- `android-java`, `android-gradle`, and `android-emulator-runtime` must remain mapped to `#154`, `#155`, and `#156`
+- `android-java` is already delivered as a source-backed slice under `#154`, `android-gradle` remains the open Android follow-up under `#155`, and `android-emulator-runtime` is already delivered as a source-backed slice under `#156`
 - every watched fact path in `.github/runner-host-watch.json` must still be owned by exactly one source-rule group after the split
 - the manifest must fail closed if any watched iOS fact path is dropped, duplicated, or assigned to the wrong follow-up issue
 
@@ -95,7 +95,7 @@ Implementation contract for this slice:
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
 - the new source-rule section must make it explicit that Xcode and simulator-runtime promotion are still future follow-up work
-- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands
+- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands, and it must not revive closed issue `#144` as the live later owner
 
 ### 3. Tests and fixtures
 
@@ -120,20 +120,22 @@ The implementation PR for this spec must update these docs:
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation is no longer purely drift / missing evidence: current `main` keeps `runner-images` and `android-java` as delivered source-backed exceptions
-- the iOS backlog is no longer one combined `ios-xcode-simulator` umbrella after this slice lands, but current `main` still uses the combined `ios-xcode-simulator -> #144` placeholder until then
+- current `main` still keeps one combined `ios-xcode-simulator` placeholder key; `#144` is historical/superseded rather than the live current-main owner
+- shipped runner-host automation already includes the delivered `runner-images`, `android-java`, and `android-emulator-runtime` source-backed exceptions while the later iOS source-backed work is split across `#164` and `#165`
 - later source-backed iOS promotion is split across `#164` and `#165`
-- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as the future steady-state summary key once this slice lands, while this historical spec keeps the current-main placeholder truthful until then
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a future `#144` umbrella owner and instead point the later iOS work at `#164` / `#165` while keeping the current combined placeholder truthful
 - those later iOS slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
 - the current runner-image and Android follow-up ownership remains unchanged outside that required iOS ownership reconciliation
 
 ## Acceptance criteria
 
+Historical note: the acceptance criteria below describe the superseded repo-owned split target for `#144`. Current `main` still keeps the combined `ios-xcode-simulator` placeholder, and the live later iOS ownership now sits with `#164` / `#165`.
+
 1. `.github/runner-host-advisory-sources.json` no longer uses `#144` as the owner of one combined iOS source group; it instead exposes two bounded iOS groups mapped to `#164` and `#165`.
 2. Every watched fact path in `.github/runner-host-watch.json` remains covered exactly once after the split.
 3. `runner_host_review_report.py` still reports the same honest top-level drift result for current clean `main`, while exposing the split iOS groups in JSON and markdown.
-4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`.
-5. The implementation PR for this slice can honestly say `Closes #144` because it finishes the immediate repo-owned contract split, while the actual Xcode/runtime source-backed integrations remain in follow-up issues.
+4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`, even while current `main` still renders one combined placeholder key.
+5. This superseded artifact now exists only to record the original split target; current `main` instead keeps the combined placeholder and tracks the later Xcode/runtime source-backed integrations in `#164` and `#165`.
 
 ## Bounded design decisions
 
@@ -149,7 +151,7 @@ Those docs updates must explicitly say:
 - **no** source-backed promotion logic for iOS simulator runtime (`#165`)
 - **no** change to the existing runner-host managed issue title or drift-alert semantics
 - **no** widening of `.github/runner-host-watch.json`
-- **no** changes to the runner-image (`#143`) or Android (`#154`, `#155`, `#156`) source-backed follow-ups beyond keeping their ownership references honest
+- **no** changes to the runner-image (`#143`) or Android (`#154` delivered, `#155` open follow-up, `#156` delivered) source-backed follow-ups beyond keeping their ownership references honest
 
 ## Validation contract for the later implementation PR
 
@@ -176,19 +178,13 @@ from pathlib import Path
 summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encoding='utf-8'))
 assert summary['verdict'] == 'no review-needed', summary
 assert summary['reason'] == 'baseline-match', summary
-keys = {group['key'] for group in summary['source_rule_groups']}
-assert keys == {
-    'runner-images',
-    'android-java',
-    'android-gradle',
-    'android-emulator-runtime',
-    'ios-xcode',
-    'ios-simulator-runtime',
-}, summary
-issue_map = {group['key']: group['follow_up_issue'] for group in summary['source_rule_groups']}
-assert issue_map['ios-xcode'] == 164, issue_map
-assert issue_map['ios-simulator-runtime'] == 165, issue_map
-print('runner-host iOS source split summary present')
+groups = {group['key']: group for group in summary['source_rule_groups']}
+assert groups['runner-images']['rule_kind'] == 'runner-image-release-metadata', groups['runner-images']
+assert groups['android-emulator-runtime']['rule_kind'] == 'android-system-image-catalog', groups['android-emulator-runtime']
+ios_placeholder = groups['ios-xcode-simulator']
+assert ios_placeholder['follow_up_issues'] == [164, 165], ios_placeholder
+assert 'follow_up_issue' not in ios_placeholder, ios_placeholder
+print('runner-host iOS placeholder ownership remains split under #164 / #165')
 PY
 ```
 

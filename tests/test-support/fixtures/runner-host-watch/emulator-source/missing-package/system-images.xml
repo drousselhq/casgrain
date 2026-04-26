@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sys-img:sdk-sys-img xmlns:sys-img="http://schemas.android.com/sdk/android/repo/sys-img2/05">
+  <remotePackage path="system-images;android-35;google_apis;x86_64">
+    <display-name>Google APIs Intel x86_64 Atom System Image</display-name>
+  </remotePackage>
+</sys-img:sdk-sys-img>
