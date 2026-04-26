@@ -939,28 +939,26 @@ def build_java_release_platform_result(
         "findings": [],
         "source_error": "",
     }
-    if fetch_error:
-        result["status"] = "manual-review-required"
-        result["outcome"] = "source-error"
-        result["source_error"] = fetch_error
-        result["findings"].append({"code": "source-error", "message": fetch_error})
-        return result, 1
-
     observed_platform = required_object_field(
         observed_platforms,
         platform_name,
         error_context="observed platforms",
     )
     if "host_environment_error" in observed_platform:
-        reason = required_scalar_field(
+        result["outcome"] = "source-skipped"
+        result["skip_reason"] = required_scalar_field(
             observed_platform,
             "host_environment_error",
             error_context=f"observed platform {platform_name}",
         )
+        result.pop("source_error")
+        return result, 0
+
+    if fetch_error:
         result["status"] = "manual-review-required"
         result["outcome"] = "source-error"
-        result["source_error"] = reason
-        result["findings"].append({"code": "source-error", "message": reason})
+        result["source_error"] = fetch_error
+        result["findings"].append({"code": "source-error", "message": fetch_error})
         return result, 1
 
     host_environment = required_object_field(
@@ -1768,11 +1766,13 @@ def enrich_source_rule_groups(
                 if platform_result["outcome"] == "source-error":
                     group_outcome = "source-error"
                     group_status = "manual-review-required"
-                elif platform_result["outcome"] != "source-match" and group_outcome != "source-error":
+                elif platform_result["outcome"] not in {"source-match", "source-skipped"} and group_outcome != "source-error":
                     group_outcome = "source-review-needed"
                     group_status = "manual-review-required"
+                elif platform_result["outcome"] == "source-skipped" and group_outcome == "source-match":
+                    group_outcome = "source-skipped"
 
-            if group_advisory_count > 0 and source_reason is None:
+            if group_outcome in {"source-error", "source-review-needed"} and source_reason is None:
                 source_reason = "source-review-needed"
 
             enriched_groups.append(
