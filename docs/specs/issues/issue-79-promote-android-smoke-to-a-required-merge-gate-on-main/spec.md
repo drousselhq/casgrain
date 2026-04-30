@@ -12,7 +12,7 @@ Already delivered on `main`:
 - PR #104 added the first Android artifact-bundle validator and removed misleading partial-evidence paths.
 - PR #117 added stable Android smoke `failure_class` values and tightened the evidence contract.
 - PR #123 kept empty or malformed `uiautomator` dumps inside the structured `ui-dump-failure` path.
-- PR #134 added the repo-owned Android reliability report + issue-sync flow.
+- PR #134 added a temporary repo-owned Android reliability report + issue-sync flow, which was useful while Android was still being promoted but is not part of the steady-state required gate.
 - PR #160 retired the stale dedicated tracker-sync path so Android reliability state no longer depends on live tracker issue `#132`.
 
 Live baseline at analyst handoff (`2026-04-21` UTC):
@@ -21,7 +21,7 @@ Live baseline at analyst handoff (`2026-04-21` UTC):
 - `.github/workflows/ios-simulator-smoke.yml` already follows the required-check-safe pattern: it runs on every PR, self-decides whether the expensive simulator path is needed, and still reports `ios-smoke`
 - canonical repo docs still describe Android as advisory rather than required, including `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/merge-and-validation-policy.md`, and `docs/development/security-owasp-baseline.md`
 
-The honest remaining gap is therefore no longer Android reliability plumbing. The repo already has a real emulator-backed Android lane with stable artifact/report contracts; what remains is promoting that existing lane into a branch-protection-safe required merge gate.
+The honest remaining gap is therefore no longer Android reliability plumbing. The repo already has a real emulator-backed Android lane with a stable artifact contract; what remains is promoting that existing lane into a branch-protection-safe required merge gate.
 
 ## Scope of this slice
 
@@ -47,7 +47,7 @@ Implementation contract:
 - add in-job change detection that mirrors the current Android/shared-runtime surface list already expressed in the workflow trigger paths
 - when the PR is unaffected, report success with an explicit skip message and do **not** build the fixture APK, boot an emulator, or upload smoke artifacts
 - when the PR is affected, preserve the current real emulator-backed smoke path, artifact validation, and machine-readable artifact contract
-- keep the existing `push`, `schedule`, `workflow_dispatch`, reliability-report, and issue-sync behavior intact unless the implementation proves a narrower edit is impossible
+- keep the existing `push`, `schedule`, and `workflow_dispatch` behavior intact; the Android steady state must not depend on a separate reliability-report or issue-sync layer once `android-smoke` is a required gate
 
 ### 2. Canonical docs / spec / policy reconciliation
 
@@ -78,7 +78,7 @@ Ruleset contract:
 
 1. Every PR head reports an `android-smoke` status context.
 2. PRs that do **not** touch Android/shared-runtime surfaces report a successful `android-smoke` result without booting an emulator or building/uploading Android smoke artifacts.
-3. PRs that **do** touch Android/shared-runtime surfaces still run the real emulator-backed Android smoke lane and preserve the current artifact/report contract.
+3. PRs that **do** touch Android/shared-runtime surfaces still run the real emulator-backed Android smoke lane and preserve the current artifact contract.
 4. The active `main-protection-ruleset` requires `android-smoke` alongside the existing required contexts.
 5. `docs/validation.md`, `docs/specs/casgrain-product-spec.md`, `docs/development/test-pyramid-and-runtime-contracts.md`, `docs/development/merge-and-validation-policy.md`, and `docs/development/security-owasp-baseline.md` no longer describe Android smoke as advisory-only.
 6. `#79` is the shipped Android merge-gate promotion slice because the merged workflow changes and the live ruleset update are both already complete.

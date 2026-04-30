@@ -17,13 +17,8 @@ ANDROID_SMOKE_PATHS = [
     "crates/runner/**",
     "crates/android/**",
     "tests/test-support/fixtures/android-smoke/**",
-    "tests/test-support/fixtures/android-smoke/reliability-issue-sync/**",
     "tests/test-support/scripts/android_smoke_run_plan.py",
-    "tests/test-support/scripts/android_smoke_reliability_window.py",
-    "tests/test-support/scripts/android_smoke_issue_sync.py",
     "tests/test-support/scripts/validate_android_smoke_artifacts.py",
-    "tests/scripts/test_android_smoke_reliability_window.py",
-    "tests/scripts/test_android_smoke_issue_sync.py",
     ".github/workflows/android-emulator-smoke.yml",
     ".github/runner-host-watch.json",
 ]
@@ -106,7 +101,7 @@ class MobileSmokeWorkflowTriggerTests(unittest.TestCase):
                 continue
             self.assertIn(pattern, run_script)
 
-    def test_android_smoke_failure_path_still_uploads_artifacts_for_reliability_report(self) -> None:
+    def test_android_smoke_failure_path_still_uploads_artifacts_without_reliability_layer(self) -> None:
         workflow = self.load_workflow(".github/workflows/android-emulator-smoke.yml")
         smoke_steps = self.job_steps(workflow, "smoke")
         upload_step = self.step_named(smoke_steps, "Upload Android smoke artifacts")
@@ -125,22 +120,8 @@ class MobileSmokeWorkflowTriggerTests(unittest.TestCase):
 
         jobs = workflow.get("jobs")
         self.assertIsInstance(jobs, dict)
-        reliability_report = jobs.get("reliability_report")
-        self.assertIsInstance(reliability_report, dict)
-        self.assertEqual(
-            reliability_report.get("if"),
-            "always() && github.event_name != 'pull_request'",
-        )
-        report_steps = reliability_report.get("steps")
-        self.assertIsInstance(report_steps, list)
-        download_step = self.step_named(report_steps, "Download current Android smoke artifact")
-        self.assertEqual(
-            download_step.get("with"),
-            {
-                "name": "casgrain-android-smoke",
-                "path": "${{ runner.temp }}/current-android-smoke",
-            },
-        )
+        self.assertNotIn("reliability_report", jobs)
+        self.assertNotIn("reliability_apply", jobs)
 
     def test_ios_smoke_push_trigger_bootstraps_main_runner_host_evidence(self) -> None:
         workflow = self.load_workflow(".github/workflows/ios-simulator-smoke.yml")
