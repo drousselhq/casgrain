@@ -4,7 +4,7 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #124`
 - Follow-up contract that landed after this slice: `#129` (`Add source-rule contract for runner-host advisory evaluation`)
-- Remaining later source-specific automation is now split across delivered `#143` (runner images), `#154` (Android Java), `#155` (Android Gradle), and `#156` (Android emulator runtime), plus later iOS follow-ups `#164` / `#165` after the Android narrowing contract in `#142`
+- Remaining later source-specific automation is now split across delivered `#143` (runner images), `#154` (Android Java), `#155` (Android Gradle), and `#156` (Android emulator runtime), plus the still-combined iOS placeholder that currently renders historical follow-up issue numbers `#164` / `#165` after the Android narrowing contract in `#142`
 
 ## Why this slice exists
 
@@ -48,7 +48,7 @@ This slice must:
 
 This slice is **only** the change-detection + manual-review slice.
 Direct source-backed advisory evaluation for selected surfaces does not belong to this slice.
-That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images, `#154` Android Java, `#155` Android Gradle, and `#156` Android emulator-runtime promotion slices while `#164` and `#165` remain the later source-specific follow-ups.
+That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images, `#154` Android Java, `#155` Android Gradle, and `#156` Android emulator-runtime promotion slices while the current combined `ios-xcode-simulator` placeholder still renders the historical iOS follow-up issue numbers `#164` / `#165`.
 
 ## Required implementation artifacts
 
@@ -212,11 +212,11 @@ The later implementation PR must explicitly update these canonical repo docs:
 Those docs updates must say, in repo-owned language rather than issue-only shorthand:
 - which runner/host facts are watched from `.github/runner-host-watch.json`
 - which evidence artifacts feed the review (`host-environment.json` for both mobile smoke workflows, with `emulator.json`, `simulator.json`, and `xcodebuild.log` remaining supporting evidence where relevant)
-- that the weekly `cve-watch` scope/output now includes this runner-host drift watch as a fourth low-noise review lane, and that drift or missing/unreadable evidence renders the `security: runner-host review needed` report via the existing sync flow
+- that the weekly `cve-watch` scope/output now includes this runner-host drift watch as a fourth low-noise workflow-summary review path, and that drift or missing/unreadable evidence renders the `security: runner-host review needed` report via the existing workflow-summary flow
 - that any blanket wording claiming `manual-review-required` outcomes never open reports, or that `cve-watch` still has only three low-noise slices, is updated or removed so the canonical docs stay internally consistent
 - that this slice renders review output only when watched facts drift or required evidence is missing/unreadable
 - that the result is drift-triggered **manual review**, not direct runner-image / host-toolchain advisory automation in this slice
-- that the repo-owned source-rule contract landed in follow-up issue `#129`, and any later source-backed advisory automation now advances via delivered slices `#143` (`runner-images`), `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`) plus split follow-up issues `#164` and `#165` rather than staying attached to one umbrella tracker
+- that the repo-owned source-rule contract landed in follow-up issue `#129`, and any later source-backed advisory automation now advances via delivered slices `#143` (`runner-images`), `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`) plus the still-combined iOS placeholder that currently renders historical follow-up issue numbers `#164` / `#165`, rather than staying attached to one umbrella tracker
 
 The spec should leave no room for a later implementation PR to claim completion while keeping those canonical docs ambiguous or stale.
 
@@ -332,4 +332,4 @@ The implementation PR for this spec should be able to close `#124` because it co
 After that PR merges:
 - the weekly watch will keep manual review explicit only when the hosted environment drifts
 - issue #129 captured the repo-owned source-rule contract on top of this baseline
-- later source-specific automation now advances through delivered slices `#143` / `#154` / `#155` / `#156` and split iOS follow-ups `#164` / `#165` rather than returning to one umbrella issue
+- later source-specific automation now advances through delivered slices `#143` / `#154` / `#155` / `#156` plus the remaining combined iOS placeholder, which still renders historical follow-up issue numbers `#164` / `#165`, rather than returning to one umbrella issue

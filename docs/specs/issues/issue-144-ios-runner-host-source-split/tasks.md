@@ -12,7 +12,7 @@
 
 ## 1. Confirm the current split is still needed
 
-- [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group key, while live later iOS ownership now belongs to `#164` / `#165` rather than closed issue `#144`.
+- [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group key, while any `#164` / `#165` references on that combined placeholder are historical only rather than reviving closed issue `#144` as a live owner.
 - [ ] 1.2 Confirm follow-up issues `#164` and `#165` are still the intended later implementation slices for Xcode and simulator-runtime source-backed work.
 
 Goal: Prove the repo still needs the contract split described in `spec.md` before changing manifests, tests, or docs.
@@ -91,7 +91,7 @@ Hand back if:
 - [ ] 5.1 Run `git diff --check`.
 - [ ] 5.2 Run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 5.3 Run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
-- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports the combined `ios-xcode-simulator` placeholder key while surfacing later iOS ownership through `#164` / `#165` rather than closed issue `#144`.
+- [ ] 5.4 Render `tests/test-support/scripts/runner_host_review_report.py` against current `main` and assert the summary still reports the combined `ios-xcode-simulator` placeholder key while treating any `#164` / `#165` references as historical only rather than reviving closed issue `#144` as a live owner.
 - [ ] 5.5 Record the closure boundary honestly: `#144` is superseded by `#164` and `#165`, so current-main validation should keep the combined `ios-xcode-simulator` placeholder truthful rather than claiming the split already landed.
 
 Goal: Prove the split lands without changing current drift behavior and hand QA a bounded, verifiable slice.

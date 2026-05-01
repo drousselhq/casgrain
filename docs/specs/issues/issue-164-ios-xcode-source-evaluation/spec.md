@@ -151,7 +151,7 @@ Those updates must explicitly say:
 - a newer Apple Xcode release or newer SDK row alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized release/support metadata for the observed Xcode version and bundled SDK facts, not a general freshness policy
 - `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving the superseded `ios-xcode-simulator` / `#144` umbrella as the live remaining iOS owner after this slice lands
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying that only `runner-images` is source-backed or that `#144` remains the later iOS follow-up once `#164` lands
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` become historical after this slice and must not keep framing `#164` as unresolved future work or the current runner-host lane as having no active iOS source-backed evaluation
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` become historical after this slice and must not keep framing `#164` as unresolved future work or the current runner-host workflow-summary report path as having no active iOS source-backed evaluation
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop describing post-`#164` current `main` as if the live iOS contract were still the combined `ios-xcode-simulator` / `#144` placeholder or as if `ios-xcode` were still entirely manual-only future work
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must also stop requiring a drift-only top-level `advisory_count` plus a separate top-level `source_advisory_count`; after `#164` lands they must preserve the shared current-main contract where source-backed findings still increment the same top-level `advisory_count` and remain inspectable through source-rule group details
 - `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work still has open spec-entry PRs `#171` and `#173`; after `#164` lands, that artifact must describe the remaining iOS ownership truthfully without preserving `#171` as still-open current-main state
@@ -175,7 +175,7 @@ Those updates must explicitly say:
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched Xcode facts
 - **no** second source-only alert dimension for `xcode.app_path`
 - **no** automatic freshness ratchet solely because Apple later publishes a newer Xcode or SDK row
-- **no** new report title or parallel runner-host GitHub issue lane
+- **no** new report title or parallel workflow-summary reporting path
 - **no** local Xcode probing beyond the emitted workflow artifact facts already captured by the smoke artifact contract
 
 ## Validation contract for the later implementation PR

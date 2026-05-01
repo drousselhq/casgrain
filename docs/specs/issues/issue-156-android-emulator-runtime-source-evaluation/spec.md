@@ -25,7 +25,7 @@ Already delivered on `main`:
   - `advisory_count=2`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, `ios-xcode-simulator`
   - `runner-images` evaluated as `runner-image-release-metadata`, while `android-java`, `android-gradle`, `android-emulator-runtime`, and the current combined `ios-xcode-simulator` placeholder still rendered as `manual-review-required`
-- GitHub issue `#144` is already closed, while the later iOS source-backed work now lives in open follow-up issues `#164` and `#165`; their issue-scoped specs are already merged on `main` via PRs `#171` and `#173`.
+- GitHub issue `#144` is already closed, and the later iOS source-backed work no longer has an open issue-side owner on current `main`; the merged historical follow-up issue specs (`#164` / `#165`, via PRs `#171` / `#173`) should be treated as background rather than live current follow-ups.
 - The latest successful Android smoke artifact on `main` currently emits this emulator evidence:
   - `api_level=34`
   - `target=google_apis`
@@ -143,12 +143,12 @@ Those updates must explicitly say:
 - a newer Android API level, extension level, or system-image revision alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized package/runtime identity, not general freshness policy
 - `emulator.device_name` remains part of the drift guard for the Android smoke artifact contract, while authoritative source evaluation in this slice is grounded on the platform/system-image runtime identity
 - `target`, `arch`, and `profile` remain supporting lookup/context fields emitted by `host-environment.json`, but this slice does not promote them into newly watched runner-host facts
-- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that only `#143` is delivered while `#154`, `#155`, `#156`, and closed issue `#144` all remain later source-specific follow-ups; after `#156` lands it must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed slices while keeping `android-java`, `android-gradle`, and the later iOS follow-up ownership truthful under `#164` / `#165`
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md` must stop saying that only `#143` is delivered while `#154`, `#155`, `#156`, and closed issue `#144` all remain later source-specific follow-ups; after `#156` lands it must describe `runner-images` and `android-emulator-runtime` as the delivered source-backed slices while keeping `android-java`, `android-gradle`, and any `#164` / `#165` references on the combined iOS placeholder framed as historical only
 - `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md` and `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop describing current `main` as uniformly drift-only or as having no active source-backed runner-host evaluation after `#156` lands
 - `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying only `runner-images` is source-backed or presenting `#156` as untouched future work once this slice lands
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop using closed issue `#144` as if it were still the live owner of the later iOS source-backed work; after `#156` lands they must keep `runner-images` and `android-emulator-runtime` as the delivered source-backed exceptions while pointing the later iOS follow-up ownership at `#164` / `#165`
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` must stop using closed issue `#144` as if it were still the live owner of the later iOS source-backed work; after `#156` lands they must keep `runner-images` and `android-emulator-runtime` as the delivered source-backed exceptions while treating any `#164` / `#165` references as historical only
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop requiring drift-only `advisory_count` plus a top-level `source_advisory_count`, and must stop saying `android-emulator-runtime` remains `manual-review-required` after `#156` lands
-- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop preserving `android-emulator-runtime` as a later unchanged `manual-review-required` follow-up or leaving `#156` as untouched future work after this slice lands; after `#156` lands they must treat `android-emulator-runtime` as an already-delivered source-backed group while keeping only the bounded `android-gradle` slice under `#155` and the later iOS ownership truthful under `#164` / `#165`
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop preserving `android-emulator-runtime` as a later unchanged `manual-review-required` follow-up or leaving `#156` as untouched future work after this slice lands; after `#156` lands they must treat `android-emulator-runtime` as an already-delivered source-backed group while keeping only the bounded `android-gradle` slice under `#155` and treating any `#164` / `#165` references as historical only
 
 ## Acceptance criteria
 
@@ -168,7 +168,7 @@ Those updates must explicitly say:
 - **no** widening of `.github/runner-host-watch.json` to add `emulator.target`, `emulator.arch`, `emulator.profile`, extension levels, package revisions, or any other new watched fact
 - **no** separate source-only alert policy for the generated `emulator.device_name` string in this slice
 - **no** automatic freshness ratchet solely because a newer Android API, extension level, or system-image revision exists upstream
-- **no** new report title or parallel runner-host GitHub issue lane
+- **no** new report title or parallel workflow-summary reporting path
 - **no** direct probing of locally installed SDK state; the evaluator should use authoritative public source metadata plus the emitted workflow artifact facts
 
 ## Validation contract for the later implementation PR

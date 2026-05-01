@@ -10,7 +10,7 @@
   - `#143` (`runner-images`)
   - `#154` (`android-java`)
   - `#156` (`android-emulator-runtime`)
-  - `#164` / `#165` (`later iOS ownership for the current combined ios-xcode-simulator placeholder`)
+  - `#164` / `#165` (`historical follow-up issue numbers for the current combined ios-xcode-simulator placeholder`)
 
 ## Why this slice exists
 
@@ -53,7 +53,7 @@ Contract:
 - keep the `android-gradle` group key, `follow_up_issue: 155`, surface name, and watched fact paths unchanged
 - change only the `android-gradle` rule kind from `manual-review-required` to a stable active kind: `gradle-release-catalog`
 - add the rule-specific source metadata needed to validate the official Gradle release catalog and to render the human-facing source description in report output
-- preserve `runner-images` as the existing `runner-image-release-metadata` group mapped to `#143`, preserve `android-java` as the already-delivered source-backed group under `#154`, treat `android-emulator-runtime` as an already-delivered source-backed slice under `#156`, and keep the current combined `ios-xcode-simulator` placeholder manual-only while later iOS ownership stays with `#164` / `#165`
+- preserve `runner-images` as the existing `runner-image-release-metadata` group mapped to `#143`, preserve `android-java` as the already-delivered source-backed group under `#154`, treat `android-emulator-runtime` as an already-delivered source-backed slice under `#156`, and keep the current combined `ios-xcode-simulator` placeholder manual-only while it still carries historical `#164` / `#165` references
 - do **not** add Android Gradle plugin versions, wrapper checksums, dependency-graph surfaces, or any other new watched fact to `.github/runner-host-watch.json`
 
 ### 2. Runner-host source evaluation and report plumbing
@@ -83,7 +83,7 @@ Implementation contract:
   - existing drift reasons keep winning when drift or missing evidence exists
   - use a dedicated source-backed reason (for example `source-review-needed`) when drift count is zero but Android Gradle source findings require review
 - render markdown that clearly distinguishes Android Gradle source-backed findings from drift / missing-evidence findings and states that `runner-images`, `android-java`, and `android-emulator-runtime` remain the already-delivered source-backed groups while the selected `android-gradle` slice joins them and `ios-xcode-simulator` stays the remaining follow-up group
-- do **not** auto-alert solely because a newer Gradle release exists; until the repo defines a separate upgrade policy, newer upstream releases may be rendered as informational context but must not by themselves open or reopen the runner-host review lane on current `main`
+- do **not** auto-alert solely because a newer Gradle release exists; until the repo defines a separate upgrade policy, newer upstream releases may be rendered as informational context but must not by themselves open or reopen the runner-host workflow-summary report path on current `main`
 - fail closed on checked-in manifest/schema violations, but degrade authoritative-source retrieval/normalization failures into explicit review-needed Android Gradle findings rather than a silent pass
 
 ### 3. Deterministic fixtures and tests
@@ -143,7 +143,7 @@ Those updates must explicitly say:
 - **no** source-backed evaluation for the combined `ios-xcode-simulator` placeholder; later iOS source-backed work remains split across `#164` / `#165`
 - **no** widening of `.github/runner-host-watch.json` to include Android Gradle plugin versions, wrapper checksums, dependency manifests, or any new Gradle fact
 - **no** automatic upgrade policy or freshness ratchet solely because a newer Gradle release exists
-- **no** new report title or parallel runner-host GitHub issue lane
+- **no** new report title or parallel workflow-summary reporting path
 - **no** broad CVE or release-note scraping beyond the chosen Gradle release catalog contract
 
 ## Validation contract for the later implementation PR

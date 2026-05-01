@@ -161,7 +161,7 @@ Those updates must explicitly say:
 - `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` must stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work and all source-backed review findings still flow only through the shared top-level `advisory_count`; after `#165` lands, those older artifacts must describe `ios-simulator-runtime` as already source-backed on current `main` and preserve the separate simulator-runtime source finding/count surface instead of banning `source_advisory_count`
 - `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split `ios-xcode` / `ios-simulator-runtime` prerequisite is on current `main`, and must keep the post-`#165` shared summary contract truthful by preserving the separate source-backed finding surface/count rather than collapsing those findings back into a drift-only top-level count
 - `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands; after `#165`, those adjacent follow-up artifacts must describe top-level `advisory_count` as the drift/missing-evidence count while the simulator-runtime source findings remain explicit in their own source-backed finding surface/count
-- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work lives in open spec-entry PRs `#171` and `#173`; after `#165` lands, that adjacent spec must describe the later iOS ownership through open follow-up issues `#164` / `#165` without preserving `#173` as still open
+- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work lives in open spec-entry PRs `#171` and `#173`; after `#165` lands, that adjacent spec must treat `#164` / `#165` only as historical follow-up issue numbers without preserving `#173` as still open
 
 ## Acceptance criteria
 
@@ -190,7 +190,7 @@ Feature: iOS simulator runtime-catalog evaluation in the runner-host watch
     And the Apple simulator runtime catalog cannot match the observed runtime version or name
     When the runner-host report is rendered
     Then the report verdict is "manual-review-required"
-    And the issue title remains "security: runner-host review needed"
+    And the report title remains "security: runner-host review needed"
     And the actionable finding appears in the ios-simulator-runtime section of the summary and markdown
 
   Scenario: Runtime source errors fail closed
@@ -211,7 +211,7 @@ Feature: iOS simulator runtime-catalog evaluation in the runner-host watch
 - **no** source-backed evaluation for `simulator.device_name`; that future device-availability work belongs to `#172`
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched iOS facts
 - **no** automatic freshness ratchet solely because Apple later publishes a newer runtime row
-- **no** new report title or parallel runner-host GitHub issue lane
+- **no** new report title or parallel workflow-summary reporting path
 - **no** local simulator probing beyond the emitted workflow artifact facts already captured by the smoke artifact contract
 
 ## Validation contract for the later implementation PR

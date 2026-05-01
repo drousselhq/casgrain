@@ -129,7 +129,7 @@ Those docs updates must explicitly say:
 
 ## Acceptance criteria
 
-Historical note: the acceptance criteria below describe the superseded repo-owned split target for `#144`. Current `main` still keeps the combined `ios-xcode-simulator` placeholder, and the live later iOS ownership now sits with `#164` / `#165`.
+Historical note: the acceptance criteria below describe the superseded repo-owned split target for `#144`. Current `main` still keeps the combined `ios-xcode-simulator` placeholder, and any `#164` / `#165` references on that output are historical only.
 
 1. `.github/runner-host-advisory-sources.json` no longer uses `#144` as the owner of one combined iOS source group; it instead exposes two bounded iOS groups mapped to `#164` and `#165`.
 2. Every watched fact path in `.github/runner-host-watch.json` remains covered exactly once after the split.
