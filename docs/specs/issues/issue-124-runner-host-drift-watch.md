@@ -4,13 +4,13 @@
 - Spec mode: `technical change contract`
 - Expected implementation PR linkage: `Closes #124`
 - Follow-up contract that landed after this slice: `#129` (`Add source-rule contract for runner-host advisory evaluation`)
-- Remaining later source-specific automation is now split across delivered `#143` (runner images), `#154` (Android Java), `#155` (Android Gradle), and `#156` (Android emulator runtime), plus later iOS follow-ups `#164` / `#165` after the Android narrowing contract in `#142`
+- Remaining later source-specific automation is now split across delivered `#143` (runner images), `#154` (Android Java), `#155` (Android Gradle), and `#156` (Android emulator runtime), plus the still-combined iOS placeholder that currently renders historical follow-up issue numbers `#164` / `#165` after the Android narrowing contract in `#142`
 
 ## Why this slice exists
 
 Already delivered on `main`:
 - PR #87 added the weekly Rust dependency `cargo audit` watch.
-- PR #116 hardened managed findings-issue sync and recurrence handling.
+- PR #116 hardened the earlier findings-report recurrence handling; current main no longer syncs scheduled findings into GitHub issues.
 - PR #121 added the Dependabot-backed non-Cargo watch for GitHub Actions and Gradle-managed dependencies.
 - PR #125 added the workflow-installed security-tooling watch for `gitleaks`, `cargo-audit`, and `cargo-deny`.
 
@@ -30,7 +30,7 @@ Live baseline at analyst handoff (2026-04-19 UTC, inspected on `main`):
 That means the repo already has enough deterministic evidence to identify the current runner/host surface, but it still lacks all of the following:
 1. a checked-in baseline inventory for exactly which runner/host facts are being watched
 2. a single machine-readable host-environment summary artifact per mobile workflow
-3. a low-noise review loop that opens work only when those facts drift or the evidence contract breaks
+3. a low-noise review loop that surfaces work only when those facts drift or the evidence contract breaks
 
 So the next honest slice is **not** direct CVE scraping of hosted runners. It is a drift-triggered manual-review watch grounded on explicit repo-managed evidence.
 
@@ -44,11 +44,11 @@ This slice must:
 3. inspect the latest successful `main` run for each mobile workflow
 4. compare the observed host facts against the checked-in baseline
 5. render concise markdown plus machine-readable JSON
-6. open/update/close exactly one managed review issue via the existing issue-sync helper
+6. render exactly one workflow-summary review report via the existing workflow-summary report helper
 
 This slice is **only** the change-detection + manual-review slice.
 Direct source-backed advisory evaluation for selected surfaces does not belong to this slice.
-That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images, `#154` Android Java, `#155` Android Gradle, and `#156` Android emulator-runtime promotion slices while `#164` and `#165` remain the later source-specific follow-ups.
+That next repo-owned follow-up landed as issue #129 for the source-rule contract; after the later Android narrowing contract in `#142`, current `main` now includes the delivered `#143` runner-images, `#154` Android Java, `#155` Android Gradle, and `#156` Android emulator-runtime promotion slices while the current combined `ios-xcode-simulator` placeholder still renders the historical iOS follow-up issue numbers `#164` / `#165`.
 
 ## Required implementation artifacts
 
@@ -61,7 +61,7 @@ Add a checked-in baseline inventory at:
 The file must be the source of truth for this slice.
 
 It must define at minimum:
-- `issue_title`: `security: runner-host review needed`
+- `report_title`: `security: runner-host review needed`
 - a concise `scope` string for the generated report
 - one explicit entry for the Android smoke surface
 - one explicit entry for the iOS smoke surface
@@ -162,7 +162,7 @@ Implementation contract:
 - inspect the newest successful `main` run per platform/workflow, not PR-branch artifacts
 - consume the normalized `host-environment.json` artifact, not raw log scraping
 - compare only the watched facts named in `.github/runner-host-watch.json`
-- reuse `tests/test-support/scripts/cve_watch_issue_sync.py` instead of inventing a new issue-upsert path
+- reuse workflow-summary reporting instead of inventing a new issue-upsert path
 
 ### 4. Weekly cve-watch integration
 
@@ -176,9 +176,9 @@ That job must:
 3. download the configured artifact from each run
 4. execute `runner_host_review_report.py`
 5. append the rendered markdown to `$GITHUB_STEP_SUMMARY`
-6. pass the summary JSON + markdown into `cve_watch_issue_sync.py`
+6. pass the summary JSON + markdown into workflow-summary reporting
 
-Issue-sync rule:
+Workflow-summary rule:
 - `alert=true` means `manual-review-required`
 - `advisory_count` is the count of changed or missing watched facts requiring review
 - `alert=false` means `no review-needed`
@@ -212,11 +212,11 @@ The later implementation PR must explicitly update these canonical repo docs:
 Those docs updates must say, in repo-owned language rather than issue-only shorthand:
 - which runner/host facts are watched from `.github/runner-host-watch.json`
 - which evidence artifacts feed the review (`host-environment.json` for both mobile smoke workflows, with `emulator.json`, `simulator.json`, and `xcodebuild.log` remaining supporting evidence where relevant)
-- that the weekly `cve-watch` scope/output now includes this runner-host drift watch as a fourth low-noise review lane, and that drift or missing/unreadable evidence opens/updates the managed `security: runner-host review needed` issue via the existing sync flow
-- that any blanket wording claiming `manual-review-required` outcomes never open managed issues, or that `cve-watch` still has only three low-noise slices, is updated or removed so the canonical docs stay internally consistent
-- that this slice opens review only when watched facts drift or required evidence is missing/unreadable
+- that the weekly `cve-watch` scope/output now includes this runner-host drift watch as a fourth low-noise workflow-summary review path, and that drift or missing/unreadable evidence renders the `security: runner-host review needed` report via the existing workflow-summary flow
+- that any blanket wording claiming `manual-review-required` outcomes never open reports, or that `cve-watch` still has only three low-noise slices, is updated or removed so the canonical docs stay internally consistent
+- that this slice renders review output only when watched facts drift or required evidence is missing/unreadable
 - that the result is drift-triggered **manual review**, not direct runner-image / host-toolchain advisory automation in this slice
-- that the repo-owned source-rule contract landed in follow-up issue `#129`, and any later source-backed advisory automation now advances via delivered slices `#143` (`runner-images`), `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`) plus split follow-up issues `#164` and `#165` rather than staying attached to one umbrella tracker
+- that the repo-owned source-rule contract landed in follow-up issue `#129`, and any later source-backed advisory automation now advances via delivered slices `#143` (`runner-images`), `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`) plus the still-combined iOS placeholder that currently renders historical follow-up issue numbers `#164` / `#165`, rather than staying attached to one umbrella tracker
 
 The spec should leave no room for a later implementation PR to claim completion while keeping those canonical docs ambiguous or stale.
 
@@ -248,7 +248,7 @@ The reporter must:
 The exact field names may vary slightly, but the summary JSON must contain at least:
 - generation timestamp
 - repo identity
-- `issue_title`
+- `report_title`
 - `alert` boolean
 - `advisory_count` integer = count of changed/missing watched facts
 - top-level verdict: `no review-needed` or `manual-review-required`
@@ -288,7 +288,7 @@ It must include:
 - **no** widening beyond the Android and iOS smoke workflows
 - **no** product/runtime behavior changes in Casgrain itself
 - **no** dependence on PR-branch artifacts for the review decision
-- **no** second parallel issue-management workflow outside `cve_watch_issue_sync.py`
+- **no** second parallel issue-management workflow outside workflow-summary reporting
 
 ## Validation contract for the later implementation PR
 
@@ -332,4 +332,4 @@ The implementation PR for this spec should be able to close `#124` because it co
 After that PR merges:
 - the weekly watch will keep manual review explicit only when the hosted environment drifts
 - issue #129 captured the repo-owned source-rule contract on top of this baseline
-- later source-specific automation now advances through delivered slices `#143` / `#154` / `#155` / `#156` and split iOS follow-ups `#164` / `#165` rather than returning to one umbrella issue
+- later source-specific automation now advances through delivered slices `#143` / `#154` / `#155` / `#156` plus the remaining combined iOS placeholder, which still renders historical follow-up issue numbers `#164` / `#165`, rather than returning to one umbrella issue

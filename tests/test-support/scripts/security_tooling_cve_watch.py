@@ -110,7 +110,7 @@ def normalize_manifest(data: Any) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise SecurityToolingWatchError("Security-tooling manifest JSON root must be an object")
 
-    issue_title = required_scalar_field(data, "issue_title", error_context="security-tooling manifest")
+    report_title = required_scalar_field(data, "report_title", error_context="security-tooling manifest")
     scope = required_scalar_field(data, "scope", error_context="security-tooling manifest")
     tools_input = required_list_field(data, "tools", error_context="security-tooling manifest")
     if not tools_input:
@@ -171,7 +171,7 @@ def normalize_manifest(data: Any) -> dict[str, Any]:
         )
 
     return {
-        "issue_title": issue_title,
+        "report_title": report_title,
         "scope": scope,
         "tools": normalized_tools,
     }
@@ -469,7 +469,7 @@ def build_summary(
         "advisory_count": sum(len(result["findings"]) for result in actionable_results),
         "manual_review_count": len(manual_results),
         "generated_at": generated_at,
-        "issue_title": normalized_manifest["issue_title"],
+        "report_title": normalized_manifest["report_title"],
         "scope": normalized_manifest["scope"],
         "results": results,
         "tool_count": len(results),
@@ -484,9 +484,9 @@ def sanitize_cell(value: Any) -> str:
 def render_markdown(summary: dict[str, Any], run_url: str) -> str:
     lines = [
         REPORT_MARKER,
-        f"# {summary['issue_title']}",
+        f"# {summary['report_title']}",
         "",
-        "This issue/report is maintained automatically by the scheduled CVE watch workflow.",
+        "This report is generated automatically by the scheduled CVE watch workflow.",
         "",
         "## Scope",
         f"- Automated scope today: {summary['scope']}",

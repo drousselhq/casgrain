@@ -309,7 +309,7 @@ def build_summary(data: Any, generated_at: str) -> dict[str, Any]:
         "alert_numbers": [item["alert_number"] for item in findings],
         "generated_at": generated_at,
         "findings": findings,
-        "issue_title": ISSUE_TITLE,
+        "report_title": ISSUE_TITLE,
         "scope": SCOPE_TEXT,
     }
 
@@ -317,9 +317,9 @@ def build_summary(data: Any, generated_at: str) -> dict[str, Any]:
 def render_markdown(summary: dict[str, Any], run_url: str) -> str:
     lines = [
         "<!-- cve-watch-report -->",
-        f"# {summary['issue_title']}",
+        f"# {summary['report_title']}",
         "",
-        "This issue is maintained automatically by the scheduled CVE watch workflow.",
+        "This report is generated automatically by the scheduled CVE watch workflow.",
         "",
         "## Scope",
         f"- Automated scope today: {summary['scope']}",
@@ -336,7 +336,7 @@ def render_markdown(summary: dict[str, Any], run_url: str) -> str:
                 "",
                 "## Status",
                 "- No active GitHub-native Dependabot alerts matched the watched non-Cargo ecosystems.",
-                "- Clean runs are recorded in the workflow summary only; this issue should normally stay closed or absent when the watched surfaces are clean.",
+                "- Clean runs are recorded in the workflow summary only; the workflow does not create or reopen GitHub issues for findings.",
             ]
         )
         return "\n".join(lines) + "\n"

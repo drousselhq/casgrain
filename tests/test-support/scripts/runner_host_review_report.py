@@ -293,7 +293,7 @@ def normalize_baseline(data: Any) -> dict[str, Any]:
             "watched_facts": normalized_watched,
         }
     return {
-        "issue_title": required_scalar_field(data, "issue_title", error_context="runner-host baseline"),
+        "report_title": required_scalar_field(data, "report_title", error_context="runner-host baseline"),
         "scope": required_scalar_field(data, "scope", error_context="runner-host baseline"),
         "platforms": normalized_platforms,
     }
@@ -524,9 +524,9 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             "watched_fact_paths": normalized_paths,
             "rule_kind": rule_kind,
             "rationale": rationale,
-            "managed_issue_behavior": required_string_field(
+            "report_behavior": required_string_field(
                 entry,
-                "managed_issue_behavior",
+                "report_behavior",
                 error_context=error_context,
             ),
             "candidate_source": required_string_field(entry, "candidate_source", error_context=error_context),
@@ -574,19 +574,19 @@ def normalize_source_rules(data: Any, *, normalized_baseline: dict[str, Any]) ->
             f"uncovered={uncovered_fact_paths}"
         )
 
-    managed_issue_title = required_string_field(
+    report_title = required_string_field(
         data,
-        "managed_issue_title",
+        "report_title",
         error_context="runner-host source rules",
     )
-    if managed_issue_title != normalized_baseline["issue_title"]:
+    if report_title != normalized_baseline["report_title"]:
         raise RunnerHostWatchError(
-            "runner-host source rules field 'managed_issue_title' must match the baseline issue_title "
-            f"{normalized_baseline['issue_title']!r}"
+            "runner-host source rules field 'report_title' must match the baseline report_title "
+            f"{normalized_baseline['report_title']!r}"
         )
 
     return {
-        "managed_issue_title": managed_issue_title,
+        "report_title": report_title,
         "groups": normalized_groups,
     }
 
@@ -1919,14 +1919,14 @@ def build_summary(
     return {
         "generated_at": generated_at,
         "repo": repo,
-        "issue_title": normalized_baseline["issue_title"],
+        "report_title": normalized_baseline["report_title"],
         "scope": normalized_baseline["scope"],
         "alert": total_advisory_count > 0,
         "advisory_count": total_advisory_count,
         "reason": reason,
         "verdict": "manual-review-required" if total_advisory_count > 0 else "no review-needed",
         "platforms": platforms_summary,
-        "source_rule_managed_issue_title": normalized_source_rules["managed_issue_title"],
+        "source_rule_report_title": normalized_source_rules["report_title"],
         "source_rule_groups": source_rule_groups,
     }
 
@@ -1949,7 +1949,7 @@ def render_markdown(summary: dict[str, Any]) -> str:
     }.get(summary["reason"], summary["reason"])
     lines = [
         REPORT_MARKER,
-        f"# {summary['issue_title']}",
+        f"# {summary['report_title']}",
         "",
         f"Verdict: **{summary['verdict']}** — {verdict_reason}",
         f"- Scope: {summary['scope']}",
@@ -1957,17 +1957,23 @@ def render_markdown(summary: dict[str, Any]) -> str:
         f"- Generated at: `{summary['generated_at']}`",
         "",
         "## Source-rule status",
-        f"- Managed issue path for future actionable findings: `{summary['source_rule_managed_issue_title']}`",
+        f"- Report title for runner-host findings: `{summary['source_rule_report_title']}`",
     ]
     for group in summary["source_rule_groups"]:
         watched_fact_list = ", ".join(
             f"{entry['platform']}:{entry['path']}" for entry in group["watched_fact_paths"]
         )
-        follow_up_numbers = group.get("follow_up_issues") or [group["follow_up_issue"]]
-        follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
+        if "follow_up_issues" in group:
+            follow_up_numbers = group["follow_up_issues"]
+            follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
+            ownership_text = f"(historical references: {follow_up_display})"
+        else:
+            follow_up_numbers = [group["follow_up_issue"]]
+            follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
+            ownership_text = f"via {follow_up_display}"
         lines.extend(
             [
-                f"- `{group['key']}` — `{group['rule_kind']}` via {follow_up_display}",
+                f"- `{group['key']}` — `{group['rule_kind']}` {ownership_text}",
                 f"  - Surface: {group['surface']}",
                 f"  - Candidate source: {group['candidate_source']}",
                 f"  - Rationale: {group['rationale']}",

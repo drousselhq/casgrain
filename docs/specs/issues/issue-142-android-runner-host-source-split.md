@@ -35,7 +35,7 @@ Narrow `#142` to the immediate repo-owned contract split only.
 This slice must:
 1. replace the single Android `android-java-gradle` source-rule group with three bounded Android groups
 2. bind each new Android group to exactly one later follow-up issue
-3. keep the current drift / missing-evidence alert semantics and managed issue title unchanged
+3. keep the current drift / missing-evidence alert semantics and report title unchanged
 4. keep the report/docs truthful that `android-java`, `android-gradle`, and `android-emulator-runtime` are now source-backed on current `main`
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
@@ -80,7 +80,7 @@ The implementation PR must replace the current combined Android group with exact
 
 Contract requirements:
 - `runner-images` must remain mapped to `#143`
-- the current combined `ios-xcode-simulator` placeholder remains manual-only while later iOS ownership stays with `#164` / `#165`
+- the current combined `ios-xcode-simulator` placeholder remains manual-only on current `main`; if mentioned, `#164` / `#165` are historical follow-up issue numbers rather than live owners
 - every watched fact path in `.github/runner-host-watch.json` must still be owned by exactly one source-rule group after the split
 - the manifest must fail closed if any Android watched fact path is dropped, duplicated, or assigned to the wrong follow-up issue
 
@@ -98,7 +98,7 @@ Implementation contract for this slice:
 - accept the new Android group keys and follow-up issue mappings
 - emit the split Android groups in the machine-readable summary
 - render markdown that names the three Android manual-review groups separately instead of one combined Android umbrella group
-- keep the current top-level `verdict`, `reason`, `alert`, `advisory_count`, and managed-issue behavior authoritative for this slice
+- keep the current top-level `verdict`, `reason`, `alert`, `advisory_count`, and report behavior authoritative for this slice
 - fail closed if the manifest omits one of the expected new Android groups, points a group at the wrong follow-up issue, or leaves any watched Android fact uncovered
 
 Required reporting behavior:
@@ -126,10 +126,10 @@ The implementation PR for this spec must update these docs:
 - `docs/development/security-owasp-baseline.md`
 
 Those docs updates must explicitly say:
-- the shipped runner-host automation already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the later iOS follow-up ownership remains split under `#164` / `#165`
+- the shipped runner-host workflow-summary report path already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the current combined iOS placeholder still carries historical `#164` / `#165` references
 - the Android backlog is no longer one combined `android-java-gradle` umbrella after this slice
 - later source-backed Android promotion is split across `#154`, `#155`, and `#156`
-- those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel managed issue titles
+- those later Android slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel report titles
 - `java.distribution` is not part of the current watched runner-host inventory unless and until a later contract change adds it explicitly
 
 ## Acceptance criteria
@@ -153,9 +153,9 @@ Those docs updates must explicitly say:
 - **no** source-backed promotion logic for Android Java (`#154`)
 - **no** source-backed promotion logic for Android Gradle (`#155`)
 - **no** source-backed promotion logic for Android emulator runtime (`#156`)
-- **no** change to the existing runner-host managed issue title or drift-alert semantics
+- **no** change to the existing runner-host report title or drift-alert semantics
 - **no** widening of `.github/runner-host-watch.json` to add new watched Android facts such as `java.distribution`
-- **no** changes to the delivered runner-image slice (`#143`) or the later iOS Xcode / simulator-runtime follow-ups now tracked by `#164` / `#165` beyond re-pointing the Android contract story honestly
+- **no** changes to the delivered runner-image slice (`#143`) or to the current combined iOS placeholder beyond re-pointing the Android contract story honestly
 
 ## Validation contract for the later implementation PR
 
@@ -205,4 +205,4 @@ The implementation PR for this spec should be able to close `#142` because it fi
 After that PR merges:
 - the Android backlog is split into bounded follow-up issues `#154` (`android-java`), `#155` (`android-gradle`), and `#156` (`android-emulator-runtime`)
 - current `main` has since delivered all three Android follow-ups as source-backed groups alongside the earlier `runner-images` slice from `#143`
-- the remaining later source-backed follow-up work is the iOS split under `#164` / `#165`, while current `main` still renders one combined `ios-xcode-simulator` placeholder for compatibility
+- the remaining later source-backed surface is the combined iOS placeholder, which current `main` still renders with historical `#164` / `#165` references for compatibility
