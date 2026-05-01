@@ -37,7 +37,7 @@ What still remains is narrower than the original umbrella issue wording. The ori
 Current `main` has no checked-in source-rule contract that records, in repo-owned machine-readable form:
 - which runner-host surface groups still remain `manual-review-required`
 - which watched fact paths belong to each future source-specific slice
-- which follow-up issue owns each later promotion
+- which follow-up ownership shape owns each later promotion
 - how those future promotions should continue to map into the existing runner-host report flow
 
 Without that contract, later source-backed work would either hardcode policy in scripts/docs or widen one issue into several unrelated source integrations.
@@ -49,7 +49,7 @@ Add a repo-owned source-rule contract around the **existing** runner-host drift 
 This slice must:
 1. keep the current drift / missing-evidence alert semantics unchanged
 2. make the current source-evaluation status explicit for each runner-host surface group
-3. bind each surface group to exactly one follow-up issue for later source-backed automation
+3. bind each surface group to explicit follow-up ownership for later source-backed automation, while allowing the still-combined iOS placeholder on current `main` to preserve historical `follow_up_issues: [164, 165]`
 4. keep the reporting / docs truthful that this contract initially shipped a drift-triggered live runner-host workflow-summary report path, and that later main may promote bounded source-backed slices like `#143` without widening the remaining groups
 5. stay testable from checked-in manifests plus deterministic fixtures
 
@@ -65,14 +65,18 @@ Add a checked-in manifest at:
 
 The file is the source of truth for this slice.
 
-It must define exactly these three source groups:
+It initially shipped three umbrella source groups, but current `main` now carries five explicit groups after the later Android narrowing and delivered promotions:
 
 1. `runner-images`
    - covers the watched runner-image / OS facts that currently come from GitHub-hosted runner evidence for Android and iOS
-2. `android-java-gradle`
-   - covers the Android watched Java / Gradle host-toolchain facts plus the Android emulator runtime facts already inventoried in `.github/runner-host-watch.json`
-3. `ios-xcode-simulator`
-   - covers the watched iOS Xcode / simulator-runtime host facts
+2. `android-java`
+   - covers the Android watched Java host version facts
+3. `android-gradle`
+   - covers the Android watched Gradle host version facts
+4. `android-emulator-runtime`
+   - covers the Android watched emulator runtime facts already inventoried in `.github/runner-host-watch.json`
+5. `ios-xcode-simulator`
+   - covers the watched iOS Xcode / simulator-runtime host facts and remains the still-combined placeholder on current `main`
 
 Each group entry must declare at minimum:
 - a stable group key
@@ -82,16 +86,19 @@ Each group entry must declare at minimum:
 - the current rule kind
 - the current rationale
 - the intended report behavior for future actionable findings
-- the follow-up issue number that owns later source-backed automation
+- the follow-up ownership for later source-backed automation (`follow_up_issue` for singular ownership or `follow_up_issues` for the still-combined iOS placeholder)
 - a short `candidate_source` description naming the future authoritative machine-readable source class to evaluate later
 
 Current-slice rule requirement:
 - the honest initial rule kind for every group in this contract slice was `manual-review-required`; current `main` now promotes `runner-images` via `#143`, `android-java` via `#154`, `android-gradle` via `#155`, and `android-emulator-runtime` via `#156`, while the current combined iOS placeholder remains the manual-review follow-up
 - the rationale must explain why the repo is not yet claiming trustworthy source-backed evaluation for that group on current `main`
-- the manifest must point to:
+- the manifest now points to:
   - `#143` for `runner-images`
-  - `#142` for the initial combined `android-java-gradle` group in this slice; the later narrowing contract in `#142` then splits that Android ownership into `#154`, `#155`, and `#156`
+  - `#154` for `android-java`
+  - `#155` for `android-gradle`
+  - `#156` for `android-emulator-runtime`
   - historical iOS follow-up issue numbers `#164` / `#165` for the current combined `ios-xcode-simulator` placeholder
+- historical note: this current five-group shape grew out of the initial combined Android ownership that `#142` later narrowed into the delivered `#154` / `#155` / `#156` slices
 
 Validation rule:
 - the manifest must fail closed if any listed watched fact path does not exist in `.github/runner-host-watch.json`
@@ -123,9 +130,10 @@ Add or extend deterministic fixtures under a dedicated path such as:
 - `tests/test-support/fixtures/runner-host-watch/source-rules/`
 
 Required fixture cases:
-- valid manifest covering all three groups with only `manual-review-required` rules
+- valid manifest covering the historical three-group baseline with only `manual-review-required` rules
+- current-main-compatible manifest covering the later five-group shape, including singular `follow_up_issue` ownership for `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime`, plus historical `follow_up_issues: [164, 165]` on the still-combined iOS placeholder
 - manifest references an unknown watched fact path
-- manifest omits a required follow-up issue number
+- manifest omits required follow-up ownership
 - manifest omits the rationale for a `manual-review-required` rule
 
 Add focused tests in either:
@@ -136,7 +144,8 @@ The tests must verify:
 - manifest normalization / validation
 - failure-closed behavior for bad source-rule input
 - rendered JSON/markdown includes the source-rule summary
-- the existing drift verdict remains unchanged for the current baseline-match fixture/live shape when all source groups are still manual-review only
+- the existing drift verdict remains unchanged for the baseline-match fixture/live shape
+- the source-rule summary stays truthful about the current five-group contract, including historical `follow_up_issues: [164, 165]` on the still-combined iOS placeholder
 
 ### 4. Canonical docs updates
 
@@ -155,7 +164,7 @@ Those docs updates must explicitly say:
 ## Acceptance criteria
 
 1. Current `main` still reports the same honest runner-host drift verdicts as before this slice; the new work does not silently alter alert semantics.
-2. The repo gains a checked-in source-rule inventory that binds each current runner-host surface group to explicit watched fact paths and exactly one follow-up issue.
+2. The repo gains a checked-in source-rule inventory that binds each current runner-host surface group to explicit watched fact paths and truthful follow-up ownership, using singular `follow_up_issue` fields for the delivered groups and historical `follow_up_issues: [164, 165]` on the still-combined iOS placeholder.
 3. The runner-host report output now makes the current source-rule status visible and testable instead of leaving it implicit in issue prose.
 4. The canonical security docs stop treating future source-backed promotion as an unstructured umbrella and instead point at the checked-in source-rule contract plus the delivered `#143` / `#154` / `#155` / `#156` slices, while treating `#164` / `#165` only as historical follow-up issue numbers on the still-combined iOS placeholder.
 5. The implementation PR for this slice can honestly say `Closes #129` because it finishes the immediate repo-controlled contract/plumbing work, while the actual source integrations remain in follow-up issues.
