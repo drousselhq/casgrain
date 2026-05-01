@@ -2,7 +2,7 @@
 
 - Issue: `#164`
 - Spec mode: `technical change contract`
-- Expected implementation PR linkage: `Closes #164`
+- Historical implementation PR linkage (superseded): `Closes #164`
 - Upstream slice already landed on `main`:
   - `#129` (`Runner-host advisory source-rule contract`)
 - Repo-owned prerequisite already merged on `main` as analyst contract:
@@ -13,6 +13,8 @@
   - `#155` (`android-gradle`)
   - `#156` (`android-emulator-runtime`)
   - `#165` (`ios-simulator-runtime`)
+
+Historical note: issue `#164` is now closed `not planned`. This artifact records the last Xcode-only source-backed proposal; current `main` still keeps the combined `ios-xcode-simulator` placeholder, and any `#164` / `#165` references on current runner-host output/docs are historical only.
 
 ## Why this slice exists
 
@@ -25,7 +27,7 @@ Already delivered on `main`:
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
   - at that handoff point, every source-rule group, including the combined iOS group, still remained `manual-review-required`
-- current `main` has since promoted `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` to delivered source-backed groups, while only the current combined `ios-xcode-simulator` placeholder remains later follow-up work until its bounded slices land
+- current `main` has since promoted `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` to delivered source-backed groups, while the current combined `ios-xcode-simulator` placeholder still renders only historical iOS follow-up references rather than live issue-side ownership
 - The checked-in iOS baseline on current `main` watches these Xcode facts:
   - `xcode.app_path=/Applications/Xcode_16.4.app`
   - `xcode.version=16.4`
@@ -33,7 +35,7 @@ Already delivered on `main`:
 - Fresh source inspection during analyst shaping confirmed Apple currently publishes authoritative Xcode support metadata at `https://developer.apple.com/support/xcode/`, and the Xcode 16.4 row lists `iOS 18.5` in the bundled SDK/support table.
 - That same source inspection also confirmed the Apple simulator-runtime catalog lives in a different authoritative source family (`index2.dvtdownloadableindex`), which belongs to `#165`, not this Xcode-only slice.
 
-That leaves one honest bounded next step once the earlier iOS split contract is present on current `main`: activate source-backed evaluation for the Xcode group only, using Apple’s Xcode support matrix for `xcode.version` and `xcode.simulator_sdk_version`, while keeping `xcode.app_path` as a drift-only supporting fact and leaving simulator-runtime evaluation to `#165`.
+At shaping time, that left one honest bounded next step once the earlier iOS split contract was present on current `main`: activate source-backed evaluation for the Xcode group only, using Apple’s Xcode support matrix for `xcode.version` and `xcode.simulator_sdk_version`, while keeping `xcode.app_path` as a drift-only supporting fact and leaving simulator-runtime evaluation to the paired historical `#165` artifact.
 
 ## Current-main prerequisite
 
@@ -142,21 +144,21 @@ Update:
 - `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md`
 - `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md`
 
-Those updates must explicitly say:
-- current `main` now performs source-backed evaluation for `ios-xcode`
-- `ios-simulator-runtime` remains separate follow-up work under `#165`
+The superseded proposal expected those updates to say:
+- the proposed target would have current `main` perform source-backed evaluation for `ios-xcode`
+- `ios-simulator-runtime` remains outside this Xcode-only slice, and any `#165` reference on current-main output/docs is historical only
 - `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`
 - actionable iOS Xcode findings continue to reuse `security: runner-host review needed`
 - `xcode.app_path` remains part of the drift guard / supporting context for the iOS smoke artifact contract in this slice rather than a source-backed comparison field
 - a newer Apple Xcode release or newer SDK row alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized release/support metadata for the observed Xcode version and bundled SDK facts, not a general freshness policy
-- `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving the superseded `ios-xcode-simulator` / `#144` umbrella as the live remaining iOS owner after this slice lands
-- `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` must stop saying that only `runner-images` is source-backed or that `#144` remains the later iOS follow-up once `#164` lands
-- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` become historical after this slice and must not keep framing `#164` as unresolved future work or the current runner-host workflow-summary report path as having no active iOS source-backed evaluation
-- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop describing post-`#164` current `main` as if the live iOS contract were still the combined `ios-xcode-simulator` / `#144` placeholder or as if `ios-xcode` were still entirely manual-only future work
-- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must also stop requiring a drift-only top-level `advisory_count` plus a separate top-level `source_advisory_count`; after `#164` lands they must preserve the shared current-main contract where source-backed findings still increment the same top-level `advisory_count` and remain inspectable through source-rule group details
-- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work still has open spec-entry PRs `#171` and `#173`; after `#164` lands, that artifact must describe the remaining iOS ownership truthfully without preserving `#171` as still-open current-main state
+- `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` were expected to stop preserving the superseded `ios-xcode-simulator` / `#144` umbrella as the live remaining iOS owner once the superseded `#164` target landed
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md` were expected to stop saying that only `runner-images` is source-backed or that `#144` remains the later iOS follow-up once the superseded `#164` target landed
+- `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md` were expected to become historical after this slice and not keep framing `#164` as unresolved future work or the current runner-host workflow-summary report path as having no active iOS source-backed evaluation
+- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` were expected to stop describing the superseded post-`#164` target as if the live iOS contract were still the combined `ios-xcode-simulator` / `#144` placeholder or as if `ios-xcode` were still entirely manual-only future work
+- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md`, `issue-155-android-gradle-source-evaluation/{spec,tasks}.md`, and `issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` were also expected to stop requiring a drift-only top-level `advisory_count` plus a separate top-level `source_advisory_count`; in that superseded target, source-backed findings would still increment the same top-level `advisory_count` and remain inspectable through source-rule group details
+- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` was expected to stop saying the later iOS work still had open spec-entry PRs `#171` and `#173`; in that superseded target, the artifact would instead describe the remaining iOS ownership truthfully without preserving `#171` as still-open current-main state
 
-## Acceptance criteria
+## Historical acceptance criteria
 
 1. Once the split iOS source-rule contract already exists on current `main`, `.github/runner-host-advisory-sources.json` exposes `ios-xcode` as `apple-xcode-support-matrix` while preserving `follow_up_issue: 164`, and `ios-simulator-runtime` remains `manual-review-required` under `#165`.
 2. A recognized Apple support-matrix row for the observed Xcode version / bundled simulator SDK pair still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Xcode source findings requiring review.
@@ -211,10 +213,10 @@ PY
 
 ## Completion boundary
 
-The implementation PR for this spec should be able to close `#164` because it turns the checked-in `ios-xcode` placeholder into an active source-backed evaluation on current `main` once the earlier split contract already exists.
+This historical artifact originally expected an implementation PR to close `#164` by turning the checked-in `ios-xcode` placeholder into an active source-backed evaluation once the earlier split contract existed.
 
-After that PR merges:
-- iOS Xcode facts are evaluated from Apple’s Xcode support matrix through the existing runner-host watch
-- `xcode.app_path` remains a drift-only supporting fact
-- `#165` remains the bounded follow-up for simulator-runtime source-backed evaluation
-- any future work on Xcode freshness ratchets, alternate path policy, or broader Apple advisory semantics must land as a new bounded follow-up issue instead of being smuggled into `#164`
+Current-main historical note:
+- current `main` still keeps the combined `ios-xcode-simulator` placeholder rather than the split Xcode/runtime target described above
+- `xcode.app_path` remains a drift-only supporting fact on current `main`
+- any `#165` reference on current runner-host output/docs should be read as paired historical context, not as live issue-side ownership
+- any future work on Xcode freshness ratchets, alternate path policy, or broader Apple advisory semantics would need a freshly shaped bounded issue instead of reusing closed issue `#164`

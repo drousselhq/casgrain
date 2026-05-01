@@ -3,6 +3,8 @@
 - Linked issue: `#165`
 - Source contract: `./spec.md`
 
+Historical note: issue `#165` is closed `not planned`; this task list survives only as the last simulator-runtime-only proposal. Current `main` still keeps the combined `ios-xcode-simulator` placeholder, and any `#164` / `#165` references on runner-host output/docs are historical only.
+
 ## 1. Confirm the bounded simulator runtime-catalog slice is actually ready on current `main`
 - [ ] 1.1 Re-run the runner-host report and confirm whether current `main` still exposes the combined `ios-xcode-simulator` placeholder or has finally moved to split `ios-xcode` / `ios-simulator-runtime` groups.
 - [ ] 1.2 Only if the split exists on current `main`, confirm `ios-simulator-runtime` is mapped to `#165`, `ios-xcode` is mapped to `#164`, and the separate device-availability follow-up `#172` remains the home for any future `simulator.device_name` source-backed work.
@@ -59,7 +61,7 @@
 ## 3. Promote the checked-in `ios-simulator-runtime` source rule from placeholder to active contract
 - [ ] 3.1 Update `.github/runner-host-advisory-sources.json` so `ios-simulator-runtime` uses `rule_kind: apple-simulator-runtime-catalog`.
 - [ ] 3.2 Add only the rule-specific source metadata needed for the Apple simulator runtime-catalog evaluator while preserving `follow_up_issue: 165` and the existing watched fact paths.
-- [ ] 3.3 Keep `ios-xcode` as the remaining separate follow-up under `#164`, and keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` on their already-delivered source-backed groups.
+- [ ] 3.3 Keep `ios-xcode` as paired historical `#164` context for this superseded simulator-runtime-only proposal, and keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` on their already-delivered source-backed groups.
 - [ ] 3.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` and still treats `simulator.device_name` as a watched drift/supporting fact rather than a runtime-catalog comparison field.
 - Goal: Make the repo-owned manifest describe one bounded active simulator runtime rule without reopening device-availability, Xcode, or non-iOS follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
@@ -139,7 +141,7 @@
 - [ ] 6.2 Re-run `python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py`.
 - [ ] 6.3 Re-run `python3 -m unittest tests/scripts/test_runner_host_review_report.py`.
 - [ ] 6.4 Rebuild `/tmp/runner-host-watch-summary.json` and `/tmp/runner-host-watch.md` from the live runner-host command and confirm `ios-simulator-runtime` now renders as `apple-simulator-runtime-catalog`.
-- [ ] 6.5 In the PR summary/comment, say the implementation PR `Closes #165`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `#164` and `#172` remained separate follow-up work.
+- [ ] 6.5 In the historical PR summary/comment for this superseded proposal, record the closure target as `Closes #165`, explicitly note that `docs-needed` still applied because canonical security docs changed, and state that `#164` remained paired historical context while `#172` stayed the separate future follow-up.
 - Goal: Leave QA with one honest picture of the simulator-runtime-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No manual GitHub issue mutation beyond the existing runner-host report behavior under test.

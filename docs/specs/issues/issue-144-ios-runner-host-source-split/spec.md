@@ -3,7 +3,7 @@
 - Linked issue: `#144`
 - Spec mode: `technical change contract`
 - Historical implementation linkage (superseded by `#164` / `#165`): `Closes #144`
-- Later follow-up implementation slices after this contract lands:
+- Historical later follow-up references captured by this contract:
   - `#164` — iOS Xcode host facts
   - `#165` — iOS simulator-runtime host facts
 
@@ -121,9 +121,9 @@ The implementation PR for this spec must update these docs:
 
 Those docs updates must explicitly say:
 - current `main` still keeps one combined `ios-xcode-simulator` placeholder key; `#144` is historical/superseded rather than the live current-main owner
-- shipped runner-host automation already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while the later iOS source-backed work is split across `#164` and `#165`
-- later source-backed iOS promotion is split across `#164` and `#165`
-- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a future `#144` umbrella owner and instead point the later iOS work at `#164` / `#165` while keeping the current combined placeholder truthful
+- shipped runner-host automation already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions while current docs/output preserve `#164` / `#165` only as historical references on the combined iOS placeholder
+- current docs/output may still name `#164` / `#165`, but only as historical references tied to the combined placeholder rather than as live issue-side owners
+- `docs/specs/issues/issue-142-android-runner-host-source-split.md` must stop preserving `ios-xcode-simulator` as a future `#144` umbrella owner and instead frame any `#164` / `#165` mentions as historical references while keeping the current combined placeholder truthful
 - those later iOS slices must continue to reuse the existing `security: runner-host review needed` lane rather than inventing parallel report titles
 - the current runner-image and Android ownership remains unchanged outside that required iOS ownership reconciliation, with `#143`, `#154`, `#155`, and `#156` already delivered
 
@@ -190,9 +190,9 @@ PY
 
 ## Completion boundary
 
-The implementation PR for this spec should be able to close `#144` because it finishes the immediate repo-owned iOS source-rule split.
+This historical artifact originally expected an implementation PR to close `#144` by finishing the immediate repo-owned iOS source-rule split.
 
-After that PR merges:
-- `#164` remains the bounded follow-up for iOS Xcode host fact source-backed promotion
-- `#165` remains the bounded follow-up for iOS simulator-runtime host fact source-backed promotion
-- the shipped runner-host lane on `main` now includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions, while the iOS groups in this spec remain historical manual-review placeholders until their own follow-up slices land under `#164` / `#165`
+Current-main historical note:
+- current `main` still keeps the combined `ios-xcode-simulator` placeholder rather than the split target described above
+- the shipped runner-host report already includes the delivered `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` source-backed exceptions
+- any `#164` / `#165` references on current runner-host output/docs should be read as historical follow-up context, not as live issue-side ownership on current `main`

@@ -16,7 +16,7 @@
 ## 2. Promote the checked-in `android-java` source rule from placeholder to active contract
 - [x] 2.1 Update `.github/runner-host-advisory-sources.json` so `android-java` uses `rule_kind: java-release-support`.
 - [x] 2.2 Add only the rule-specific source metadata needed for the Java release/support evaluator while preserving `follow_up_issue: 154` and the existing watched fact paths.
-- [x] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, treat `android-gradle` and `android-emulator-runtime` as already source-backed on current `main`, and leave the current combined `ios-xcode-simulator` placeholder unchanged in this slice while later ownership stays with `#164` / `#165`.
+- [x] 2.3 Keep `runner-images` on the delivered `runner-image-release-metadata` rule, treat `android-gradle` and `android-emulator-runtime` as already source-backed on current `main`, and leave the current combined `ios-xcode-simulator` placeholder unchanged in this slice while any `#164` / `#165` mentions remain historical references only.
 - [x] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `java.distribution` or any other new Java fact.
 - Goal: Make the repo-owned manifest describe one bounded active Java source rule without reopening the other runner-host follow-up scopes.
 - Validation:

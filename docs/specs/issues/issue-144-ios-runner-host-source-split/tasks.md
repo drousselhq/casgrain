@@ -3,6 +3,8 @@
 - Linked issue: `#144`
 - Source contract: `./spec.md`
 
+Historical note: issue `#144` is already closed as completed. This task list records the original repo-owned split plan; current `main` still keeps the combined `ios-xcode-simulator` placeholder, and any `#164` / `#165` references on current runner-host output/docs are historical only.
+
 ## Working rules
 
 - Execute tasks in order.
@@ -13,7 +15,7 @@
 ## 1. Confirm the current split is still needed
 
 - [ ] 1.1 Run the current runner-host report on `main` and capture that `ios-xcode-simulator` is still the only iOS source-rule group key, while any `#164` / `#165` references on that combined placeholder are historical only rather than reviving closed issue `#144` as a live owner.
-- [ ] 1.2 Confirm follow-up issues `#164` and `#165` are still the intended later implementation slices for Xcode and simulator-runtime source-backed work.
+- [ ] 1.2 Capture the current closed state of `#164` and `#165` so this historical task list does not present them as live implementation intake.
 
 Goal: Prove the repo still needs the contract split described in `spec.md` before changing manifests, tests, or docs.
 
@@ -28,7 +30,7 @@ Non-goals:
 
 Hand back if:
 - Current `main` already uses split iOS source-rule groups.
-- `#164` or `#165` no longer represents the later iOS Xcode/simulator-runtime work.
+- current repo truth no longer even preserves `#164` / `#165` as historical references tied to the combined iOS placeholder.
 
 ## 2. Split the checked-in iOS source-rule inventory
 
@@ -71,7 +73,7 @@ Hand back if:
 
 ## 4. Reconcile canonical docs and older issue-spec references
 
-- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they stop treating `#144` as the remaining umbrella iOS promotion issue and instead name `#164` and `#165`.
+- [ ] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they stop treating `#144` as the remaining umbrella iOS promotion issue and instead preserve any `#164` / `#165` mentions as historical references only.
 - [ ] 4.2 Update `docs/specs/issues/issue-129-runner-host-advisory-source-rules.md`, `docs/specs/issues/issue-124-runner-host-drift-watch.md`, and `docs/specs/issues/issue-142-android-runner-host-source-split.md` so older repo-owned specs do not preserve the superseded `ios-xcode-simulator` umbrella story after this slice lands.
 
 Goal: Keep canonical docs and older issue-spec artifacts aligned with the new iOS split.
@@ -110,13 +112,13 @@ assert summary['reason'] == 'baseline-match', summary
 ios_placeholder = next(group for group in summary['source_rule_groups'] if group['key'] == 'ios-xcode-simulator')
 assert ios_placeholder['follow_up_issues'] == [164, 165], ios_placeholder
 assert 'follow_up_issue' not in ios_placeholder, ios_placeholder
-print('runner-host iOS placeholder ownership remains split under #164 / #165')
+print('runner-host iOS placeholder preserves historical #164 / #165 references')
 PY`
 
 Non-goals:
 - No extra CI/workflow changes.
 - No live Apple-source integration.
-- No closure of `#164` or `#165`.
+- No reopening or new live-owner claims for `#164` or `#165`.
 
 Hand back if:
 - Current `main` no longer produces a clean runner-host baseline render.

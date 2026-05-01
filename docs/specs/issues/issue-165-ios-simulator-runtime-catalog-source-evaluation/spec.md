@@ -2,7 +2,7 @@
 
 - Issue: `#165`
 - Spec mode: `technical change contract`
-- Expected implementation PR linkage: `Closes #165`
+- Historical implementation PR linkage (superseded): `Closes #165`
 - Upstream slice already landed on `main`:
   - `#129` (`Runner-host advisory source-rule contract`)
 - Repo-owned prerequisite already merged on `main` as analyst contract:
@@ -15,6 +15,8 @@
   - `#164` (`ios-xcode`)
   - `#172` (`ios simulator device-availability facts`)
 
+Historical note: issue `#165` is now closed `not planned`. This artifact records the last simulator-runtime-only source-backed proposal; current `main` still keeps the combined `ios-xcode-simulator` placeholder, and any `#164` / `#165` references on runner-host output/docs are historical only.
+
 ## Why this slice exists
 
 Already delivered on `main`:
@@ -26,7 +28,7 @@ Already delivered on `main`:
   - `advisory_count=0`
   - source-rule groups `runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`, and `ios-xcode-simulator`
   - at that handoff point, every source-rule group, including the combined iOS group, still remained `manual-review-required`
-- current `main` has since promoted `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` to delivered source-backed groups, while only the current combined `ios-xcode-simulator` placeholder remains later follow-up work until its bounded slices land
+- current `main` has since promoted `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` to delivered source-backed groups, while the current combined `ios-xcode-simulator` placeholder now carries only historical `#164` / `#165` references rather than live follow-up ownership
 - The checked-in iOS baseline on current `main` watches these simulator facts:
   - `simulator.runtime_identifier=com.apple.CoreSimulator.SimRuntime.iOS-26-2`
   - `simulator.runtime_name=iOS 26.2`
@@ -149,21 +151,21 @@ Update:
 - `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md`
 - `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/tasks.md`
 
-Those updates must explicitly say:
-- current `main` now performs source-backed evaluation for `ios-simulator-runtime`
-- `ios-xcode` remains separate follow-up work under `#164`
+The superseded proposal expected those updates to say:
+- the proposed target would have current `main` perform source-backed evaluation for `ios-simulator-runtime`
+- `ios-xcode` would remain separate historical `#164` context outside this simulator-runtime-only target
 - `simulator.device_name` remains part of the watched drift contract, but any future source-backed device-availability work belongs to `#172` rather than this runtime-catalog slice
 - `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` remain the already-delivered non-iOS source-backed groups on current `main`
 - actionable simulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Apple runtime upstream alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized runtime identity/name validation for the observed runtime, not a general upgrade/freshness policy
-- older issue-spec artifacts, including the ordered task lists in `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, must stop claiming that `#144` is still the current or future iOS umbrella owner, must stop preserving closed `#144` as the remaining iOS follow-up after the split prerequisite lands, and must stop claiming that current `main` still has no active iOS source-backed evaluation once this slice lands
-- `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` must stop preserving the stale post-`#143` wording that `#154`, `#155`, `#156`, and `#144` remain future work; after `#165` lands, that historical task artifact must point the remaining iOS follow-up ownership at the split issues `#164` / `#165` instead of reviving closed umbrella issue `#144`
-- `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` must stop preserving the post-`#164` current-main contract where `ios-simulator-runtime` is still manual-only future work and all source-backed review findings still flow only through the shared top-level `advisory_count`; after `#165` lands, those older artifacts must describe `ios-simulator-runtime` as already source-backed on current `main` and preserve the separate simulator-runtime source finding/count surface instead of banning `source_advisory_count`
-- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` must stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split `ios-xcode` / `ios-simulator-runtime` prerequisite is on current `main`, and must keep the post-`#165` shared summary contract truthful by preserving the separate source-backed finding surface/count rather than collapsing those findings back into a drift-only top-level count
-- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands; after `#165`, those adjacent follow-up artifacts must describe top-level `advisory_count` as the drift/missing-evidence count while the simulator-runtime source findings remain explicit in their own source-backed finding surface/count
-- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` must stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice lands, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` must stop saying the later iOS work lives in open spec-entry PRs `#171` and `#173`; after `#165` lands, that adjacent spec must treat `#164` / `#165` only as historical follow-up issue numbers without preserving `#173` as still open
+- older issue-spec artifacts, including the ordered task lists in `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` and `docs/specs/issues/issue-144-ios-runner-host-source-split/tasks.md`, were expected to stop claiming that `#144` is still the current or future iOS umbrella owner, to stop preserving closed `#144` as the remaining iOS follow-up after the split prerequisite landed, and to stop claiming that current `main` still has no active iOS source-backed evaluation once the superseded `#165` target landed
+- `docs/specs/issues/issue-143-runner-image-source-evaluation/tasks.md` were expected to stop preserving the stale post-`#143` wording that `#154`, `#155`, `#156`, and `#144` remain future work; in that superseded post-`#165` target, the historical task artifact would instead point the remaining iOS follow-up ownership at the split issues `#164` / `#165` instead of reviving closed umbrella issue `#144`
+- `docs/specs/issues/issue-164-ios-xcode-source-evaluation/{spec,tasks}.md` were expected to stop preserving the superseded post-`#164` target where `ios-simulator-runtime` is still manual-only future work and all source-backed review findings still flow only through the shared top-level `advisory_count`; in that superseded post-`#165` target, those older artifacts would instead describe `ios-simulator-runtime` as already source-backed on current `main` and preserve the separate simulator-runtime source finding/count surface instead of banning `source_advisory_count`
+- `docs/specs/issues/issue-154-android-java-source-evaluation/{spec,tasks}.md` were expected to stop preserving the pre-split `ios-xcode-simulator -> #144` live-owner story once the split `ios-xcode` / `ios-simulator-runtime` prerequisite was on current `main`, and to keep the superseded post-`#165` summary contract truthful by preserving the separate source-backed finding surface/count rather than collapsing those findings back into a drift-only top-level count
+- `docs/specs/issues/issue-155-android-gradle-source-evaluation/{spec,tasks}.md` were expected to stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice landed; in that superseded post-`#165` target, those adjacent artifacts would instead describe top-level `advisory_count` as the drift/missing-evidence count while the simulator-runtime source findings remained explicit in their own source-backed finding surface/count
+- `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/{spec,tasks}.md` were expected to stop requiring the shared runner-host summary contract to use only the top-level `advisory_count` with no separate source-backed finding/count field once this slice landed, and `docs/specs/issues/issue-156-android-emulator-runtime-source-evaluation/spec.md` was expected to stop saying the later iOS work lived in open spec-entry PRs `#171` and `#173`; in that superseded post-`#165` target, the adjacent spec would instead treat `#164` / `#165` only as historical follow-up issue numbers without preserving `#173` as still open
 
-## Acceptance criteria
+## Historical acceptance criteria
 
 1. Once the split iOS source-rule contract already exists on current `main`, `.github/runner-host-advisory-sources.json` exposes `ios-simulator-runtime` as `apple-simulator-runtime-catalog` while preserving `follow_up_issue: 165`, and `ios-xcode` remains the separate follow-up under `#164`.
 2. A recognized Apple simulator runtime row for the observed runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no simulator-runtime source findings requiring review.
@@ -247,11 +249,11 @@ PY
 
 ## Completion boundary
 
-The implementation PR for this spec should be able to close `#165` because it turns the checked-in `ios-simulator-runtime` placeholder into an active source-backed evaluation on current `main` once the earlier split contract already exists.
+This historical artifact originally expected an implementation PR to close `#165` by turning the checked-in `ios-simulator-runtime` placeholder into an active source-backed evaluation once the earlier split contract existed.
 
-After that PR merges:
-- iOS simulator runtime identity/version facts are evaluated from Apple’s simulator runtime catalog through the existing runner-host watch
-- `simulator.device_name` remains a drift-only supporting fact
-- `#164` remains the bounded follow-up for iOS Xcode source-backed evaluation
-- `#172` remains the bounded follow-up for any future simulator device-availability source-backed work
-- any future work on runtime freshness ratchets, alternate device-selection policy, or broader Apple simulator/source semantics must land as a new bounded follow-up issue instead of being smuggled into `#165`
+Current-main historical note:
+- current `main` still keeps the combined `ios-xcode-simulator` placeholder rather than the split runtime target described above
+- `simulator.device_name` remains a drift-only supporting fact on current `main`
+- any `#164` / `#165` reference on current runner-host output/docs should be read as paired historical context, not as live issue-side ownership
+- `#172` remains a separate open issue for any future simulator device-availability source-backed work
+- any future work on runtime freshness ratchets, alternate device-selection policy, or broader Apple simulator/source semantics would need a freshly shaped bounded issue instead of reusing closed issue `#165`
