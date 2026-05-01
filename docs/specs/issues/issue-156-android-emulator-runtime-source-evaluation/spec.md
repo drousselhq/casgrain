@@ -138,7 +138,7 @@ Update:
 Those updates must explicitly say:
 - current `main` already performs source-backed evaluation for `runner-images`, and after this slice it also performs source-backed evaluation for `android-emulator-runtime`
 - `android-java` and `android-gradle` are already source-backed on current `main`
-- current `main` still renders one combined `ios-xcode-simulator` placeholder as `manual-review-required`, but touched docs/specs must not preserve closed issue `#144` as the live later-owner because the iOS source-backed follow-up work is already split across `#164` / `#165`
+- current `main` still renders one combined `ios-xcode-simulator` placeholder as `manual-review-required`, but touched docs/specs must not preserve closed issue `#144` as the live later-owner because current output keeps `#164` / `#165` only as historical split references on that combined placeholder
 - actionable Android emulator-runtime findings continue to reuse `security: runner-host review needed`
 - a newer Android API level, extension level, or system-image revision alone is not yet a review-needed condition on current `main`; this slice is bounded to recognized package/runtime identity, not general freshness policy
 - `emulator.device_name` remains part of the drift guard for the Android smoke artifact contract, while authoritative source evaluation in this slice is grounded on the platform/system-image runtime identity

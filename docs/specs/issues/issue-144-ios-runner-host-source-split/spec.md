@@ -35,7 +35,7 @@ This slice must:
 1. replace the single iOS `ios-xcode-simulator` source-rule group with two bounded iOS groups
 2. bind each new iOS group to exactly one later follow-up issue
 3. keep the current drift / missing-evidence alert semantics and report title unchanged
-4. keep the report/docs truthful that the current combined iOS placeholder still renders `manual-review-required` on current `main`, while later live iOS ownership is `#164` / `#165` rather than closed issue `#144`
+4. keep the report/docs truthful that the current combined iOS placeholder still renders `manual-review-required` on current `main`, while any `#164` / `#165` references on that placeholder remain historical split context rather than live issue-side ownership
 5. stay testable from checked-in manifests, report output, and deterministic fixtures
 
 This slice is **not** the later source-backed advisory implementation itself. It is the contract change that makes the later iOS source integrations bounded and auditable.
@@ -94,8 +94,8 @@ Implementation contract for this slice:
 
 Required reporting behavior:
 - current clean runs must still report `no review-needed` when the baseline matches
-- the new source-rule section must make it explicit that Xcode and simulator-runtime promotion are still future follow-up work
-- the report must not imply that any iOS source-backed advisory evaluation is already active until `#164` or `#165` lands, and it must not revive closed issue `#144` as the live later owner
+- the new source-rule section must make it explicit that Xcode and simulator-runtime source-backed promotion did not land on current `main` and would require freshly shaped future work rather than reviving closed `#164` / `#165` as live intake
+- the report must not imply that any iOS source-backed advisory evaluation is already active on current `main`, and it must keep `#164` / `#165` as historical-only references rather than live landing conditions or owners
 
 ### 3. Tests and fixtures
 
@@ -134,8 +134,8 @@ Historical note: the acceptance criteria below describe the superseded repo-owne
 1. `.github/runner-host-advisory-sources.json` no longer uses `#144` as the owner of one combined iOS source group; it instead exposes two bounded iOS groups mapped to `#164` and `#165`.
 2. Every watched fact path in `.github/runner-host-watch.json` remains covered exactly once after the split.
 3. `runner_host_review_report.py` still reports the same honest top-level drift result for current clean `main`, while exposing the split iOS groups in JSON and markdown.
-4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead point at `#164` and `#165`, even while current `main` still renders one combined placeholder key.
-5. This superseded artifact now exists only to record the original split target; current `main` instead keeps the combined placeholder and tracks the later Xcode/runtime source-backed integrations in `#164` and `#165`.
+4. The canonical security docs and older issue-spec docs, including `docs/specs/issues/issue-142-android-runner-host-source-split.md`, stop describing `#144` as the remaining umbrella iOS follow-up and instead preserve `#164` / `#165` only as historical split references, even while current `main` still renders one combined placeholder key.
+5. This superseded artifact now exists only to record the original split target; current `main` instead keeps the combined placeholder and preserves the closed `#164` / `#165` proposals as historical context rather than live issue-side ownership.
 
 ## Bounded design decisions
 
