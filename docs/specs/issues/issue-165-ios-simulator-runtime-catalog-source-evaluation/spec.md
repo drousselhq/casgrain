@@ -36,7 +36,7 @@ Already delivered on `main`:
 - Fresh source inspection during analyst shaping confirmed Apple currently publishes simulator runtime metadata at `https://devimages-cdn.apple.com/downloads/xcode/simulators/index2.dvtdownloadableindex`, and that catalog contains an iOS 26.2 simulator runtime entry (`name=iOS 26.2 beta Simulator Runtime`, `simulatorVersion.version=26.2`).
 - That same source inspection did **not** expose one stable machine-readable selector for the watched simulator device name. Raw catalog inspection surfaced separate device-support packages rather than one trustworthy runtime-catalog field for `simulator.device_name`.
 
-That means the original issue wording was still too broad for one honest implementation seam. The immediate repo-owned next slice is runtime-catalog evaluation for `simulator.runtime_identifier` and `simulator.runtime_name`. The selected simulator device remains watched on current `main`, but any future source-backed device-availability logic now belongs to the separate follow-up issue `#172` rather than being smuggled into this runtime-catalog slice.
+That meant the original issue wording was too broad for one honest implementation seam. This historical artifact records the last bounded simulator-runtime-only proposal: runtime-catalog evaluation for `simulator.runtime_identifier` and `simulator.runtime_name`, while the selected simulator device stayed watched on current `main` and any future source-backed device-availability logic moved to the separate follow-up issue `#172` instead of being smuggled into this runtime-catalog slice.
 
 ## Current-main prerequisite
 
