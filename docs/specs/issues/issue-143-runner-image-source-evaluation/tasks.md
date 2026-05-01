@@ -28,7 +28,7 @@
 - Goal: Lock the expected clean, actionable, and fail-closed `runner-images` behavior in place before any evaluator logic changes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No production report logic changes yet, no workflow YAML edits yet.
-- Hand back if: The failing tests show the current summary shape or managed issue title cannot support the exact promoted-rule fields from `spec.md` without redesigning the whole runner-host lane.
+- Hand back if: The failing tests show the current summary shape or report title cannot support the exact promoted-rule fields from `spec.md` without redesigning the whole runner-host lane.
 
 ## 3. Promote only the `runner-images` source rule and implement its evaluator
 - [x] 3.1 Update `.github/runner-host-advisory-sources.json` so only `runner-images` is promoted from `manual-review-required` to `runner-image-release-metadata`.
@@ -41,7 +41,7 @@
 - Goal: Land the smallest production change that makes `runner-images` source-backed while leaving the rest of the runner-host watch alone.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
 - Non-goals: No Android Java/Gradle/emulator source work, no iOS Xcode/simulator source work, no generic source-rule framework for every future runner-host group.
-- Hand back if: Promoting `runner-images` would require widening `.github/runner-host-watch.json`, adding a second managed issue lane, or inventing promoted-rule fields or reason strings beyond the exact contract frozen in `spec.md`.
+- Hand back if: Promoting `runner-images` would require widening `.github/runner-host-watch.json`, adding a second report lane, or inventing promoted-rule fields or reason strings beyond the exact contract frozen in `spec.md`.
 
 ## 4. Keep the workflow/reporting contract truthful and reconcile docs
 - [x] 4.1 Update the runner-host markdown / summary output so it clearly distinguishes the existing drift / missing-evidence path from the promoted runner-images source-backed `source-match`, `source-drift`, and `source-error` outcomes.
@@ -71,7 +71,7 @@ PY`
 ## 5. Run bounded validation and prepare the QA handoff
 - [x] 5.1 Run `git diff --check`.
 - [x] 5.2 Run Python compile and unit-test coverage for the runner-host report path.
-- [x] 5.3 Re-run the live runner-host report and assert that the summary still carries the same managed issue title, all five source groups, the exact promoted runner-images fields, and that the original `#143` checkpoint kept the four non-`runner-images` groups as follow-ups even though current `main` later promoted `android-java`, `android-gradle`, and `android-emulator-runtime`.
+- [x] 5.3 Re-run the live runner-host report and assert that the summary still carries the same report title, all five source groups, the exact promoted runner-images fields, and that the original `#143` checkpoint kept the four non-`runner-images` groups as follow-ups even though current `main` later promoted `android-java`, `android-gradle`, and `android-emulator-runtime`.
 - [x] 5.4 In the PR handoff comment, state that `#143` promoted the first source-backed runner-host group (`runner-images`), list the exact validation commands, note that docs still need review because the spec/reporting contract changed, and call out that current `main` now tracks later follow-up work under `#164` and `#165` while `#154` / `#155` / `#156` are already delivered.
 - [x] 5.5 Add a regression that exercises the live runner-image release-discovery path and proves the report selects the latest stream release instead of the observed runner-image tag.
 - Goal: Hand QA a bounded PR with deterministic test evidence and an honest live render smoke, not a speculative framework change.

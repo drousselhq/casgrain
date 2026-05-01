@@ -9,11 +9,11 @@
 Already delivered on `main`:
 - PR #145 added the checked-in runner-host source-rule contract at `.github/runner-host-advisory-sources.json`.
 - PR #157 and PR #158 split the Android host-toolchain backlog into the bounded follow-up issues `#154`, `#155`, and `#156`.
-- The current runner-host watch already owns the live summary and managed issue flow through:
+- The current runner-host watch already owns the live summary and report flow through:
   - `.github/runner-host-watch.json`
   - `tests/test-support/scripts/runner_host_review_report.py`
   - `.github/workflows/cve-watch.yml`
-  - `tests/test-support/scripts/cve_watch_issue_sync.py`
+  - workflow-summary reporting
 - A fresh analyst dry-run on current `main` still reports:
   - `verdict=no review-needed`
   - `reason=baseline-match`
@@ -30,7 +30,7 @@ Promote the existing `runner-images` group from `manual-review-required` to one 
 
 This slice must:
 1. change only the `runner-images` source group behavior
-2. keep the existing `security: runner-host review needed` managed issue path
+2. keep the existing `security: runner-host review needed` report path
 3. keep the watched fact inventory in `.github/runner-host-watch.json` unchanged
 4. preserve the current drift / missing-evidence behavior for the rest of the runner-host watch
 5. keep the remaining source groups explicit later work, with the original `#143` checkpoint separated from current `main` ownership:
@@ -53,7 +53,7 @@ Contract requirements:
   - `surface=GitHub-hosted runner images and OS facts`
   - `platforms=["android", "ios"]`
   - `follow_up_issue=143`
-  - `managed_issue_behavior` continues to reuse `security: runner-host review needed`
+  - `report_behavior` continues to reuse `security: runner-host review needed`
   - the current watched fact paths from `.github/runner-host-watch.json`
 - keep `candidate_source` explicit as `GitHub-hosted runner image release metadata`; do not broaden this slice into generic package/CVE scraping or a new source family
 - add an exact `source_streams` object on `runner-images` with only these platform selectors and source-compared facts:
@@ -83,7 +83,7 @@ Implementation contract:
   - Android: `runner.image_version`, `runner.os_version`
   - iOS: `runner.image_version`, `runner.os_version`, `runner.os_build`
 - include machine-readable runner-images outcome details for `runner-images` in the emitted summary JSON and markdown without inventing a second top-level report family
-- keep the existing top-level fields and managed issue title intact so `cve_watch_issue_sync.py` can keep reusing the same issue lane
+- keep the existing top-level fields and report title intact so workflow-summary reporting can keep reusing the same issue lane
 - do not generalize this slice into shared promotion logic for the Android or iOS host-toolchain groups that still belong to later issues
 
 Required emitted summary contract:
@@ -140,13 +140,13 @@ Update these docs so they say:
 - the runner-host lane is no longer uniformly drift-only once `#143` lands
 - `runner-images` is the source-backed group delivered by `#143`, and current `main` now also includes the later `android-java`, `android-gradle`, and `android-emulator-runtime` promotions from `#154` / `#155` / `#156`
 - the remaining open follow-ups on current `main` are the split iOS work `#164` / `#165`, while the live summary still keeps the combined `ios-xcode-simulator` placeholder
-- the managed findings issue title remains `security: runner-host review needed`
+- the workflow-summary findings report title remains `security: runner-host review needed`
 - the older issue-spec docs for `#129` and `#124` no longer describe `#143` as remaining future work on current `main`; they must explicitly reconcile `#143` as the delivered runner-images promotion slice while later source-backed follow-ups remain open
 - `docs/specs/issues/issue-142-android-runner-host-source-split.md` no longer says the shipped runner-host lane stays drift-triggered review until a later Android follow-up lands; it must reconcile that `runner-images` becomes the first delivered source-backed exception and that current `main` also includes `android-java`, `android-gradle`, and `android-emulator-runtime` while `#164` and `#165` remain the open follow-ups
 
 Workflow touch is allowed only if narrowly necessary:
 - `.github/workflows/cve-watch.yml` may change only for minimal step wording or a minimal input/env adjustment already available in the job
-- do not add a new secret, a new managed issue path, or a second runner-host sync step in this slice
+- do not add a new secret, a new report path, or a second runner-host sync step in this slice
 
 ## Acceptance criteria
 
@@ -155,7 +155,7 @@ Workflow touch is allowed only if narrowly necessary:
 3. `runner_host_review_report.py` keeps the existing top-level summary shape intact and uses only the exact runner-images-specific reason values `runner-images-source-drift` and `runner-images-source-error` when the promoted rule drives the verdict.
 4. The `runner-images` entry inside `summary['source_rule_groups']` emits the exact promoted-rule fields `status`, `outcome`, and `platform_results`, and each platform result emits `platform`, `status`, `outcome`, `observed`, `source`, `changed_facts`, and `source_error`.
 5. A clean deterministic source-backed `runner-images` fixture can still render `no review-needed` with `outcome=source-match`.
-6. Actionable deterministic runner-image findings reuse the existing `security: runner-host review needed` path with `outcome=source-drift` rather than inventing a new managed issue title.
+6. Actionable deterministic runner-image findings reuse the existing `security: runner-host review needed` path with `outcome=source-drift` rather than inventing a new report title.
 7. Source retrieval, parsing, normalization, or matching failure for the promoted `runner-images` rule fails closed into `reason=runner-images-source-error` rather than a silent clean result.
 8. Drift / missing-evidence behavior for the rest of the runner-host watch remains intact on current `main`.
 9. The canonical runner-host docs plus the older issue-spec docs for `#129`, `#124`, and `#142` no longer describe `#143` as remaining future work or claim the shipped runner-host lane stays uniformly drift-triggered; they reconcile `#143` as the delivered first runner-images promotion, current `main` as also having the later `#154` Android Java, `#155` Android Gradle, and `#156` emulator-runtime promotions, and the remaining open follow-ups as `#164` and `#165`.
@@ -212,7 +212,7 @@ Feature: Source-backed runner-images evaluation in the runner-host watch
 - **no** widening of `.github/runner-host-watch.json` to add new watched facts such as `runner.os_name`
 - **no** generic source-rule engine for every future runner-host source family
 - **no** broad package-in-image scraping or unrelated CVE inventory work beyond the current `runner-images` contract
-- **no** new managed issue title or parallel issue-sync workflow
+- **no** new report title or parallel GitHub issue workflow
 
 ## Validation contract for the later implementation PR
 
@@ -237,7 +237,7 @@ python3 - <<'PY'
 import json
 from pathlib import Path
 summary = json.loads(Path('/tmp/runner-host-watch-summary.json').read_text(encoding='utf-8'))
-assert summary['issue_title'] == 'security: runner-host review needed', summary
+assert summary['report_title'] == 'security: runner-host review needed', summary
 keys = {group['key'] for group in summary['source_rule_groups']}
 assert keys == {
     'runner-images',

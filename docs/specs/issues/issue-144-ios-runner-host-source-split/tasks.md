@@ -43,7 +43,7 @@ Validation:
 Non-goals:
 - No live Apple-source queries.
 - No changes to `.github/runner-host-watch.json`.
-- No change to the managed issue title.
+- No change to the report title.
 
 Hand back if:
 - The watched iOS fact inventory on current `main` no longer matches `spec.md`.
@@ -63,7 +63,7 @@ Validation:
 
 Non-goals:
 - No change to the top-level drift verdict/reason semantics.
-- No new runner-host managed issue behavior.
+- No new runner-host report behavior.
 
 Hand back if:
 - The only way to make the slice pass is to weaken fail-closed ownership checks.

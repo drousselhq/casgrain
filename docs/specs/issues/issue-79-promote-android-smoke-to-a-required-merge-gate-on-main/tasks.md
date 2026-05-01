@@ -16,7 +16,7 @@
 - [x] 2.1 Update `.github/workflows/android-emulator-smoke.yml` so the workflow runs on every PR and keeps `jobs.smoke.name` exactly `android-smoke`.
 - [x] 2.2 Add in-job change detection that uses the existing Android/shared-runtime surface list to decide whether the expensive emulator path is required.
 - [x] 2.3 When `should_run=false`, report success with a clear skip message and do not build the APK, boot the emulator, or upload Android smoke artifacts.
-- [x] 2.4 When `should_run=true`, preserve the current emulator-backed smoke run and artifact validation; do not make the steady-state required gate depend on a separate reliability report or issue-sync layer.
+- [x] 2.4 When `should_run=true`, preserve the current emulator-backed smoke run and artifact validation; do not make the steady-state required gate depend on a separate reliability report or GitHub issue-management layer.
 - Goal: Make the Android lane safe to require in branch protection without paying emulator cost on unrelated PRs.
 - Validation: `python3 -m unittest tests/scripts/test_mobile_smoke_workflow_triggers.py && python3 - <<'PY'
 from pathlib import Path

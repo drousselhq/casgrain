@@ -25,7 +25,7 @@ Already delivered on `main`:
   - iOS run `24638847580` → `no review-needed`
   - top-level `verdict=no review-needed`
   - `reason=baseline-match`
-  - no managed `security: runner-host review needed` issue is currently open from drift or missing evidence
+  - no `security: runner-host review needed` report is currently open from drift or missing evidence
 
 That means the repo already owns the **drift / missing-evidence** slice honestly.
 
@@ -38,7 +38,7 @@ Current `main` has no checked-in source-rule contract that records, in repo-owne
 - which runner-host surface groups still remain `manual-review-required`
 - which watched fact paths belong to each future source-specific slice
 - which follow-up issue owns each later promotion
-- how those future promotions should continue to map into the existing runner-host managed-issue flow
+- how those future promotions should continue to map into the existing runner-host report flow
 
 Without that contract, later source-backed work would either hardcode policy in scripts/docs or widen one issue into several unrelated source integrations.
 
@@ -81,7 +81,7 @@ Each group entry must declare at minimum:
 - the exact watched fact paths it owns from `.github/runner-host-watch.json`
 - the current rule kind
 - the current rationale
-- the intended managed-issue behavior for future actionable findings
+- the intended report behavior for future actionable findings
 - the follow-up issue number that owns later source-backed automation
 - a short `candidate_source` description naming the future authoritative machine-readable source class to evaluate later
 
@@ -108,7 +108,7 @@ Implementation contract for this slice:
 - include a machine-readable summary of source-rule status per group in the emitted JSON summary
 - include a concise markdown section that states which groups are still `manual-review-required`, and on current `main` also reflects that `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` are the delivered source-backed promotions
 - keep the current top-level drift logic authoritative for alerting in this slice
-- do **not** change the existing `alert`, `advisory_count`, `verdict`, or managed-issue-opening semantics merely because the new source-rule inventory exists
+- do **not** change the existing `alert`, `advisory_count`, `verdict`, or report-opening semantics merely because the new source-rule inventory exists
 - if the new manifest is missing, malformed, or references unknown watched fact paths, fail closed rather than silently dropping the source-rule story
 
 Required reporting behavior:
@@ -149,7 +149,7 @@ Those docs updates must explicitly say:
 - current shipped runner-host automation now evaluates drift / missing evidence plus the delivered source-backed promotions for `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime`
 - `.github/runner-host-advisory-sources.json` is the repo-owned contract for later source-backed promotion decisions
 - the current source groups on `main` keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` delivered while the combined iOS placeholder remains the `manual-review-required` follow-up until its later slices land
-- future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel managed-issue titles
+- future actionable advisory automation must continue to report through the existing runner-host review lane rather than inventing parallel report titles
 - later source-specific promotion work is split across delivered `#143` / `#154` / `#155` / `#156` plus open follow-ups `#164` and `#165` after the narrowing contract in `#142` lands
 
 ## Acceptance criteria
@@ -170,7 +170,7 @@ Those docs updates must explicitly say:
 
 ### Explicit non-goals
 - **no** live external advisory queries in this slice
-- **no** new managed-issue title or parallel issue-sync lane
+- **no** new report title or parallel GitHub issue lane
 - **no** changes to `.github/runner-host-watch.json` watched-fact coverage beyond any tiny schema link needed for validation
 - **no** direct advisory implementation for GitHub-hosted runner images (`#143`)
 - **no** direct advisory implementation for Android host surfaces in this slice; the later narrowing contract in `#142` splits those source-backed follow-ups into `#154`, `#155`, and `#156`

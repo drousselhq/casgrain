@@ -35,7 +35,7 @@
   print('android-java is promoted while runner-images and android-emulator-runtime stay delivered and the remaining follow-up groups stay unchanged at this checkpoint')
   PY
   ```
-- Non-goals: No Gradle/emulator/iOS source activation, no runner-images rework, no new managed issue title.
+- Non-goals: No Gradle/emulator/iOS source activation, no runner-images rework, no new report title.
 - Hand back if: The Java slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the non-Java groups too.
 
 ## 3. Implement bounded Android Java source evaluation in `runner_host_review_report.py`
@@ -48,7 +48,7 @@
 - Goal: Activate one trustworthy Java-only source-backed path without changing the baseline drift contract for the rest of the runner-host watch or rewriting the unchanged iOS placeholder ownership on current `main`.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No broad CVE scraping, no Java distribution policy, no patch-freshness ratchet beyond the bounded release/support contract in `spec.md`.
-- Hand back if: The bounded Java evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the managed-issue sync path instead of staying inside the existing runner-host watch.
+- Hand back if: The bounded Java evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the report sync path instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [x] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images`, `android-gradle`, and `android-emulator-runtime` are already source-backed on current `main`, `android-java` becomes source-backed in this slice, Android Java `source-review-needed` / `source-error` findings reuse `security: runner-host review needed`, and the current combined `ios-xcode-simulator` placeholder still remains `manual-review-required` on current `main` while later iOS ownership lives under `#164` / `#165`.
@@ -92,5 +92,5 @@
 - [x] 5.5 In the PR summary/comment, say the implementation PR `Closes #154`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that the current combined `ios-xcode-simulator` placeholder still remains on current `main` while later iOS ownership is tracked by `#164` / `#165`.
 - Goal: Leave QA with one honest picture of the Java-only source-backed change, its validation evidence, and its closure boundary without reopening the delivered runner-images or the unchanged iOS placeholder slice.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
-- Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.
+- Non-goals: No manual GitHub issue mutation beyond the existing runner-host report behavior under test.
 - Hand back if: The refreshed head still reports `android-java` as manual-only, or the final diff no longer lets the implementation PR honestly `Closes #154`.

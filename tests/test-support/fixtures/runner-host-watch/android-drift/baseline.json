@@ -1,5 +1,5 @@
 {
-  "issue_title": "security: runner-host review needed",
+  "report_title": "security: runner-host review needed",
   "scope": "Runner-image and host-toolchain drift across the scheduled Android and iOS smoke workflows",
   "platforms": {
     "android": {

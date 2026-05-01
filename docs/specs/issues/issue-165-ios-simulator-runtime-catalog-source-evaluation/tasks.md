@@ -63,7 +63,7 @@
 - [ ] 3.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` and still treats `simulator.device_name` as a watched drift/supporting fact rather than a runtime-catalog comparison field.
 - Goal: Make the repo-owned manifest describe one bounded active simulator runtime rule without reopening device-availability, Xcode, or non-iOS follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
-- Non-goals: No device-availability activation, no new managed issue title, no runtime freshness ratchet.
+- Non-goals: No device-availability activation, no new report title, no runtime freshness ratchet.
 - Hand back if: The runtime slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the device-availability or non-iOS groups too.
 
 ## 4. Implement bounded simulator runtime-catalog evaluation in `runner_host_review_report.py`
@@ -76,7 +76,7 @@
 - Goal: Activate one trustworthy simulator runtime-catalog path without changing the baseline drift contract for the rest of the runner-host watch.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No device-availability/source evaluation, no local simulator probing, no source-backed comparison for `simulator.device_name`.
-- Hand back if: The bounded runtime evaluator would require widening the watched inventory, redefining the managed-issue sync path, or absorbing Xcode/device-availability source families instead of staying inside the existing runner-host watch.
+- Hand back if: The bounded runtime evaluator would require widening the watched inventory, redefining the report sync path, or absorbing Xcode/device-availability source families instead of staying inside the existing runner-host watch.
 
 ## 5. Reconcile the repo-owned docs and earlier issue-spec contract
 - [ ] 5.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `ios-simulator-runtime` is now source-backed while `ios-xcode` and `#172` remain follow-up work, and the non-iOS groups (`runner-images`, `android-java`, `android-gradle`, `android-emulator-runtime`) keep their already-delivered source-backed states.
@@ -142,5 +142,5 @@
 - [ ] 6.5 In the PR summary/comment, say the implementation PR `Closes #165`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `#164` and `#172` remained separate follow-up work.
 - Goal: Leave QA with one honest picture of the simulator-runtime-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
-- Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.
+- Non-goals: No manual GitHub issue mutation beyond the existing runner-host report behavior under test.
 - Hand back if: The refreshed head still reports `ios-simulator-runtime` as manual-only, or the final diff no longer lets the implementation PR honestly `Closes #165`.

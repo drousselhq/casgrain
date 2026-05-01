@@ -1,5 +1,5 @@
 {
-  "managed_issue_title": "security: runner-host review needed",
+  "report_title": "security: runner-host review needed",
   "groups": [
     {
       "key": "runner-images",
@@ -48,7 +48,7 @@
       ],
       "rule_kind": "runner-image-release-metadata",
       "rationale": "Current main compares emitted runner facts against the checked-in baseline and now evaluates authoritative GitHub-hosted runner image release metadata for the watched runner-images facts.",
-      "managed_issue_behavior": "Actionable runner-image findings must reuse the existing managed issue title.",
+      "report_behavior": "Actionable runner-image findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 143,
       "candidate_source": "GitHub-hosted runner image release metadata",
       "source_streams": {
@@ -89,7 +89,7 @@
       ],
       "rule_kind": "java-release-support",
       "rationale": "Current main compares emitted Android Java facts against authoritative Eclipse Temurin release/support metadata for the configured Java line and resolved runtime version.",
-      "managed_issue_behavior": "Actionable Android Java findings must reuse the existing managed issue title.",
+      "report_behavior": "Actionable Android Java findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 154,
       "candidate_source": "Eclipse Temurin available releases and version metadata",
       "source_metadata": {
@@ -118,7 +118,7 @@
       ],
       "rule_kind": "gradle-release-catalog",
       "rationale": "Current main compares the watched Android Gradle version facts against the official Gradle release catalog and fails closed when the source cannot be trusted.",
-      "managed_issue_behavior": "Actionable Gradle findings must reuse the existing managed issue title.",
+      "report_behavior": "Actionable Gradle findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 155,
       "candidate_source": "Gradle release catalog stable-version metadata",
       "source_catalog_url": "https://services.gradle.org/versions/all",
@@ -146,7 +146,7 @@
       ],
       "rule_kind": "android-system-image-catalog",
       "rationale": "Current main validates the observed Android emulator runtime identity against authoritative Android platform and Google APIs system-image catalogs while keeping emulator.device_name in the drift-only path.",
-      "managed_issue_behavior": "Actionable Android emulator-runtime source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Actionable Android emulator-runtime findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 156,
       "candidate_source": "Android platform catalog, Google APIs system-image catalog, and Android version/API mapping metadata",
       "source_catalogs": {
@@ -189,7 +189,7 @@
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main records Xcode and simulator-runtime evidence but does not yet evaluate Apple source data for those surfaces.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Future source-backed findings would render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "candidate_source": "Apple Xcode and simulator runtime release metadata",
       "follow_up_issues": [
         164,

@@ -56,7 +56,7 @@ This slice must:
 1. promote only `ios-xcode` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate only the watched iOS Xcode release/support facts `xcode.version` and `xcode.simulator_sdk_version` against Apple’s published Xcode support matrix
 3. keep `xcode.app_path` inside the existing watched inventory as a drift-only supporting fact rather than inventing a second source-backed alert dimension for a local install path
-4. surface actionable Xcode findings through the existing managed issue `security: runner-host review needed`
+4. surface actionable Xcode findings through the existing report `security: runner-host review needed`
 5. preserve the current drift / missing-evidence behavior for the watched runner-host facts and keep every non-Xcode group on its existing separate follow-up issue
 
 ## Required implementation artifacts
@@ -160,7 +160,7 @@ Those updates must explicitly say:
 
 1. Once the split iOS source-rule contract already exists on current `main`, `.github/runner-host-advisory-sources.json` exposes `ios-xcode` as `apple-xcode-support-matrix` while preserving `follow_up_issue: 164`, and `ios-simulator-runtime` remains `manual-review-required` under `#165`.
 2. A recognized Apple support-matrix row for the observed Xcode version / bundled simulator SDK pair still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Xcode source findings requiring review.
-3. A missing row, a simulator-SDK mismatch, or source-unavailable iOS Xcode evaluation produces an explicit source-backed finding for `ios-xcode`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when the watched-fact drift count remains zero.
+3. A missing row, a simulator-SDK mismatch, or source-unavailable iOS Xcode evaluation produces an explicit source-backed finding for `ios-xcode`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/report path into `manual-review-required` even when the watched-fact drift count remains zero.
 4. The rendered JSON and markdown distinguish iOS Xcode source-backed findings from drift / missing-evidence findings through explicit source-rule group details, keep `xcode.app_path` in the drift-only/supporting contract, leave `ios-simulator-runtime` as the separate manual-review follow-up, and keep `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` on their delivered source-backed paths.
 5. The named canonical docs and older main-branch issue-spec/task artifacts — including `issue-154/{spec,tasks}.md`, `issue-155/{spec,tasks}.md`, and `issue-156/{spec,tasks}.md` — no longer preserve the superseded `ios-xcode-simulator` / `#144` umbrella story, no longer describe post-`#164` current `main` as keeping `ios-xcode` manual-only future work, no longer claim that only `runner-images` is source-backed on current `main`, and no longer require a drift-only top-level `advisory_count` plus a separate top-level `source_advisory_count` for the shared runner-host summary contract.
 6. The implementation PR for this slice can honestly say `Closes #164` because the iOS Xcode source-backed evaluation becomes active on `main` without widening the watched inventory or absorbing the simulator-runtime work.
@@ -175,7 +175,7 @@ Those updates must explicitly say:
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched Xcode facts
 - **no** second source-only alert dimension for `xcode.app_path`
 - **no** automatic freshness ratchet solely because Apple later publishes a newer Xcode or SDK row
-- **no** new managed issue title or parallel runner-host issue-sync lane
+- **no** new report title or parallel runner-host GitHub issue lane
 - **no** local Xcode probing beyond the emitted workflow artifact facts already captured by the smoke artifact contract
 
 ## Validation contract for the later implementation PR

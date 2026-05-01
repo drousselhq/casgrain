@@ -86,7 +86,7 @@ def build_android_java_promoted_source_rules() -> dict[str, object]:
     android_java["rationale"] = (
         "Current main compares emitted Android Java facts against authoritative Eclipse Temurin release/support metadata."
     )
-    android_java["managed_issue_behavior"] = "Actionable Android Java findings must reuse the existing managed issue title."
+    android_java["report_behavior"] = "Actionable Android Java findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically."
     android_java["candidate_source"] = "Eclipse Temurin available releases and version metadata"
     android_java["source_metadata"] = copy.deepcopy(JAVA_SOURCE_METADATA)
     return source_rules
@@ -1890,10 +1890,10 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("follow_up_issue", str(error.exception))
         self.assertIn("must be an integer", str(error.exception))
 
-    def test_build_summary_fails_closed_when_source_rules_managed_issue_title_drifts(self) -> None:
+    def test_build_summary_fails_closed_when_source_rules_report_title_drifts(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
         source_rules = load_source_rules_case("valid")
-        source_rules["managed_issue_title"] = "security: some other issue"
+        source_rules["report_title"] = "security: some other issue"
 
         with self.assertRaises(MODULE.RunnerHostWatchError) as error:
             MODULE.build_summary(
@@ -1904,12 +1904,12 @@ class RunnerHostReviewReportTests(unittest.TestCase):
                 generated_at="2026-04-19T09:00:00Z",
             )
 
-        self.assertIn("managed_issue_title", str(error.exception))
-        self.assertIn("baseline issue_title", str(error.exception))
+        self.assertIn("report_title", str(error.exception))
+        self.assertIn("baseline report_title", str(error.exception))
 
     def test_build_summary_fails_closed_when_source_rule_text_metadata_is_not_a_string(self) -> None:
         baseline, fixture_input = load_case("baseline-match")
-        for field_name in ("surface", "rationale", "managed_issue_behavior", "candidate_source"):
+        for field_name in ("surface", "rationale", "report_behavior", "candidate_source"):
             with self.subTest(field_name=field_name):
                 source_rules = load_source_rules_case("valid")
                 source_rules["groups"][0][field_name] = 123

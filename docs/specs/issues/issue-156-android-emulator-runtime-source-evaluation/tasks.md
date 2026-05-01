@@ -20,7 +20,7 @@
 - [x] 2.4 Confirm the manifest still does **not** widen `.github/runner-host-watch.json` to include `emulator.target`, `emulator.arch`, `emulator.profile`, package revisions, extension levels, or any other new watched fact.
 - Goal: Make the repo-owned manifest describe one bounded active emulator-runtime source rule without reopening the delivered `runner-images` slice or the other runner-host follow-up scopes.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py`
-- Non-goals: No Java/Gradle/iOS source activation, no runner-images rework, no new managed issue title.
+- Non-goals: No Java/Gradle/iOS source activation, no runner-images rework, no new report title.
 - Hand back if: The emulator-runtime slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the non-emulator groups or silently overriding the separate iOS follow-up ownership already tracked by `#164` / `#165`.
 
 ## 3. Implement bounded Android emulator-runtime source evaluation in `runner_host_review_report.py`
@@ -34,7 +34,7 @@
 - Goal: Activate one trustworthy emulator-runtime source-backed path without changing the baseline drift contract for the rest of the runner-host watch.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No local-SDK probing, no API freshness ratchet, no device-name policy beyond the bounded contract in `spec.md`.
-- Hand back if: The bounded emulator-runtime evaluator would require widening the watched inventory, redefining the managed-issue sync path, or inventing an unsupported authoritative source for `emulator.device_name` instead of staying inside the existing runner-host watch.
+- Hand back if: The bounded emulator-runtime evaluator would require widening the watched inventory, redefining the report sync path, or inventing an unsupported authoritative source for `emulator.device_name` instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [x] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images`, `android-java`, and `android-gradle` are already delivered source-backed groups, `android-emulator-runtime` is newly source-backed in this slice, and current docs do not preserve closed issue `#144` as the live owner of the later iOS work already split across `#164` / `#165`.
@@ -88,5 +88,5 @@
 - [x] 5.5 In the PR summary/comment, say the implementation PR `Closes #156`, explicitly note that `docs-needed` still applies because canonical docs/specs changed, and state that `runner-images`, `android-java`, and `android-gradle` remain delivered while later iOS work stays with `#164` / `#165`.
 - Goal: Leave QA with one honest picture of the emulator-runtime-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
-- Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.
+- Non-goals: No manual GitHub issue mutation beyond the existing runner-host report behavior under test.
 - Hand back if: The refreshed head still reports `android-emulator-runtime` as manual-only, or the final diff no longer lets the implementation PR honestly `Closes #156`.

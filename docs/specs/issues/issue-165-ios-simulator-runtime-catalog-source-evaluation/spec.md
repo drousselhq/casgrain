@@ -57,7 +57,7 @@ This slice must:
 1. promote only `ios-simulator-runtime` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate only the watched iOS simulator runtime identity/version facts `simulator.runtime_identifier` and `simulator.runtime_name` against Apple’s simulator runtime catalog
 3. keep `simulator.device_name` inside the existing watched inventory as a drift-only supporting fact rather than inventing a second device-availability source-backed evaluator in this issue
-4. surface actionable simulator-runtime findings through the existing managed issue `security: runner-host review needed`
+4. surface actionable simulator-runtime findings through the existing report `security: runner-host review needed`
 5. preserve the current drift / missing-evidence behavior for the watched runner-host facts and keep every non-runtime group on its existing separate follow-up issue
 
 ## Required implementation artifacts
@@ -167,7 +167,7 @@ Those updates must explicitly say:
 
 1. Once the split iOS source-rule contract already exists on current `main`, `.github/runner-host-advisory-sources.json` exposes `ios-simulator-runtime` as `apple-simulator-runtime-catalog` while preserving `follow_up_issue: 165`, and `ios-xcode` remains the separate follow-up under `#164`.
 2. A recognized Apple simulator runtime row for the observed runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no simulator-runtime source findings requiring review.
-3. A missing runtime row, a runtime-name mismatch, or source-unavailable simulator-runtime evaluation produces an explicit source-backed finding for `ios-simulator-runtime` and turns the overall runner-host summary/managed-issue path into `manual-review-required` without pretending the drift counter increased.
+3. A missing runtime row, a runtime-name mismatch, or source-unavailable simulator-runtime evaluation produces an explicit source-backed finding for `ios-simulator-runtime` and turns the overall runner-host summary/report path into `manual-review-required` without pretending the drift counter increased.
 4. The rendered JSON and markdown distinguish simulator-runtime source-backed findings from drift / missing-evidence findings, keep `simulator.device_name` in the drift-only/supporting contract, and leave `ios-xcode`, `#172`, and the non-iOS groups as separate work.
 5. The named canonical docs and adjacent main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, `issue-144/{spec,tasks}.md`, `issue-164/{spec,tasks}.md`, and `issue-154/155/156/{spec,tasks}.md`) no longer claim that current runner-host automation has no active iOS source-backed evaluation, no longer preserve `#144` as the live or remaining iOS umbrella owner after the split prerequisite lands, no longer preserve `ios-simulator-runtime` as manual-only future work after `#165`, and no longer leave contradictory shared summary/count expectations about whether simulator-runtime source findings use their own source-backed finding surface/count.
 6. The implementation PR for this slice can honestly say `Closes #165` because the iOS simulator runtime-catalog evaluation becomes active on `main` without widening the watched inventory or absorbing Xcode/device-availability work.
@@ -211,7 +211,7 @@ Feature: iOS simulator runtime-catalog evaluation in the runner-host watch
 - **no** source-backed evaluation for `simulator.device_name`; that future device-availability work belongs to `#172`
 - **no** widening of `.github/runner-host-watch.json` or addition of new watched iOS facts
 - **no** automatic freshness ratchet solely because Apple later publishes a newer runtime row
-- **no** new managed issue title or parallel runner-host issue-sync lane
+- **no** new report title or parallel runner-host GitHub issue lane
 - **no** local simulator probing beyond the emitted workflow artifact facts already captured by the smoke artifact contract
 
 ## Validation contract for the later implementation PR

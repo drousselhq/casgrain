@@ -17,7 +17,7 @@ SPEC.loader.exec_module(MODULE)
 class SecurityToolingCveWatchTests(unittest.TestCase):
     def sample_manifest(self) -> dict[str, object]:
         return {
-            "issue_title": "security: security-tooling CVE watch findings",
+            "report_title": "security: security-tooling CVE watch findings",
             "scope": "Workflow-installed security tooling outside Cargo.lock / Dependabot coverage",
             "tools": [
                 {
@@ -37,7 +37,7 @@ class SecurityToolingCveWatchTests(unittest.TestCase):
                     "version": "0.22.1",
                     "workflows": [
                         ".github/workflows/security.yml:54",
-                        ".github/workflows/cve-watch.yml:35",
+                        ".github/workflows/cve-watch.yml:34",
                     ],
                     "source_rule": {
                         "kind": "github-security-vulnerabilities",
@@ -121,7 +121,7 @@ class SecurityToolingCveWatchTests(unittest.TestCase):
         self.assertEqual(cargo_audit["first_patched_version"], "0.22.2")
         self.assertEqual(cargo_audit["affected_workflows"], [
             ".github/workflows/security.yml:54",
-            ".github/workflows/cve-watch.yml:35",
+            ".github/workflows/cve-watch.yml:34",
         ])
 
         markdown = MODULE.render_markdown(summary, run_url="")

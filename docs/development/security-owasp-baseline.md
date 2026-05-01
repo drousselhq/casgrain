@@ -149,7 +149,7 @@ Relevant OWASP themes:
 Required baseline:
 - Casgrain should have a documented way to review newly disclosed CVEs that might affect dependencies, build tooling, CI actions, runtime components, or supporting infrastructure
 - the first version should prefer authoritative sources and clear relevance rules over noisy broad alerts
-- relevant findings should turn into GitHub issues or PRs instead of disappearing into chat or ad hoc notes
+- relevant findings should surface as failed scheduled workflow runs with self-contained summaries, then become PRs or explicitly approved follow-up work instead of bot-created backlog issues
 
 Current repo status:
 - **mostly meets baseline**, with a small set of non-dependency surfaces still handled manually
@@ -162,35 +162,27 @@ Current automated cadence:
 3. the workflow now also evaluates `.github/security-tooling-watch.json`, the checked-in inventory of workflow-installed security tooling outside Cargo.lock / Dependabot coverage:
    - `cargo-audit` and `cargo-deny` use GitHub `securityVulnerabilities` GraphQL data keyed by the pinned crates.io package and compare the pinned version against the advisory `vulnerableVersionRange`
    - `gitleaks` stays explicit `manual-review-required` until the repo adopts a trustworthy machine-readable advisory source for its downloaded release-tarball path
-4. the workflow also evaluates `.github/runner-host-watch.json`, the checked-in inventory of watched runner-image / host-toolchain facts for the Android and iOS smoke workflows:
-   - both mobile smoke artifacts now include `host-environment.json` as the normalized runner/toolchain evidence source, with `emulator.json`, `simulator.json`, and `xcodebuild.log` remaining supporting evidence
-   - the watch compares only the inventoried runner image, OS, Java, Gradle, Xcode, simulator, and emulator facts against the baseline and opens `security: runner-host review needed` when a watched fact drifts, when required host evidence is missing/unreadable, when the promoted `runner-images` release metadata disagrees with the observed runner-image facts, when the promoted `android-java` release/support evaluator reports a `source-review-needed` or `source-error` finding, when the promoted `android-gradle` release-catalog evaluator reports a review-needed finding, or when Android emulator-runtime source-backed evaluation needs review
-   - `.github/runner-host-advisory-sources.json` is the repo-owned source-rule contract for runner-host promotion decisions; `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` are now the delivered source-backed groups on `main`, and the current combined `ios-xcode-simulator` placeholder stays manual-only while later iOS ownership lives in `#164` / `#165` rather than closed issue `#144`
-   - the Android backlog landed as delivered slices `#154`, `#155`, and `#156` rather than one combined `android-java-gradle` umbrella; `java.distribution` remains outside the watched runner-host inventory on current `main`; and the later iOS split is tracked in open `#164` / `#165` even though current `main` still publishes the combined placeholder above
-5. all four slices render triage-friendly markdown, sync a managed GitHub findings issue only when their slice-specific alert condition is active, and close that managed issue again on later clean runs
+4. the workflow still renders `.github/runner-host-watch.json`, the checked-in inventory of watched runner-image / host-toolchain facts for the Android and iOS smoke workflows, as report-only evidence in the workflow summary
+5. the Rust dependency, non-Cargo Dependabot, and workflow-installed security-tooling slices fail their scheduled job when an active advisory affects a watched surface; none of the slices create, reopen, update, label, or close GitHub issues automatically
 
 Remaining manual review:
-1. review authoritative sources for surfaces that are still outside the automated dependency graph, explicit security-tooling inventory, and drift-based runner-host watch, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
+1. review authoritative sources for surfaces that are still outside the automated dependency graph and explicit security-tooling inventory, starting with cve.org / CVE Services data, GitHub security advisories, and release/advisory feeds for workflow-critical downloaded tooling
 2. compare findings only against Casgrain's actual remaining manual surface area:
-   - source-backed host-toolchain advisory evaluation beyond the delivered `runner-images` / `android-java` / `android-gradle` / `android-emulator-runtime` slices; on current `main` the remaining follow-up work is the later iOS split under `#164` and `#165`, even though the checked-in manifest still keeps one combined `ios-xcode-simulator` placeholder until that split lands
    - repo-security tooling or settings-side gaps that require maintainer/platform action rather than an in-repo diff
    - any downloaded tooling not yet represented in `.github/security-tooling-watch.json` with a trustworthy source rule
+   - runner-host drift/source-rule evidence when a maintainer intentionally chooses to act on the report
 3. classify each finding as one of:
-   - **action now** — directly affects a package/tool/action currently used by the repo and needs an issue or PR immediately
+   - **action now** — directly affects a package/tool/action currently used by the repo and needs a PR or explicitly approved follow-up
    - **track** — plausibly relevant but needs version/surface verification before action
    - **ignore with reason** — not used by Casgrain, or only affects unsupported configurations
-4. record anything actionable in GitHub with the relevant evidence, affected surface, and next bounded step
-5. if the safe fix depends on settings, billing, unavailable runners, or maintainer-only activation, use `blocked` and/or `waiting-on-human` explicitly instead of inventing a fake in-repo resolution
-
-Tracked gap:
-- later source-backed promotion work for the runner-host watch now stays limited to the remaining iOS follow-ups `#164` (`ios-xcode`) and `#165` (`ios-simulator-runtime`); `#143`, `#154`, `#155`, and `#156` are delivered source-backed slices on current `main`, and the combined `ios-xcode-simulator` placeholder remains a compatibility entry until that split lands
+4. record anything actionable in a PR, maintainer note, or explicitly approved follow-up with the relevant evidence, affected surface, and next bounded step
+5. if the safe fix depends on settings, billing, unavailable runners, or maintainer-only activation, use `blocked` and/or `waiting-on-human` only on human-approved work items instead of bot-minted scheduled-watch issues
 
 ## Known gaps and tracked follow-up
 
 - #73 — activate the Renovate lane by enabling the app/runner outside the repo
-- delivered source-backed runner-host slices on current `main`: #143 (`runner-images`), #154 (`android-java`), #155 (`android-gradle`), and #156 (`android-emulator-runtime`)
-- #164 — evaluate source-backed advisory automation for iOS Xcode host surfaces
-- #165 — evaluate source-backed advisory automation for iOS simulator runtime-catalog host surfaces
+- delivered source-backed runner-host report slices on current `main`: #143 (`runner-images`), #154 (`android-java`), #155 (`android-gradle`), and #156 (`android-emulator-runtime`)
+- iOS Xcode/simulator source-backed runner-host promotion is intentionally not queued as autonomous backlog work unless a maintainer reopens that direction explicitly
 
 ## Triage rules for security findings
 
@@ -201,9 +193,10 @@ When a security finding appears, the security or DevOps lane should answer these
 4. can the next bounded step land safely in one PR without changing product behavior or developer experience?
 
 Response policy:
-- **in-repo fix available** → open or update an issue, implement the narrowest safe PR, and validate honestly
-- **settings-side fix required** → open or update an issue with concrete evidence, mark `blocked` and/or `waiting-on-human` when appropriate, and avoid pretending a docs-only change fully resolves it
-- **advisory only / not applicable** → record the reason in the issue, PR, or scheduled report so the decision is durable
+- **in-repo fix available from a CVE-watch finding** → implement the narrowest safe PR directly from the failed run summary; do not mint a scheduled-watch GitHub issue first
+- **in-repo fix available from human triage** → use a human-approved issue only when the next step is not immediately safe to implement as a PR
+- **settings-side fix required** → record concrete evidence in the PR/run handoff or an explicitly approved issue; mark `blocked` and/or `waiting-on-human` only on human-approved work items
+- **advisory only / not applicable** → record the reason in the PR, scheduled report, or approved follow-up so the decision is durable
 
 ## Relationship to other repo docs
 

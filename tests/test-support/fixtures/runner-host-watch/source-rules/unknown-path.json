@@ -1,5 +1,5 @@
 {
-  "managed_issue_title": "security: runner-host review needed",
+  "report_title": "security: runner-host review needed",
   "groups": [
     {
       "key": "runner-images",
@@ -20,7 +20,7 @@
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet evaluate authoritative runner metadata.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Future actionable source-backed findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 143,
       "candidate_source": "GitHub-hosted runner image release metadata"
     },
@@ -38,7 +38,7 @@
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet query authoritative Java sources.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Future actionable source-backed findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 154,
       "candidate_source": "Authoritative Java release/support metadata"
     },
@@ -56,7 +56,7 @@
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet query authoritative Gradle sources.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Future actionable source-backed findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 155,
       "candidate_source": "Authoritative Gradle release/support metadata"
     },
@@ -74,7 +74,7 @@
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet query authoritative Android runtime sources.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Future actionable source-backed findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "follow_up_issue": 156,
       "candidate_source": "Authoritative Android emulator runtime metadata"
     },
@@ -92,7 +92,7 @@
       ],
       "rule_kind": "manual-review-required",
       "rationale": "Current main does not yet evaluate Apple release metadata.",
-      "managed_issue_behavior": "Future actionable source-backed findings must reuse the existing managed issue title.",
+      "report_behavior": "Future actionable source-backed findings render in the scheduled cve-watch report without creating or reopening GitHub issues automatically.",
       "candidate_source": "Apple Xcode and simulator runtime release metadata",
       "follow_up_issues": [
         164,

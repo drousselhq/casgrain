@@ -1,5 +1,5 @@
 {
-  "issue_title": "security: security-tooling CVE watch findings",
+  "report_title": "security: security-tooling CVE watch findings",
   "scope": "Workflow-installed security tooling outside Cargo.lock / Dependabot coverage",
   "tools": [
     {
@@ -19,7 +19,7 @@
       "version": "0.22.1",
       "workflows": [
         ".github/workflows/security.yml:54",
-        ".github/workflows/cve-watch.yml:35"
+        ".github/workflows/cve-watch.yml:34"
       ],
       "source_rule": {
         "kind": "github-security-vulnerabilities",

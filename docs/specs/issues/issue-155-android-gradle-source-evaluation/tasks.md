@@ -35,7 +35,7 @@ assert groups['ios-xcode-simulator']['rule_kind'] == 'manual-review-required', g
 print('android-gradle is promoted while the remaining iOS follow-up group stays unchanged at this checkpoint')
 PY
 ```
-- Non-goals: No Java/emulator/iOS/runner-image source activation, no new managed issue title.
+- Non-goals: No Java/emulator/iOS/runner-image source activation, no new report title.
 - Hand back if: The Gradle slice cannot be represented honestly inside the existing runner-host source-rule manifest without redesigning the already-delivered `runner-images` / `android-java` / `android-emulator-runtime` contracts or the remaining manual-only iOS follow-up group.
 
 ## 3. Implement bounded Android Gradle source evaluation in `runner_host_review_report.py`
@@ -48,7 +48,7 @@ PY
 - Goal: Activate one trustworthy Gradle-only source-backed path without changing the baseline drift contract for the rest of the runner-host watch.
 - Validation: `python3 -m unittest tests/scripts/test_runner_host_review_report.py && python3 tests/test-support/scripts/runner_host_review_report.py --repo drousselhq/casgrain --baseline .github/runner-host-watch.json --android-workflow android-emulator-smoke.yml --android-artifact casgrain-android-smoke --ios-workflow ios-simulator-smoke.yml --ios-artifact casgrain-ios-smoke --summary-out /tmp/runner-host-watch-summary.json --markdown-out /tmp/runner-host-watch.md`
 - Non-goals: No Gradle plugin policy, no wrapper-integrity ratchet, no broad CVE scraping beyond the bounded release-catalog contract in `spec.md`.
-- Hand back if: The bounded Gradle evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the managed-issue sync path instead of staying inside the existing runner-host watch.
+- Hand back if: The bounded Gradle evaluator would require changing `host-environment.json` fields, widening the watched inventory, or redesigning the report sync path instead of staying inside the existing runner-host watch.
 
 ## 4. Reconcile the repo-owned docs and earlier issue-spec contract
 - [x] 4.1 Update `docs/development/cve-watch-operations.md`, `docs/development/security-automation-plan.md`, and `docs/development/security-owasp-baseline.md` so they state that `runner-images`, `android-java`, and `android-emulator-runtime` are already source-backed, `android-gradle` becomes source-backed in this slice, and the current combined `ios-xcode-simulator` placeholder remains `manual-review-required` while later iOS ownership lives in `#164` / `#165`.
@@ -136,5 +136,5 @@ PY
 - [x] 5.5 In the PR summary/comment, say the implementation PR `Closes #155`, explicitly note that `docs-needed` still applies because canonical security docs changed, and state that `runner-images`, `android-java`, and `android-emulator-runtime` stayed source-backed while only the current combined iOS placeholder remained the follow-up group.
 - Goal: Leave QA with one honest picture of the Gradle-only source-backed change, its validation evidence, and its closure boundary.
 - Validation: `git diff --check && python3 -m py_compile tests/test-support/scripts/runner_host_review_report.py tests/scripts/test_runner_host_review_report.py && python3 -m unittest tests/scripts/test_runner_host_review_report.py`
-- Non-goals: No manual GitHub issue mutation beyond the existing runner-host managed-issue behavior under test.
+- Non-goals: No manual GitHub issue mutation beyond the existing runner-host report behavior under test.
 - Hand back if: The refreshed head still reports `android-gradle` as manual-only, or the final diff no longer lets the implementation PR honestly `Closes #155`.

@@ -30,7 +30,7 @@ Already delivered on `main`:
   - `gradle.resolved_version`
 - Fresh source inspection during analyst shaping confirmed `https://services.gradle.org/versions/all` exposes machine-readable Gradle release metadata including `version`, `current`, and `broken`, and the current baseline `8.7` appears in that catalog.
 
-That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the already-watched Android Gradle facts without widening the runner-host inventory, without touching the Java/emulator/iOS follow-ups, and without inventing a parallel managed-issue flow.
+That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the already-watched Android Gradle facts without widening the runner-host inventory, without touching the Java/emulator/iOS follow-ups, and without inventing a parallel report flow.
 
 ## Scope of this slice
 
@@ -39,7 +39,7 @@ Add source-backed Android Gradle evaluation to the existing runner-host watch.
 This slice must:
 1. promote only `android-gradle` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate only the watched Android Gradle facts (`gradle.configured_version` and `gradle.resolved_version`) against authoritative machine-readable Gradle release metadata
-3. surface actionable Gradle findings through the existing managed issue `security: runner-host review needed`
+3. surface actionable Gradle findings through the existing report `security: runner-host review needed`
 4. preserve the current drift / missing-evidence behavior for the existing watched facts while keeping `runner-images` on its already-delivered `runner-image-release-metadata` path and the remaining follow-up groups unchanged
 
 ## Required implementation artifacts
@@ -130,7 +130,7 @@ Those updates must explicitly say:
 
 1. `.github/runner-host-advisory-sources.json` exposes `android-gradle` as `gradle-release-catalog` while preserving its watched fact paths and `follow_up_issue: 155`.
 2. A recognized non-broken baseline-match Android Gradle evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Gradle source findings requiring review.
-3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle`, turns the overall runner-host summary/managed-issue path into `manual-review-required`, and increments the same top-level `advisory_count` field current `main` already uses for source-backed findings.
+3. Broken, unrecognized, or source-unavailable Android Gradle evaluation produces an explicit source-backed finding for `android-gradle`, turns the overall runner-host summary/report path into `manual-review-required`, and increments the same top-level `advisory_count` field current `main` already uses for source-backed findings.
 4. The rendered JSON and markdown distinguish Android Gradle source-backed findings from drift / missing-evidence findings through explicit source-rule group details, preserve `runner-images`, `android-java`, and `android-emulator-runtime` as the existing delivered source-backed groups, add `android-gradle` as the selected source-backed group, leave the current combined `ios-xcode-simulator` placeholder as the remaining manual-review follow-up, and do not auto-alert merely because a newer upstream Gradle release exists.
 5. The named canonical docs and older main-branch issue specs/tasks (`#124`, `#129`, `#142`, `issue-143/{spec,tasks}.md`, `issue-144/{spec,tasks}.md`, and `issue-154/{spec,tasks}.md`) no longer claim that current runner-host automation is drift-only for every source group, that only `runner-images` is source-backed, that `#155` remains future work on current `main` after this slice lands, or that Android source-backed slices must split findings into a drift-only `advisory_count` plus a separate `source_advisory_count`.
 6. The implementation PR for this slice can honestly say `Closes #155` because the Android Gradle source-backed evaluation becomes active on `main`.
@@ -143,7 +143,7 @@ Those updates must explicitly say:
 - **no** source-backed evaluation for the combined `ios-xcode-simulator` placeholder; later iOS source-backed work remains split across `#164` / `#165`
 - **no** widening of `.github/runner-host-watch.json` to include Android Gradle plugin versions, wrapper checksums, dependency manifests, or any new Gradle fact
 - **no** automatic upgrade policy or freshness ratchet solely because a newer Gradle release exists
-- **no** new managed issue title or parallel runner-host issue-sync lane
+- **no** new report title or parallel runner-host GitHub issue lane
 - **no** broad CVE or release-note scraping beyond the chosen Gradle release catalog contract
 
 ## Validation contract for the later implementation PR

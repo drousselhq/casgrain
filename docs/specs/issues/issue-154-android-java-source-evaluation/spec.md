@@ -32,7 +32,7 @@ Already delivered on `main`:
   - `java.resolved_version`
 - `host-environment.json` still emits `java.distribution`, but that fact is not part of the checked-in watched inventory.
 
-That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the already-watched Android Java facts without widening the runner-host inventory, without reopening the delivered `runner-images` or `android-emulator-runtime` slices or widening the unchanged iOS placeholder on current `main`, and without inventing a parallel managed-issue flow.
+That means the honest remaining gap is now narrow: add trustworthy source-backed evaluation for the already-watched Android Java facts without widening the runner-host inventory, without reopening the delivered `runner-images` or `android-emulator-runtime` slices or widening the unchanged iOS placeholder on current `main`, and without inventing a parallel report flow.
 
 ## Scope of this slice
 
@@ -41,7 +41,7 @@ Add source-backed Android Java evaluation to the existing runner-host watch.
 This slice must:
 1. promote only `android-java` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate only the watched Android Java facts (`java.configured_major` and `java.resolved_version`) using authoritative machine-readable Java release/support metadata
-3. surface actionable Java findings through the existing managed issue `security: runner-host review needed`
+3. surface actionable Java findings through the existing report `security: runner-host review needed`
 4. preserve the current drift / missing-evidence behavior, keep the delivered `runner-images` rule intact, and leave the remaining non-Java follow-up groups otherwise unchanged
 
 ## Required implementation artifacts
@@ -128,7 +128,7 @@ Those updates must explicitly say:
 
 1. `.github/runner-host-advisory-sources.json` exposes `android-java` as `java-release-support` while preserving its watched fact paths and `follow_up_issue: 154`.
 2. A supported/baseline-match Android Java evaluation still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no Java source findings requiring review.
-3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/managed-issue path into `manual-review-required`.
+3. Unsupported, unrecognized, or source-unavailable Android Java evaluation produces an explicit source-backed finding for `android-java`, increments the same top-level `advisory_count` current `main` already uses for source-backed findings, and turns the overall runner-host summary/report path into `manual-review-required`.
 4. Missing Android host evidence preserves the existing top-level `reason=missing-evidence` / watched-fact advisory path and leaves `android-java` present as `rule_kind=java-release-support` with `outcome=source-skipped` instead of adding a second Java-only top-level advisory.
 5. The rendered JSON and markdown distinguish Android Java source-backed findings from drift / missing-evidence findings, preserve `runner-images`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed groups, and leave only the current combined iOS placeholder as the unchanged follow-up entry.
 6. The named canonical docs and older main-branch issue specs/tasks, including `docs/specs/issues/issue-124-runner-host-drift-watch.md`, `docs/specs/issues/issue-143-runner-image-source-evaluation/{spec,tasks}.md`, and `docs/specs/issues/issue-144-ios-runner-host-source-split/{spec,tasks}.md`, no longer claim that only drift / missing-evidence checks or only `runner-images` are source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only wording, no longer present `#154` as a later follow-up once this slice lands, and still keep the unchanged combined `ios-xcode-simulator` placeholder truthful on current `main` under later ownership `#164` / `#165`.
@@ -141,7 +141,7 @@ Those updates must explicitly say:
 - **no** further behavior or ownership changes to the delivered `android-emulator-runtime` slice (`#156`)
 - **no** iOS source-rule split rework or source-backed evaluation; the current combined `ios-xcode-simulator` placeholder stays unchanged in this slice while later ownership remains `#164` / `#165`
 - **no** widening of `.github/runner-host-watch.json` to include `java.distribution` or any new Java fact
-- **no** new managed issue title or parallel runner-host issue-sync lane
+- **no** new report title or parallel runner-host GitHub issue lane
 - **no** generic Java patch-freshness ratchet or vendor-distribution policy beyond the bounded release/support contract for `java.configured_major` and `java.resolved_version`
 - **no** broad external CVE or release-note scraping outside the chosen authoritative Java release/support metadata
 

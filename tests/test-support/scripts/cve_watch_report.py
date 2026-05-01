@@ -192,7 +192,7 @@ def build_summary(data: dict[str, Any], generated_at: str) -> dict[str, Any]:
         "lockfile_timestamp": lockfile.get("timestamp", "unknown"),
         "generated_at": generated_at,
         "findings": findings,
-        "issue_title": "security: dependency CVE watch findings",
+        "report_title": "security: dependency CVE watch findings",
         "scope": "Rust dependency advisories reported by cargo audit",
     }
 
@@ -202,12 +202,12 @@ def render_markdown(summary: dict[str, Any], run_url: str) -> str:
     db_updated = summary["database_last_updated"]
     advisory_count = summary["advisory_count"]
     package_count = summary["package_count"]
-    issue_title = summary["issue_title"]
+    report_title = summary["report_title"]
     lines = [
         "<!-- cve-watch-report -->",
-        f"# {issue_title}",
+        f"# {report_title}",
         "",
-        "This issue is maintained automatically by the scheduled CVE watch workflow.",
+        "This report is generated automatically by the scheduled CVE watch workflow.",
         "",
         "## Scope",
         f"- Automated scope today: {summary['scope']}",
@@ -225,7 +225,7 @@ def render_markdown(summary: dict[str, Any], run_url: str) -> str:
                 "",
                 "## Status",
                 "- No active Rust dependency advisories were reported by `cargo audit`.",
-                "- Clean runs are recorded in the workflow summary only; this issue should normally stay closed or absent when the dependency surface is clean.",
+                "- Clean runs are recorded in the workflow summary only; the workflow does not create or reopen GitHub issues for findings.",
             ]
         )
         return "\n".join(lines) + "\n"
@@ -268,7 +268,7 @@ def render_markdown(summary: dict[str, Any], run_url: str) -> str:
             "## Triage expectations",
             "1. Confirm whether the affected package is reachable in the current Casgrain build/runtime path.",
             "2. Open or update a remediation PR when an upgrade or exception is clear.",
-            "3. If remediation cannot land in-repo yet, keep the blocker explicit in GitHub instead of letting this report become tribal knowledge.",
+            "3. If remediation cannot land in-repo yet, record the blocker explicitly instead of letting this report become tribal knowledge.",
         ]
     )
 

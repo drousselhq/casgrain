@@ -54,7 +54,7 @@ Add source-backed Android emulator-runtime evaluation to the existing runner-hos
 This slice must:
 1. promote only `android-emulator-runtime` from a placeholder/manual source-rule entry to an active source-backed evaluation rule
 2. evaluate the observed Android emulator runtime identity from authoritative platform/system-image metadata using `emulator.api_level` and `emulator.os_version`, with the existing emitted `target` / `arch` fields as supporting lookup inputs
-3. surface actionable emulator-runtime findings through the existing managed issue `security: runner-host review needed`
+3. surface actionable emulator-runtime findings through the existing report `security: runner-host review needed`
 4. preserve the current drift / missing-evidence behavior, keep the delivered `runner-images` rule intact, leave `android-java` and `android-gradle` unchanged, and do not widen this Android slice into the separate iOS follow-up ownership already tracked by `#164` / `#165`
 5. keep `emulator.device_name` as a drift-guarded supporting fact in this slice rather than inventing a second source-backed alert dimension for the generated AVD product string
 
@@ -154,7 +154,7 @@ Those updates must explicitly say:
 
 1. `.github/runner-host-advisory-sources.json` exposes `android-emulator-runtime` as `android-system-image-catalog` while preserving its watched fact paths and `follow_up_issue: 156`, and keeps `runner-images` on `runner-image-release-metadata`.
 2. A recognized Android 14 / API 34 Google APIs x86_64 runtime still produces top-level `verdict=no review-needed`, `reason=baseline-match`, `advisory_count=0`, and no emulator-runtime source findings requiring review.
-3. Missing package metadata, an API/runtime mismatch, or source-unavailable Android emulator-runtime evaluation produces an explicit source-backed finding for `android-emulator-runtime`, increments the overall `advisory_count`, and turns the overall runner-host summary/managed-issue path into `manual-review-required` even when no watched-fact drift exists.
+3. Missing package metadata, an API/runtime mismatch, or source-unavailable Android emulator-runtime evaluation produces an explicit source-backed finding for `android-emulator-runtime`, increments the overall `advisory_count`, and turns the overall runner-host summary/report path into `manual-review-required` even when no watched-fact drift exists.
 4. The rendered JSON and markdown distinguish Android emulator-runtime source-backed findings from drift / missing-evidence findings, preserve `runner-images`, `android-java`, `android-gradle`, and `android-emulator-runtime` as delivered source-backed groups, and expose the current `ios-xcode-simulator` placeholder with plural later ownership under `#164` / `#165` rather than reintroducing closed issue `#144` as the live owner.
 5. The named canonical docs and historical issue-spec/task artifacts no longer claim that current runner-host automation is drift-only or that only `runner-images` is source-backed on current `main`, no longer preserve stale `android-emulator-runtime` manual-only / unchanged-ownership wording in the adjacent `#154` / `#155` issue-spec artifacts, and no longer require a top-level `source_advisory_count` for the shared runner-host summary contract.
 6. The implementation PR for this slice can honestly say `Closes #156` because the Android emulator-runtime source-backed evaluation becomes active on `main`.
@@ -168,7 +168,7 @@ Those updates must explicitly say:
 - **no** widening of `.github/runner-host-watch.json` to add `emulator.target`, `emulator.arch`, `emulator.profile`, extension levels, package revisions, or any other new watched fact
 - **no** separate source-only alert policy for the generated `emulator.device_name` string in this slice
 - **no** automatic freshness ratchet solely because a newer Android API, extension level, or system-image revision exists upstream
-- **no** new managed issue title or parallel runner-host issue-sync lane
+- **no** new report title or parallel runner-host GitHub issue lane
 - **no** direct probing of locally installed SDK state; the evaluator should use authoritative public source metadata plus the emitted workflow artifact facts
 
 ## Validation contract for the later implementation PR
@@ -200,7 +200,7 @@ assert groups['android-emulator-runtime']['follow_up_issue'] == 156, groups['and
 assert groups['runner-images']['rule_kind'] == 'runner-image-release-metadata', groups['runner-images']
 assert groups['ios-xcode-simulator']['follow_up_issues'] == [164, 165], groups['ios-xcode-simulator']
 assert 'follow_up_issue' not in groups['ios-xcode-simulator'], groups['ios-xcode-simulator']
-assert summary['source_rule_managed_issue_title'] == 'security: runner-host review needed', summary
+assert summary['source_rule_report_title'] == 'security: runner-host review needed', summary
 print('android-emulator-runtime source-backed rule is present while runner-images stays delivered')
 PY
 ```
