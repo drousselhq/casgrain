@@ -205,7 +205,7 @@ Feature: iOS simulator runtime-catalog evaluation in the runner-host watch
 
 ## Explicit non-goals
 
-- **no** source-backed evaluation for `runner-images` (`#143`)
+- **no** changes to the already-delivered `runner-images` source-backed evaluation (`#143`)
 - **no** changes to the already-delivered `android-java` source-backed evaluation (`#154`)
 - **no** changes to the already-delivered `android-gradle` source-backed evaluation (`#155`)
 - **no** changes to the already-delivered `android-emulator-runtime` source-backed evaluation (`#156`)
