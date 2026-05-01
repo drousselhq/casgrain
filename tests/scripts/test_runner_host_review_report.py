@@ -248,7 +248,8 @@ class RunnerHostReviewReportTests(unittest.TestCase):
         self.assertIn("#154", markdown)
         self.assertIn("#155", markdown)
         self.assertIn("#156", markdown)
-        self.assertIn("via #164, #165", markdown)
+        self.assertIn("historical references: #164, #165", markdown)
+        self.assertNotIn("via #164, #165", markdown)
         self.assertNotIn("via #144", markdown)
 
     def test_build_summary_accepts_checked_in_source_rules_manifest(self) -> None:

@@ -1963,11 +1963,17 @@ def render_markdown(summary: dict[str, Any]) -> str:
         watched_fact_list = ", ".join(
             f"{entry['platform']}:{entry['path']}" for entry in group["watched_fact_paths"]
         )
-        follow_up_numbers = group.get("follow_up_issues") or [group["follow_up_issue"]]
-        follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
+        if "follow_up_issues" in group:
+            follow_up_numbers = group["follow_up_issues"]
+            follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
+            ownership_text = f"(historical references: {follow_up_display})"
+        else:
+            follow_up_numbers = [group["follow_up_issue"]]
+            follow_up_display = ", ".join(f"#{number}" for number in follow_up_numbers)
+            ownership_text = f"via {follow_up_display}"
         lines.extend(
             [
-                f"- `{group['key']}` — `{group['rule_kind']}` via {follow_up_display}",
+                f"- `{group['key']}` — `{group['rule_kind']}` {ownership_text}",
                 f"  - Surface: {group['surface']}",
                 f"  - Candidate source: {group['candidate_source']}",
                 f"  - Rationale: {group['rationale']}",
